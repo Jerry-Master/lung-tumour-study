@@ -20,5 +20,13 @@ The supported conversions and their corresponding implementations are:
 * [Hovernet JSON >> Centroids], implemented in `hovernet2centroids.py`.
 * [Hovernet JSON >> GeoJSON], implemented in `hovernet2geojson.py`.
 
-## Files usage
+## Script usage
 
+All the scripts are used in the same way `python3 [SCRIPT_NAME].py [FLAGS]`. There are five different flags that correspond to the paths of the files to convert:
+
+* `--png_dir`, `--csv_dir`: The paths to the images and their labels, used in any script that converts to or from PNG <-> CSV format. It indicates input or output depending on the conversion.
+* `--gson_dir`: Path to the geojson files, either input or output depending on conversion.
+* `--json_dir`: Path to hovernet jsons, only used as input.
+* `--output_path`: Path to save the centroids tables, only used as output.
+
+If any folder indicated as output doesn't exist, it is created at runtime.
