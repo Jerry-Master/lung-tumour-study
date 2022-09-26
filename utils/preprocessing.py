@@ -2,17 +2,24 @@ import os
 from geojson import Feature, Polygon
 
 def parse_path(path):
+    """
+    Checks for trailing slash and adds it in case it isn't there.
+    """
     if path[-1] != '/':
         return path + '/'
     return path
 
 def create_dir(path):
+    """
+    Checks if the folder exists, if it doesn't, it is created
+    """
     if not os.path.isdir(path):
         os.mkdir(path)
 
 def get_names(path, pattern):
     """
-    Assumes the names end in <pattern>
+    Returns a list with all the files in <path> containing <pattern>.
+    It removes the <pattern> substring from the names.
     """
     names_raw = os.listdir(path)
     names = []
@@ -22,6 +29,12 @@ def get_names(path, pattern):
     return names
 
 def create_geojson(contours):
+    """
+    Input: List of pairs (contour, label).
+        Contour is a list of points starting and finishing in the same point.
+        label is an integer representing the class of the cell
+    Returns: A dictionary with the geojson format of QuPath
+    """
     label_dict = ["non-tumour", "tumour"]
     colour_dict = [-9408287, -9408287]
     features = []
