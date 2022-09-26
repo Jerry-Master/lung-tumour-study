@@ -6,15 +6,19 @@ Converts from HoVernet json to QuPath geojson
 import json
 import pandas as pd
 import argparse
-import os
 import geojson
 from geojson import Feature, Polygon
-from ..utils/preprocessing import *
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(SCRIPT_DIR)
+from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--json_dir', type=str, default='./',
                     help='Path to json files.')
-parser.add_argument('--output_path', type=str, default='./',
+parser.add_argument('--gson_dir', type=str, default='./',
                     help='Path to save files.')
 
 def read_json(json_dir):
@@ -47,4 +51,4 @@ if __name__ == '__main__':
         nuc = read_json(json_path)
         contours = parse_contours(nuc)
         features = create_geojson(contours)
-        save_contours(args.output_path, name, features)
+        save_contours(args.gson_dir, name, features)

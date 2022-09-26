@@ -4,12 +4,18 @@ Converts QuPath geojson format into our png <-> csv format.
 
 """
 import argparse
-from ..utils/preprocessing import *
 import geojson
 import cv2
 from skimage.draw import polygon
 import numpy as np
 import pandas as pd
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(SCRIPT_DIR)
+
+from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gson_dir', type=str, required=True, 

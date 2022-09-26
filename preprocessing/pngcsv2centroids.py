@@ -5,10 +5,14 @@ Computes centroids csv from png <-> csv labels.
 """
 import argparse
 import pandas as pd
-import os
 import cv2
 import numpy as np
-from ..utils/preprocessing import *
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(SCRIPT_DIR)
+from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--png_dir', type=str, required=True,

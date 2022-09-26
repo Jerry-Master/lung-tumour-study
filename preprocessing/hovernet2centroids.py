@@ -8,8 +8,12 @@ The class output format is 0=non-tumour, 1=tumour.
 import json
 import pandas as pd
 import argparse
+import sys
 import os
-from ..utils/preprocessing import *
+
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(SCRIPT_DIR)
+from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--json_dir', type=str, required=True,

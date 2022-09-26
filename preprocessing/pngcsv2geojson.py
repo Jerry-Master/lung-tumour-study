@@ -5,18 +5,22 @@ Converts our png <-> csv format into QuPath geojson format.
 """
 import argparse
 import pandas as pd
-import os
 import cv2
 import numpy as np
 import geojson
-from ..utils/preprocessing import *
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(SCRIPT_DIR)
+from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--png_dir', type=str, required=True,
                     help='Path to png files.')
 parser.add_argument('--csv_dir', type=str, required=True,
                     help='Path to csv files.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--gson_dir', type=str, required=True,
                     help='Path to save files.')
 
 def read_labels(name, png_path, csv_path):
@@ -67,7 +71,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     PNG_DIR = parse_path(args.png_dir)
     CSV_DIR = parse_path(args.csv_dir)
-    OUTPUT_PATH = parse_path(args.output_path)
+    OUTPUT_PATH = parse_path(args.gson_dir)
     create_dir(OUTPUT_PATH)
 
     names = get_names(PNG_DIR, '.GT_cells.png')
