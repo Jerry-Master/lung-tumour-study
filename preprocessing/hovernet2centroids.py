@@ -39,7 +39,7 @@ def parse_centroids(nuc):
 if __name__ == '__main__':
     args = parser.parse_args()
     names = get_names(args.json_dir, '.json')
-    create_dir(args.output_path)
+    create_dir(parse_path(args.output_path))
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         json_path = args.json_dir + name + '.json'

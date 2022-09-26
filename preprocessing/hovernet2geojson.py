@@ -39,6 +39,7 @@ def parse_contours(nuc):
 
 
 def save_contours(out_dir, name, contours):
+    create_dir(parse_path(out_dir))
     with open(out_dir + name + '.geojson', 'w') as f:
         geojson.dump(contours, f, sort_keys=True, indent=2)
 
