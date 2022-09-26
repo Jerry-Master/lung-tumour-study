@@ -10,8 +10,9 @@ import numpy as np
 import sys
 import os
 
-SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(SCRIPT_DIR)
+PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PKG_DIR)
+
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
