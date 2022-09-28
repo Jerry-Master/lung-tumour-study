@@ -34,7 +34,7 @@ def parse_centroids(nuc):
         inst_info = nuc[inst]
         inst_centroid = inst_info['centroid']
         inst_type = inst_info['type']
-        centroids_.append((inst_centroid[1], inst_centroid[0], inst_type-1)) # Minus 1 because initial range is [1,2]
+        centroids_.append((inst_centroid[1], inst_centroid[0], inst_type)) 
     return centroids_
 
 if __name__ == '__main__':

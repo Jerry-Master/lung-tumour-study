@@ -21,26 +21,13 @@ import numpy as np
 from scipy.spatial import KDTree
 import argparse
 import time
-from utils import *
+from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gt_path', type=str, required=True,
                     help='Path to GT files.')
 parser.add_argument('--pred_path', type=str, required=True,
                     help='Path to prediction files.')
-
-def read_labels(name, path):
-    """
-    Assumes the folder structure is
-        GT_cells/
-            *.png
-        class/
-            *.csv
-    """
-    img = cv2.imread(path + 'GT_cells/' + name + '.GT_cells.png', -1)
-    csv = pd.read_csv(path + 'class/' + name + '.class.csv')
-    csv.columns = ['id', 'label']
-    return img, csv
 
 def read_centroids(name, path):
     """
@@ -87,28 +74,28 @@ def find_nearest(a, B):
     dist, idx = B.query([x,y], k=1)
     return idx
 
-def get_confusion_matrix(gt_centroids, pred_centroids, name):
+def get_confusion_matrix(gt_centroids, pred_centroids):
     """
-    Each centroid is represented by a 4-tuple with (X, Y, class).
+    Each centroid is represented by a 3-tuple with (X, Y, class).
     Class is 0=non-tumour, 1=tumour.
     """
     t0 = time.time()
     if len(gt_centroids) == 0:
         return None
 
-    gt_tree = generate_tree(gt_centroids)
-    pred_tree = generate_tree(pred_centroids)
+    gt_tree = generate_tree(gt_centroids[:,:2])
+    pred_tree = generate_tree(pred_centroids[:,:2])
     t1 = time.time()
-    print('Time generating KDTree(secs):', t1-t0)
+    # print('Time generating KDTree(secs):', t1-t0)
     t0 = time.time()
     M = np.zeros((2,2)) 
     for point_id, point in enumerate(gt_centroids):
-        closest_id = find_nearest(point, pred_tree)
+        closest_id = find_nearest(point[:2], pred_tree)
         closest = pred_centroids[closest_id]
-        if closest[2] != -1 and point[2] != -1 and point_id == find_nearest(closest, gt_tree):
-            M[point[2]-1][closest[2]] += 1
+        if closest[2] != -1 and point[2] != -1 and point_id == find_nearest(closest[:2], gt_tree):
+            M[int(point[2]-1)][int(closest[2]-1)] += 1
     t1 = time.time()
-    print('Time querying KDTree(secs):', t1-t0)
+    # print('Time querying KDTree(secs):', t1-t0)
     t0 = time.time()
     return M
 
@@ -145,7 +132,7 @@ if __name__ == '__main__':
     for name in names:
         gt_centroids = read_centroids(name, args.gt_path)
         pred_centroids = read_centroids(name, args.pred_path)
-        confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids, name)
+        confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids)
         scores = get_weighted_F1_score(confusion_matrix)
         save_score(scores, name)
 

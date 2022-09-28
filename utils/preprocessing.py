@@ -51,3 +51,4 @@ def create_geojson(contours):
         feat = Feature(geometry=points, properties=properties)
         features.append(feat)
     return features
+
