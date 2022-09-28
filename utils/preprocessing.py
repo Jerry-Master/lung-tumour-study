@@ -35,8 +35,8 @@ def create_geojson(contours):
         label is an integer representing the class of the cell
     Returns: A dictionary with the geojson format of QuPath
     """
-    label_dict = ["non-tumour", "tumour"]
-    colour_dict = [-9408287, -9408287]
+    label_dict = ["background", "non-tumour", "tumour"]
+    colour_dict = [-9408287, -9408287, -9408287]
     features = []
     for contour, label in contours:
         points = Polygon([contour])

@@ -30,14 +30,14 @@ def read_gson(name, path):
         gson = geojson.load(f)
     return gson
 
-def geojson2pngcsv(gson, names):
+def geojson2pngcsv(gson):
     """
     Computes png <-> csv labels from geojson. 
     Width and height are assumed to be 1024.
     """
-    png = np.zeros((1024,1024))
+    png = np.zeros((1024,1024), dtype=np.uint16)
     csv = pd.DataFrame([], columns=['id', 'label'])
-    label_parser = {'tumour': 1, 'non-tumour': 0}
+    label_parser = {'tumour': 2, 'non-tumour': 1}
     for k, feature in enumerate(gson):
         # Draw filled contour
         contour = feature['geometry']['coordinates'][0]
@@ -46,7 +46,7 @@ def geojson2pngcsv(gson, names):
         assert(contour[0] == contour[-1])
         poly = np.array(contour[:-1])
         rr, cc = polygon(poly[:,0], poly[:,1], png.shape)
-        png[rr,cc] = k+1
+        png[cc,rr] = k+1
 
         # Save row to csv
         label = feature['properties']['classification']['name']
@@ -57,8 +57,8 @@ def geojson2pngcsv(gson, names):
 
 def save_pngcsv(png, csv, png_path, csv_path, name):
     png = np.array(png, dtype=np.uint16)
-    cv2.imwrite(png_path + name + '.png', png)
-    csv.to_csv(csv_path + name + '.csv', index=False, header=False)
+    cv2.imwrite(png_path + name + '.GT_cells.png', png)
+    csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -73,6 +73,6 @@ if __name__ == '__main__':
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         gson = read_gson(name, GSON_DIR)
-        png, csv = geojson2pngcsv(gson, name)
+        png, csv = geojson2pngcsv(gson)
         save_pngcsv(png, csv, PNG_DIR, CSV_DIR, name)
     print()
