@@ -39,6 +39,7 @@ def create_geojson(contours):
     colour_dict = [-9408287, -9408287, -9408287]
     features = []
     for contour, label in contours:
+        assert(label > 0)
         points = Polygon([contour])
         properties = {
                     "object_type": "annotation",

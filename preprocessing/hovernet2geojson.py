@@ -32,10 +32,11 @@ def parse_contours(nuc):
     contours_ = []
     for inst in nuc:
         inst_info = nuc[inst]
-        inst_contour = inst_info['contour']
-        inst_contour.append(inst_contour[0])
         inst_type = inst_info['type']
-        contours_.append((inst_contour, inst_type-1)) # Minus 1 because initial range is [1,2]
+        if inst_type == 1 or inst_type == 2:
+            inst_contour = inst_info['contour']
+            inst_contour.append(inst_contour[0])
+            contours_.append((inst_contour, inst_type)) 
     return contours_
 
 
