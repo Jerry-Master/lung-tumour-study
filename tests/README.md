@@ -1,7 +1,7 @@
 # Tests
 ## PNG <-> CSV to GeoJSON conversion
 
-In order to check if this conversion works the following test was designed. If we call $f$ the PNG <-> CSV to GeoJSON, then the GeoJSON to PNG <-> CSV should be $f^{-1}$. Therefore, we just have to check that $f^{-1} (f(\text{png, csv})) = (\text{png, csv})$. Since the algorithm of contour detection makes some approximations the result may not be exactly equal, therefore the result has a relative tolerance of $10\%$.
+In order to check if this conversion works the following test was designed. If we call $f$ the PNG <-> CSV to GeoJSON, then the GeoJSON to PNG <-> CSV conversion should be $f^{-1}$. Therefore, we just have to check that $f^{-1} (f(\text{png, csv})) = (\text{png, csv})$. Since the algorithm of contour detection makes some approximations the result may not be exactly equal, therefore the result has a relative tolerance of $10$\%.
 
  ### Tests format
  
