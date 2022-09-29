@@ -8,8 +8,8 @@ PKG_DIR = os.path.dirname(TEST_DIR)
 sys.path.append(PKG_DIR)
 
 from preprocessing.geojson2pngcsv import geojson2pngcsv
-from preprocessing.pngcsv2geojson import pngcsv2geojson, read_labels
-from utils.preprocessing import get_names, parse_path
+from preprocessing.pngcsv2geojson import pngcsv2geojson
+from utils.preprocessing import get_names, parse_path, read_labels
 
 PNGCSV_DIR = parse_path(TEST_DIR) + 'pngcsv/'
 THRESHOLD = 0.1

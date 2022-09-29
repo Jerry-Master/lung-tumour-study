@@ -22,13 +22,12 @@ parser.add_argument('--json_dir', type=str, required=True,
 parser.add_argument('--output_path', type=str, required=True,
                     help='Path to save files.')
 
-def read_json(json_dir):
-    with open(json_dir) as json_file:
-        data = json.load(json_file)
-        nuc_info = data['nuc']
-    return nuc_info
 
 def parse_centroids(nuc):
+    """
+    Input: Hovernet json nuclei dictionary as given by read_json.
+    Output: List of (X,Y,class) tuples representing centroids.
+    """
     centroids_ = []
     for inst in nuc:
         inst_info = nuc[inst]

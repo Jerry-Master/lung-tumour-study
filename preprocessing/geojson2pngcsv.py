@@ -26,6 +26,9 @@ parser.add_argument('--csv_dir', type=str, required=True,
                     help='Path to save the csv files.')      
 
 def read_gson(name, path):
+    """
+    Reads gson at path + name.
+    """
     with open(path + name + '.geojson', 'r') as f:
         gson = geojson.load(f)
     return gson
@@ -56,6 +59,10 @@ def geojson2pngcsv(gson):
     return png, csv
 
 def save_pngcsv(png, csv, png_path, csv_path, name):
+    """
+    Save png, csv pair in the folders indicated by png_path and csv_path with 
+    the name given in name.
+    """
     png = np.array(png, dtype=np.uint16)
     cv2.imwrite(png_path + name + '.GT_cells.png', png)
     csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)

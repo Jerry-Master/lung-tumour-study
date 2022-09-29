@@ -22,12 +22,6 @@ parser.add_argument('--json_dir', type=str, default='./',
 parser.add_argument('--gson_dir', type=str, default='./',
                     help='Path to save files.')
 
-def read_json(json_dir):
-    with open(json_dir) as json_file:
-        data = json.load(json_file)
-        nuc_info = data['nuc']
-    return nuc_info
-
 def parse_contours(nuc):
     contours_ = []
     for inst in nuc:
@@ -49,7 +43,8 @@ def save_contours(out_dir, name, contours):
 if __name__ == '__main__':
     args = parser.parse_args()
     names = get_names(args.json_dir, '.json')
-    for name in names:
+    for k, name in enumerate(names):
+        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         json_path = args.json_dir + name + '.json'
         nuc = read_json(json_path)
         contours = parse_contours(nuc)

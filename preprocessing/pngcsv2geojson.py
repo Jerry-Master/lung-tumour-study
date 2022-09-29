@@ -24,17 +24,19 @@ parser.add_argument('--csv_dir', type=str, required=True,
 parser.add_argument('--gson_dir', type=str, required=True,
                     help='Path to save files.')
 
-def read_labels(name, png_path, csv_path):
-    img = cv2.imread(png_path + name + '.GT_cells.png', -1)
-    csv = pd.read_csv(csv_path + name + '.class.csv')
-    csv.columns = ['id', 'label']
-    return img, csv
 
 def save_geojson(gson, name, path):
+    """
+    Save geojson to file path + name.
+    """
     with open(path + name + '.geojson', 'w') as f:
         geojson.dump(gson, f)
 
 def create_mask(png, csv, label):
+    """
+    Returns the image with only the pixels of the class given in label.
+    The pixel values are truncated to uint8.
+    """
     mask = png.copy()
     for i, (idx, cell_label) in csv.iterrows():
         if cell_label != label:
@@ -42,6 +44,11 @@ def create_mask(png, csv, label):
     return np.array(mask, dtype=np.uint8)
 
 def format_contour(contour):
+    """
+    Auxiliary function to pass from the cv2.findContours format to
+    an array of shape (N,2). Additionally, the first point is added
+    to the end to close the contour.
+    """
     new_contour = np.reshape(contour, (-1,2)).tolist()
     new_contour.append(new_contour[0])
     return new_contour

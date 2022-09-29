@@ -4,10 +4,7 @@ Evaluating script for cell predictions.
 
 Input format
 ------------
-> Cell segmentations as png with one id per pixel representing connected component.
-> Cell classification in csv format with two columns: 
-    * One with the id of the component.
-    * Another with the label.
+Centroids in a csv with columns X,Y and class. Both for prediction and GT.
 
 Output
 ------
@@ -100,6 +97,9 @@ def get_confusion_matrix(gt_centroids, pred_centroids):
     return M
 
 def get_weighted_F1_score(M):
+    """
+    Computes weighted F1 score from confusion matrix
+    """
     if M is None:
         return -1, -1
     eps=1e-7
@@ -120,6 +120,10 @@ def get_weighted_F1_score(M):
     return f1, wf1
 
 def save_score(scores, name):
+    """
+    Appends the F1 score and weighted f1 score in scores in the file results.txt.
+    The name of the labels file should be given.
+    """
     f1, wf1 = scores
     with open('results.txt', 'a') as f:
         print(name, file=f)
@@ -129,7 +133,8 @@ def save_score(scores, name):
 if __name__ == '__main__':
     args = parser.parse_args()
     names = get_names(args.gt_path, '.centroids.csv')
-    for name in names:
+    for k, name in enumerate(names):
+        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         gt_centroids = read_centroids(name, args.gt_path)
         pred_centroids = read_centroids(name, args.pred_path)
         confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids)

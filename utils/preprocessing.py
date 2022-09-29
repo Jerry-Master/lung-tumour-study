@@ -28,6 +28,27 @@ def get_names(path, pattern):
             names.append(name[:-len(pattern)])
     return names
 
+def read_labels(name, png_path, csv_path):
+    """
+    Input: name of file and paths to their location in png and csv format.
+           Files should end in .GT_cells.png and .class.csv respectively.
+    Output: png and csv of that file.
+    """
+    img = cv2.imread(png_path + name + '.GT_cells.png', -1)
+    csv = pd.read_csv(csv_path + name + '.class.csv')
+    csv.columns = ['id', 'label']
+    return img, csv
+
+def read_json(json_path):
+    """
+    Input: Hovernet json path
+    Output: Dictionary with nuclei information
+    """
+    with open(json_path) as json_file:
+        data = json.load(json_file)
+        nuc_info = data['nuc']
+    return nuc_info
+
 def create_geojson(contours):
     """
     Input: List of pairs (contour, label).

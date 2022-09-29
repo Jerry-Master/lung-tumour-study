@@ -23,11 +23,6 @@ parser.add_argument('--csv_dir', type=str, required=True,
 parser.add_argument('--output_path', type=str, required=True,
                     help='Path to save files.')
 
-def read_labels(name, png_path, csv_path):
-    img = cv2.imread(png_path + name + '.GT_cells.png', -1)
-    csv = pd.read_csv(csv_path + name + '.class.csv')
-    csv.columns = ['id', 'label']
-    return img, csv
 
 def get_centroid_by_id(img, idx):
     """
