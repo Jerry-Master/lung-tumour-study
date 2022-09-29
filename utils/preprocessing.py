@@ -32,7 +32,7 @@ def create_geojson(contours):
     """
     Input: List of pairs (contour, label).
         Contour is a list of points starting and finishing in the same point.
-        label is an integer representing the class of the cell
+        label is an integer representing the class of the cell (1: non-tumour, 2: tumour)
     Returns: A dictionary with the geojson format of QuPath
     """
     label_dict = ["background", "non-tumour", "tumour"]
@@ -52,4 +52,3 @@ def create_geojson(contours):
         feat = Feature(geometry=points, properties=properties)
         features.append(feat)
     return features
-
