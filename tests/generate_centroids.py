@@ -16,8 +16,6 @@ def polygon(n, theta=0.01, radius=1):
     paramB = paramA + theta
     X, Y = radius*np.cos(paramA), radius*np.sin(paramA)
     A = np.vstack([X, Y, np.ones(n+1)]).transpose()
-
-    X, Y = np.cos(paramB), np.sin(paramB)
     B = np.vstack([X, Y, np.ones(n+1)]).transpose()
     return A[:-1], B[:-1]
 
@@ -79,3 +77,14 @@ if __name__=='__main__':
         B[:,2] = np.random.randint(1,3,N-1)
         conf = confusion_matrix(A[:,2], B[:,2])
         save(A, B, conf, 'random_labels_rotated_vis'+str(k+1))
+
+    N = 3000
+    A, B = polygon(N-1, theta=np.pi/(N), radius=200)
+    M = 300
+    B = np.vstack([B, np.random.randint(-5, 5, size=(M,3))])
+    for k in range(30):
+        A[:,2] = np.random.randint(1,3,N-1)
+        B[:N-1,2] = np.random.randint(1,3,N-1)
+        B[N-1:,2] = np.random.randint(1,3,M)
+        conf = confusion_matrix(A[:,2], B[:N-1,2])
+        save(A, B, conf, 'extra_points'+str(k+1))
