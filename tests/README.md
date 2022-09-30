@@ -22,3 +22,4 @@ In order to check if this conversion works the following test was designed. If w
  * __Random points__: A and B both contain the same random points with some predefined classes. 
  * __Circle__: A and B both contain points in a circle, but B has the points slightly rotated and / or scaled.
  * __Random labels__: Same approaches as before for point generation, but now labels are randomly generated for A and B. The real confusion matrix is computed with sklearn's `confusion_matrix` function.
+ * __Extra points__: Same as random labels but there are extra predicted points far away from the others that should be ignored.
