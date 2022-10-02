@@ -3,6 +3,7 @@ from geojson import Feature, Polygon
 import cv2
 import pandas as pd
 import numpy as np
+import json
 
 def parse_path(path):
     """
