@@ -60,8 +60,8 @@ def create_geojson(contours):
         label is an integer representing the class of the cell (1: non-tumour, 2: tumour)
     Returns: A dictionary with the geojson format of QuPath
     """
-    label_dict = ["background", "non-tumour", "tumour"]
-    colour_dict = [-9408287, -9408287, -9408287]
+    label_dict = ["background", "non-tumour", "tumour", "segmented"]
+    colour_dict = [-9408287, -9408287, -9408287, -9408287]
     features = []
     for contour, label in contours:
         assert(label > 0)

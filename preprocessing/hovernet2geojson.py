@@ -31,6 +31,10 @@ def parse_contours(nuc):
             inst_contour = inst_info['contour']
             inst_contour.append(inst_contour[0])
             contours_.append((inst_contour, inst_type)) 
+        elif inst_type is None:
+            inst_contour = inst_info['contour']
+            inst_contour.append(inst_contour[0])
+            contours_.append((inst_contour, 3)) 
     return contours_
 
 
@@ -42,11 +46,12 @@ def save_contours(out_dir, name, contours):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    names = get_names(args.json_dir, '.json')
+    JSON_DIR = parse_path(args.json_dir)
+    names = get_names(JSON_DIR, '.json')
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        json_path = args.json_dir + name + '.json'
+        json_path = JSON_DIR + name + '.json'
         nuc = read_json(json_path)
         contours = parse_contours(nuc)
         features = create_geojson(contours)
-        save_contours(args.gson_dir, name, features)
+        save_contours(parse_path(args.gson_dir), name, features)
