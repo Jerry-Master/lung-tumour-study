@@ -119,15 +119,34 @@ def get_weighted_F1_score(M):
 
     return f1, wf1
 
-def save_score(scores, name):
+def compute_percentage(arr):
+    """
+    arr is an array of integers representing classes
+    It returns the the percentage of class 2: #2 / (#1 + #2)
+    """
+    n_one = np.sum(arr==1)
+    n_two = np.sum(arr==2)
+    return n_two / (n_one + n_two)
+
+def get_percentages(gt_centroids, pred_centroids):
+    gt_labels = gt_centroids[:,2]
+    pred_labels = pred_centroids[:,2]
+    gt_per = compute_percentage(gt_labels)
+    pred_per = compute_percentage(pred_labels)
+    return gt_per, pred_per
+
+def save_score(scores, name, percentages):
     """
     Appends the F1 score and weighted f1 score in scores in the file results.txt.
     The name of the labels file should be given.
     """
     f1, wf1 = scores
+    gt_per, pred_per = percentages
     with open('results.txt', 'a') as f:
         print(name, file=f)
-        print('    F1 score: {}\n    Weighted F1 score: {:.3f}\n'.format(f1, wf1), file=f)
+        print('    F1 score: {}\n    Weighted F1 score: {:.3f}\n'.format(f1, wf1), file=f, end='')
+        print('    GT percentage: {:.3f}\n    Pred percentage: {:.3f}\n'.format(gt_per, pred_per), file=f, end='')
+        print('    Error: {:.3f}\n'.format(abs(gt_per - pred_per)), file=f)
 
 
 if __name__ == '__main__':
@@ -139,5 +158,6 @@ if __name__ == '__main__':
         pred_centroids = read_centroids(name, args.pred_path)
         confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids)
         scores = get_weighted_F1_score(confusion_matrix)
-        save_score(scores, name)
+        percentages = get_percentages(gt_centroids, pred_centroids)
+        save_score(scores, name, percentages)
 
