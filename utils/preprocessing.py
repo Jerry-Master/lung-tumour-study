@@ -32,6 +32,16 @@ def get_names(path, pattern):
             names.append(name[:-len(pattern)])
     return names
 
+def read_names(file_path):
+    """
+    Given txt with one name at each line,
+    returns a list with all the names.
+    """
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        files = [line.strip() for line in lines]
+    return files
+
 def read_labels(name, png_path, csv_path):
     """
     Input: name of file and paths to their location in png and csv format.

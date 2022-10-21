@@ -21,10 +21,14 @@ import time
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--names', type=str, required=True,
+                    help='Path to txt file with names.')
 parser.add_argument('--gt_path', type=str, required=True,
                     help='Path to GT files.')
 parser.add_argument('--pred_path', type=str, required=True,
                     help='Path to prediction files.')
+parser.add_argument('--save_name', type=str, required=True,
+                    help='Name to save the result, should end in .txt.')
 
 def read_centroids(name, path):
     """
@@ -135,14 +139,14 @@ def get_percentages(gt_centroids, pred_centroids):
     pred_per = compute_percentage(pred_labels)
     return gt_per, pred_per
 
-def save_score(scores, name, percentages):
+def save_score(scores, name, percentages, save_path):
     """
     Appends the F1 score and weighted f1 score in scores in the file results.txt.
     The name of the labels file should be given.
     """
     f1, wf1 = scores
     gt_per, pred_per = percentages
-    with open('results.txt', 'a') as f:
+    with open(save_path, 'a') as f:
         print(name, file=f)
         print('    F1 score: {}\n    Weighted F1 score: {:.3f}\n'.format(f1, wf1), file=f, end='')
         print('    GT percentage: {:.3f}\n    Pred percentage: {:.3f}\n'.format(gt_per, pred_per), file=f, end='')
@@ -151,7 +155,7 @@ def save_score(scores, name, percentages):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    names = get_names(args.gt_path, '.centroids.csv')
+    names = read_names(args.names)
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         gt_centroids = read_centroids(name, args.gt_path)
@@ -159,5 +163,5 @@ if __name__ == '__main__':
         confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids)
         scores = get_weighted_F1_score(confusion_matrix)
         percentages = get_percentages(gt_centroids, pred_centroids)
-        save_score(scores, name, percentages)
+        save_score(scores, name, percentages, args.save_name)
 
