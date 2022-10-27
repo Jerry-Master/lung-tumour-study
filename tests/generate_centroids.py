@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import sys
 import os
 from sklearn.metrics import confusion_matrix
 
@@ -16,7 +15,8 @@ def polygon(n, theta=0.01, radius=1):
     paramB = paramA + theta
     X, Y = radius*np.cos(paramA), radius*np.sin(paramA)
     A = np.vstack([X, Y, np.ones(n+1)]).transpose()
-    B = np.vstack([X, Y, np.ones(n+1)]).transpose()
+    X_, Y_ = radius*np.cos(paramB), radius*np.sin(paramB)
+    B = np.vstack([X_, Y_, np.ones(n+1)]).transpose()
     return A[:-1], B[:-1]
 
 
