@@ -1,0 +1,70 @@
+         1513144 function calls in 1.746 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    37646    0.476    0.000    1.384    0.000 {function KDTree.query at 0x125f45c60}
+    38018    0.146    0.000    0.146    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+   151328    0.127    0.000    0.768    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
+    75292    0.112    0.000    0.225    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:38(_wrapit)
+   113124    0.110    0.000    0.110    0.000 {built-in method numpy.asarray}
+    37661    0.084    0.000    0.084    0.000 {method 'extend' of 'list' objects}
+      183    0.083    0.000    1.704    0.009 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:9(get_N_closest_pairs_dists)
+    75292    0.081    0.000    0.316    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:51(_wrapfunc)
+    37646    0.067    0.000    1.504    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/scipy/spatial/_kdtree.py:346(query)
+    38018    0.059    0.000    0.232    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:69(_wrapreduction)
+    75292    0.046    0.000    0.046    0.000 {method 'reshape' of 'numpy.ndarray' objects}
+    75292    0.046    0.000    0.502    0.000 <__array_function__ internals>:177(reshape)
+    75292    0.040    0.000    0.356    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:198(reshape)
+    37832    0.039    0.000    0.269    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2677(amax)
+    37652    0.038    0.000    0.038    0.000 {method 'sort' of 'list' objects}
+    37646    0.026    0.000    0.065    0.000 <__array_function__ internals>:177(shape)
+    37832    0.024    0.000    0.319    0.000 <__array_function__ internals>:177(amax)
+   150584    0.023    0.000    0.023    0.000 {built-in method builtins.getattr}
+    38018    0.022    0.000    0.022    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:70(<dictcomp>)
+    37646    0.018    0.000    0.025    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/numeric.py:1873(isscalar)
+    75294    0.017    0.000    0.017    0.000 {built-in method builtins.isinstance}
+    37646    0.013    0.000    0.013    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:1965(shape)
+    75292    0.012    0.000    0.012    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:193(_reshape_dispatcher)
+      186    0.007    0.000    0.027    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/scipy/spatial/_kdtree.py:336(__init__)
+    37832    0.007    0.000    0.007    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2672(_amax_dispatcher)
+    37646    0.007    0.000    0.007    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:1961(_shape_dispatcher)
+    38041    0.006    0.000    0.006    0.000 {method 'items' of 'dict' objects}
+        2    0.006    0.003    0.006    0.003 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/json/decoder.py:343(raw_decode)
+        3    0.003    0.001    0.035    0.012 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:35(get_N_closest_pairs_idx)
+      594    0.001    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:46(<listcomp>)
+      183    0.001    0.000    1.705    0.009 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:26(is_equal)
+      372    0.000    0.000    0.000    0.000 {built-in method numpy.array}
+        1    0.000    0.000    1.740    1.740 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/postprocessing/rswoosh.py:7(rswoosh)
+      372    0.000    0.000    0.001    0.000 <__array_function__ internals>:177(copy)
+      186    0.000    0.000    0.002    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2802(amin)
+      186    0.000    0.000    0.003    0.000 <__array_function__ internals>:177(amin)
+     1005    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+      372    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/lib/function_base.py:870(copy)
+        2    0.000    0.000    0.000    0.000 {built-in method _codecs.utf_8_decode}
+        2    0.000    0.000    0.000    0.000 {built-in method io.open}
+        2    0.000    0.000    0.000    0.000 {method 'read' of '_io.TextIOWrapper' objects}
+      372    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/lib/function_base.py:866(_copy_dispatcher)
+        6    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:55(get_greatest_connected_component)
+      186    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2797(_amin_dispatcher)
+        3    0.000    0.000    0.035    0.012 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:109(merge_cells)
+        6    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:85(remove_idx)
+        1    0.000    0.000    1.746    1.746 rswoosh_profile.py:21(exec_conversion)
+        2    0.000    0.000    0.000    0.000 {method '__exit__' of '_io._IOBase' objects}
+        2    0.000    0.000    0.006    0.003 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/json/decoder.py:332(decode)
+        2    0.000    0.000    0.006    0.003 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/json/__init__.py:274(load)
+        2    0.000    0.000    0.006    0.003 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/json/__init__.py:299(loads)
+        4    0.000    0.000    0.000    0.000 {method 'match' of 're.Pattern' objects}
+        2    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/codecs.py:319(decode)
+       22    0.000    0.000    0.000    0.000 {method 'pop' of 'list' objects}
+        3    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:101(join)
+        2    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/codecs.py:309(__init__)
+        1    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:25(create_comparator)
+        2    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/codecs.py:260(__init__)
+        2    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        3    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:96(check_order)
+        4    0.000    0.000    0.000    0.000 {method 'end' of 're.Match' objects}
+        3    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+
+
