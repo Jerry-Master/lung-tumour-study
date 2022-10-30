@@ -62,14 +62,31 @@ def pngcsv2features(png, csv, label):
     contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), label) for c in contours])
     return create_geojson(contours)
 
+"""WRONG VERSION"""
+# def pngcsv2geojson(png, csv):
+#     """
+#     Computes geojson as list of features representing contours.
+#     """
+#     features_tumour = pngcsv2features(png, csv, 2)
+#     features_nontumour = pngcsv2features(png, csv, 1)
+#     features_tumour.extend(features_nontumour)
+#     return features_tumour
+
 def pngcsv2geojson(png, csv):
     """
     Computes geojson as list of features representing contours.
     """
-    features_tumour = pngcsv2features(png, csv, 2)
-    features_nontumour = pngcsv2features(png, csv, 1)
-    features_tumour.extend(features_nontumour)
-    return features_tumour
+    total_contours = []
+    for i, (idx, cell_label) in csv.iterrows():
+        mask = png.copy()
+        mask[mask != idx] = 0
+        mask[mask == idx] = 1
+        mask = mask.astype(np.uint8)
+        contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
+        contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), cell_label) for c in contours])
+        total_contours.extend(create_geojson(contours))
+        del mask
+    return total_contours
 
 
 if __name__ == '__main__':
@@ -83,6 +100,7 @@ if __name__ == '__main__':
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         png, csv = read_labels(name, PNG_DIR, CSV_DIR)
+        if png is None or png.max() == 0: continue
         gson = pngcsv2geojson(png, csv)
         save_geojson(gson, name, OUTPUT_PATH)
     print()

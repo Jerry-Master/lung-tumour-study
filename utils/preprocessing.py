@@ -48,10 +48,13 @@ def read_labels(name, png_path, csv_path):
            Files should end in .GT_cells.png and .class.csv respectively.
     Output: png and csv of that file.
     """
-    img = cv2.imread(png_path + name + '.GT_cells.png', -1)
-    csv = pd.read_csv(csv_path + name + '.class.csv', header=None)
-    csv.columns = ['id', 'label']
-    return img, csv
+    try:
+        img = cv2.imread(png_path + name + '.GT_cells.png', -1)
+        csv = pd.read_csv(csv_path + name + '.class.csv', header=None)
+        csv.columns = ['id', 'label']
+        return img, csv
+    except:
+        return None, None
 
 def read_json(json_path):
     """
