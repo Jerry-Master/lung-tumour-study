@@ -49,7 +49,7 @@ def read_labels(name, png_path, csv_path):
     Output: png and csv of that file.
     """
     img = cv2.imread(png_path + name + '.GT_cells.png', -1)
-    csv = pd.read_csv(csv_path + name + '.class.csv')
+    csv = pd.read_csv(csv_path + name + '.class.csv', header=None)
     csv.columns = ['id', 'label']
     return img, csv
 
