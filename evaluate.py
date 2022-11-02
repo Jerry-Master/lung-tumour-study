@@ -11,8 +11,6 @@ Output
 Weighted F1-score between the prediction and the GT at cell-level.
 
 """
-import os
-import cv2
 import pandas as pd
 import numpy as np
 from scipy.spatial import KDTree
@@ -28,7 +26,7 @@ parser.add_argument('--gt_path', type=str, required=True,
 parser.add_argument('--pred_path', type=str, required=True,
                     help='Path to prediction files.')
 parser.add_argument('--save_name', type=str, required=True,
-                    help='Name to save the result, should end in .txt.')
+                    help='Name to save the result, without file type.')
 
 def read_centroids(name, path):
     """
@@ -146,16 +144,20 @@ def save_score(scores, name, percentages, save_path):
     """
     f1, wf1 = scores
     gt_per, pred_per = percentages
-    with open(save_path, 'a') as f:
+    with open(save_path + '.txt', 'a') as f:
         print(name, file=f)
         print('    F1 score: {}\n    Weighted F1 score: {:.3f}\n'.format(f1, wf1), file=f, end='')
         print('    GT percentage: {:.3f}\n    Pred percentage: {:.3f}\n'.format(gt_per, pred_per), file=f, end='')
         print('    Error: {:.3f}\n'.format(abs(gt_per - pred_per)), file=f)
 
+def save_csv(metrics, save_path):
+    metrics_df = pd.DataFrame(metrics, columns=['name', 'F1_1', 'F1_2', 'WF1'])
+    metrics_df.to_csv(save_path + '.csv', index=False)
 
 if __name__ == '__main__':
     args = parser.parse_args()
     names = read_names(args.names)
+    metrics = []
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         gt_centroids = read_centroids(name, args.gt_path)
@@ -164,4 +166,6 @@ if __name__ == '__main__':
         scores = get_weighted_F1_score(confusion_matrix)
         percentages = get_percentages(gt_centroids, pred_centroids)
         save_score(scores, name, percentages, args.save_name)
+        metrics.append([name, *scores[0], scores[1]])
+    save_csv(metrics, args.save_name)
 
