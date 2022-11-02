@@ -119,7 +119,7 @@ def get_weighted_F1_score(M):
     total = support[1:].sum()
     wf1 = np.sum(f1[1:] * support[1:] / total)
 
-    return f1, wf1
+    return [f1, wf1]
 
 def compute_percentage(arr):
     """
@@ -151,7 +151,7 @@ def save_score(scores, name, percentages, save_path):
         print('    Error: {:.3f}\n'.format(abs(gt_per - pred_per)), file=f)
 
 def save_csv(metrics, save_path):
-    metrics_df = pd.DataFrame(metrics, columns=['name', 'F1_1', 'F1_2', 'WF1'])
+    metrics_df = pd.DataFrame(metrics, columns=['name', 'F1_1', 'F1_2', 'WF1', 'GT_per', 'Pred_per', 'diff_pere'])
     metrics_df.to_csv(save_path + '.csv', index=False)
 
 if __name__ == '__main__':
@@ -164,8 +164,10 @@ if __name__ == '__main__':
         pred_centroids = read_centroids(name, args.pred_path)
         confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids)
         scores = get_weighted_F1_score(confusion_matrix)
+        if scores[0] is None or pd.isna(scores[0]).any():
+            scores[0] = [-1,-1]
         percentages = get_percentages(gt_centroids, pred_centroids)
         save_score(scores, name, percentages, args.save_name)
-        metrics.append([name, *scores[0], scores[1]])
+        metrics.append([name, *scores[0], scores[1], *percentages, abs(percentages[0]-percentages[1])])
     save_csv(metrics, args.save_name)
 
