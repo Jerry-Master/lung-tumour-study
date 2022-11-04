@@ -99,3 +99,11 @@ def save_pngcsv(png, csv, png_path, csv_path, name):
     png = np.array(png, dtype=np.uint16)
     cv2.imwrite(png_path + name + '.GT_cells.png', png)
     csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)
+
+def read_centroids(name, path):
+    """
+    Format of the csv should be columns: X, Y, class
+    """
+    centroid_csv = pd.read_csv(path + name + '.centroids.csv')
+    centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
+    return centroid_csv.to_numpy(dtype=int)

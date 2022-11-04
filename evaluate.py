@@ -28,35 +28,6 @@ parser.add_argument('--pred_path', type=str, required=True,
 parser.add_argument('--save_name', type=str, required=True,
                     help='Name to save the result, without file type.')
 
-def read_centroids(name, path):
-    """
-    Format of the csv should be columns: X, Y, class
-    """
-    centroid_csv = pd.read_csv(path + name + '.centroids.csv')
-    centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
-    return centroid_csv.to_numpy(dtype=int)
-
-def get_centroid_by_id(img, idx):
-    """
-    img contains a different id value per component at each pixel
-    """
-    X, Y = np.where(img == idx)
-    if len(X) == 0 or len(Y) == 0:
-        return -1, -1
-    return X.mean(), Y.mean()
-
-def extract_centroids(img, csv):
-    """
-    Output format: list of (x,y,class) tuples
-    """
-    centroids = []
-    for i, row in csv.iterrows():
-        x, y = get_centroid_by_id(img, row.id)
-        if x == -1:
-            continue
-        centroids.append((x,y,row.label))
-    return centroids
-
 def generate_tree(centroids):
     """
     Input format: list of (x,y,class) tuples
