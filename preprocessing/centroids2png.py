@@ -34,4 +34,4 @@ if __name__ == '__main__':
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         centroids = read_centroids(name, CENTROIDS_PATH)
         png = centroids2png(centroids)
-        cv2.imwrite(OUTPUT_PATH + name + '.png', png)
+        cv2.imwrite(OUTPUT_PATH + name + '.points.png', png)
