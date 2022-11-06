@@ -1,65 +1,46 @@
-         60566 function calls in 0.030 seconds
+         4098 function calls in 0.005 seconds
 
    Ordered by: internal time
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-     2020    0.004    0.000    0.009    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:122(put)
-     2020    0.003    0.000    0.009    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:154(get)
-        1    0.003    0.003    0.030    0.030 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:10(get_N_closest_pairs_dists)
-      101    0.002    0.000    0.006    0.000 {function KDTree.query at 0x10ec71f30}
-     2020    0.002    0.000    0.003    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:111(full)
-     4040    0.002    0.000    0.004    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/threading.py:359(notify)
-     6081    0.002    0.000    0.002    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:232(_qsize)
-     4040    0.001    0.000    0.002    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/threading.py:267(__exit__)
-     4040    0.001    0.000    0.002    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/threading.py:279(_is_owned)
-     4040    0.001    0.000    0.002    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/threading.py:264(__enter__)
-     4040    0.001    0.000    0.001    0.000 {method 'acquire' of '_thread.lock' objects}
-     4040    0.001    0.000    0.001    0.000 {method '__enter__' of '_thread.lock' objects}
-     6081    0.001    0.000    0.001    0.000 {method '__exit__' of '_thread.lock' objects}
-     2020    0.001    0.000    0.001    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:235(_put)
-     2020    0.001    0.000    0.001    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:238(_get)
-      103    0.001    0.000    0.001    0.000 {method 'reduce' of 'numpy.ufunc' objects}
-     6087    0.001    0.000    0.001    0.000 {built-in method builtins.len}
-     2020    0.001    0.000    0.001    0.000 {built-in method _heapq.heappop}
-      408    0.001    0.000    0.003    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
+      101    0.001    0.000    0.004    0.000 {function KDTree.query at 0x109fd3520}
+      103    0.000    0.000    0.000    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+      408    0.000    0.000    0.002    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
       202    0.000    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:38(_wrapit)
-      101    0.000    0.000    0.006    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/scipy/spatial/_kdtree.py:346(query)
-     2020    0.000    0.000    0.000    0.000 {built-in method _heapq.heappush}
+        1    0.000    0.000    0.005    0.005 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/utils/postprocessing.py:8(get_N_closest_pairs_dists)
       202    0.000    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:51(_wrapfunc)
+      101    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+      101    0.000    0.000    0.004    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/scipy/spatial/_kdtree.py:346(query)
       103    0.000    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:69(_wrapreduction)
       304    0.000    0.000    0.000    0.000 {built-in method numpy.asarray}
-      102    0.000    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2677(amax)
+      202    0.000    0.000    0.001    0.000 <__array_function__ internals>:177(reshape)
       202    0.000    0.000    0.000    0.000 {method 'reshape' of 'numpy.ndarray' objects}
-      202    0.000    0.000    0.002    0.000 <__array_function__ internals>:177(reshape)
+      101    0.000    0.000    0.000    0.000 {method 'sort' of 'list' objects}
       202    0.000    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:198(reshape)
-      101    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/numeric.py:1873(isscalar)
-      101    0.000    0.000    0.000    0.000 <__array_function__ internals>:177(shape)
+      102    0.000    0.000    0.001    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2677(amax)
       102    0.000    0.000    0.001    0.000 <__array_function__ internals>:177(amax)
+      101    0.000    0.000    0.000    0.000 <__array_function__ internals>:177(shape)
+      101    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/numeric.py:1873(isscalar)
+      404    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
       103    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:70(<dictcomp>)
       202    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
-      404    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
       101    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:1965(shape)
       202    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:193(_reshape_dispatcher)
         1    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/scipy/spatial/_kdtree.py:336(__init__)
-      101    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:1961(_shape_dispatcher)
       102    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2672(_amax_dispatcher)
-        1    0.000    0.000    0.030    0.030 cpairs_profile.py:33(exec_conversion)
+        1    0.000    0.000    0.005    0.005 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/lung-tumour-study/profiling/cpairs_profile.py:38(exec_conversion)
+      101    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:1961(_shape_dispatcher)
       103    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
-       21    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:97(empty)
-        3    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/threading.py:236(__init__)
-        1    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:34(__init__)
         2    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/lib/function_base.py:870(copy)
-       20    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
-        1    0.000    0.000    0.000    0.000 {built-in method builtins.sorted}
        20    0.000    0.000    0.000    0.000 {built-in method builtins.abs}
         2    0.000    0.000    0.000    0.000 {built-in method numpy.array}
         2    0.000    0.000    0.000    0.000 <__array_function__ internals>:177(copy)
         1    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2802(amin)
         1    0.000    0.000    0.000    0.000 <__array_function__ internals>:177(amin)
-        1    0.000    0.000    0.000    0.000 {built-in method _thread.allocate_lock}
+        6    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+        1    0.000    0.000    0.000    0.000 {built-in method builtins.sorted}
         2    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/lib/function_base.py:866(_copy_dispatcher)
         1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
-        1    0.000    0.000    0.000    0.000 /usr/local/Cellar/python@3.10/3.10.6_2/Frameworks/Python.framework/Versions/3.10/lib/python3.10/queue.py:229(_init)
         1    0.000    0.000    0.000    0.000 /Users/joseperezcano/Desktop/CFIS Quinto Curso/TFG/pulmon/lib/python3.10/site-packages/numpy/core/fromnumeric.py:2797(_amin_dispatcher)
 
 
