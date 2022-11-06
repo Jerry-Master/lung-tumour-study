@@ -2,6 +2,8 @@
 Merge broken cells using a morphological algorithm 
 to detect touching frontiers.
 """
+from typing import Callable, Dict
+import numpy as np
 import skimage
 import os
 import sys
@@ -22,11 +24,12 @@ parser.add_argument('--output_path', type=str, required=True,
 
 MAX_CELLS = 1500
 
-def create_id_map():
+def create_id_map() -> tuple[Callable[[np.array], np.array], Dict[int, tuple[int,int]]]:
     """
     Map index to some function so that difference is unique per pair.
     Also returns the inverse mapping of the differences and the 
     inverse mapping of the function itself.
+    Extra information: https://math.stackexchange.com/questions/4565014/injectivity-of-given-integer-function/4567383#4567383
     """
     f = lambda x: x**5
     sq_dif = []
@@ -40,7 +43,7 @@ def create_id_map():
     vec_mapping = np.vectorize(f)
     return vec_mapping, inv_diff_mapping
 
-def get_gradient(png):
+def get_gradient(png: np.array) -> np.array:
     """
     Apply a dilation, subtract the image and remove pixels in background.
     """
@@ -51,7 +54,14 @@ def get_gradient(png):
     grad_bkgr = grad * mask
     return grad_bkgr
 
-def merge_cells(png, vec_mapping, inv_diff_mapping):
+def merge_cells(
+    png: np.array, 
+    vec_mapping: Callable[[np.array], np.array], 
+    inv_diff_mapping: Dict[int, tuple[int,int]]
+    ) -> np.array:
+    """
+    Merges all the cells that share a frontier of more than 13 pixels.
+    """
     png_cp = png.copy()
     png_cp = vec_mapping(png_cp) # Indices mapping
     grad_bkgr = get_gradient(png_cp) # Morphological gradient
@@ -78,7 +88,10 @@ def merge_cells(png, vec_mapping, inv_diff_mapping):
             png[png==pair[1]] = M
     return png
 
-def remove_lost_ids(png, csv):
+def remove_lost_ids(png: np.array, csv: pd.DataFrame) -> pd.DataFrame:
+    """
+    Removes identifiers in csv that are not in png.
+    """
     next_ids = set(np.unique(png))
     curr_ids = set(csv.id)
     assert next_ids.difference(curr_ids) == set([0]), "Indices doesn't match"
