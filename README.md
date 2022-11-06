@@ -1,14 +1,14 @@
 # lung-tumour-study
 Github repository for my Bachelor's thesis. It is dedicated to study lung tumour through WSI.
 
-## Dataset (in creation)
+## Dataset (v1)
 
-The dataset consists of a set of crowdsourced labelled WSI tiles of lung cancer. The labels correspond to the segmentation of cells and several classifications for each cell made by different annotators.
+The dataset consists of a set of labelled WSI tiles of lung cancer. The labels are done at x40 magnification and are done pixel-wise. It is therefore a segmentation and nuclei classification dataset. Right now it has 44 images manually labelled by me, with the help of Hovernet.
 
-## Baseline (to do)
+## Baseline (Soft & Hovernet)
 
-The initial baseline is set by Feliu's model and Hovernet's model trained with the majority voting annotations.
+The initial baseline is set by Hovernet's model trained with the first version of the dataset. I also tried the soft algorithm developed by Digipatics with far worse results.
 
-## Improvements (to do)
+## Improvements (Doing)
 
-The baseline is expected to be improved by changing MV with crowdsourcing models like CrowdLayer or GP based crowdsourcing, as well as by changing the backbone to include graph neural networks.
+Current line of research right now is about applying Machine Learning with Graphs. It has yet to be decided the way to construct the graph and the design space of the models to use.
