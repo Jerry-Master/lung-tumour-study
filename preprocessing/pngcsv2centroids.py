@@ -5,7 +5,6 @@ Computes centroids csv from png <-> csv labels.
 """
 import argparse
 import pandas as pd
-import cv2
 import numpy as np
 import sys
 import os
@@ -24,7 +23,7 @@ parser.add_argument('--output_path', type=str, required=True,
                     help='Path to save files.')
 
 
-def get_centroid_by_id(img, idx):
+def get_centroid_by_id(img: np.array, idx: int) -> tuple[int, int]:
     """
     img contains a different id value per component at each pixel
     """
@@ -33,12 +32,12 @@ def get_centroid_by_id(img, idx):
         return -1, -1
     return X.mean(), Y.mean()
 
-def extract_centroids(img, csv):
+def extract_centroids(img: np.array, csv: pd.DataFrame) -> list[tuple[int,int,int]]:
     """
     Output format: list of (x,y,class) tuples
     """
     centroids = []
-    for i, row in csv.iterrows():
+    for _, row in csv.iterrows():
         x, y = get_centroid_by_id(img, row.id)
         if x == -1:
             continue

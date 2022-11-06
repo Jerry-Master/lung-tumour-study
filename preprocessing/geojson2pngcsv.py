@@ -3,9 +3,9 @@
 Converts QuPath geojson format into our png <-> csv format.
 
 """
+from typing import Dict, Any
 import argparse
 import geojson
-import cv2
 from skimage.draw import polygon
 import numpy as np
 import pandas as pd
@@ -25,7 +25,7 @@ parser.add_argument('--png_dir', type=str, required=True,
 parser.add_argument('--csv_dir', type=str, required=True,
                     help='Path to save the csv files.')      
 
-def read_gson(name, path):
+def read_gson(name: str, path: str) -> list[Dict[str,Any]]:
     """
     Reads gson at path + name.
     """
@@ -33,7 +33,7 @@ def read_gson(name, path):
         gson = geojson.load(f)
     return gson
 
-def geojson2pngcsv(gson):
+def geojson2pngcsv(gson: list[Dict[str, Any]]) -> tuple[np.array, pd.DataFrame]:
     """
     Computes png <-> csv labels from geojson. 
     Width and height are assumed to be 1024.

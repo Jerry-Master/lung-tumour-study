@@ -1,3 +1,8 @@
+"""
+
+Creates images with pixel value 255 at the centroids coordinates.
+
+"""
 import numpy as np
 import cv2
 import sys
@@ -15,7 +20,7 @@ parser.add_argument('--centroids_path', type=str, required=True,
 parser.add_argument('--output_path', type=str, required=True,
                     help='Path to save png files with points.')
 
-def centroids2png(centroids):
+def centroids2png(centroids: list[tuple[int,int,int]]) -> np.array:
     """
     Generates blank image with pixel value 255 at centroids coordinates.
     """

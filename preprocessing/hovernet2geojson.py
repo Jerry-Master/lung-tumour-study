@@ -1,13 +1,11 @@
 """
 
-Converts from HoVernet json to QuPath geojson
+Converts from HoVernet json to QuPath geojson.
 
 """
-import json
-import pandas as pd
+from typing import Dict, Any
 import argparse
 import geojson
-from geojson import Feature, Polygon
 import sys
 import os
 
@@ -22,7 +20,9 @@ parser.add_argument('--json_dir', type=str, default='./',
 parser.add_argument('--gson_dir', type=str, default='./',
                     help='Path to save files.')
 
-def parse_contours(nuc):
+Point = tuple[float,float]
+Contour = list[Point]
+def parse_contours(nuc: Dict[str, Any]) -> list[Contour]:
     """
     Input: hovernet json dictionary with nuclei information.
     Output: list of contours of cells as list of points.
@@ -43,7 +43,7 @@ def parse_contours(nuc):
     return contours_
 
 
-def save_contours(out_dir, name, contours):
+def save_contours(out_dir: str, name: str, contours: list[Contour]) -> None:
     """
     Saves geojson in a file. It doesn't change the format.
     """

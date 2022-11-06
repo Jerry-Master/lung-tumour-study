@@ -23,7 +23,7 @@ parser.add_argument('--output_path', type=str, required=True,
                     help='Path to save files.')
 
 
-def parse_centroids(nuc):
+def parse_centroids(nuc: Dict[str, Any]) -> list[tuple[int,int,int]]:
     """
     Input: Hovernet json nuclei dictionary as given by read_json.
     Output: List of (X,Y,class) tuples representing centroids.

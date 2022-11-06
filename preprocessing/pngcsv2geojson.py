@@ -25,14 +25,14 @@ parser.add_argument('--gson_dir', type=str, required=True,
                     help='Path to save files.')
 
 
-def save_geojson(gson, name, path):
+def save_geojson(gson: list[Dict[str, Any]], name: str, path: str) -> None:
     """
     Save geojson to file path + name.
     """
     with open(path + name + '.geojson', 'w') as f:
         geojson.dump(gson, f)
 
-def create_mask(png, csv, label):
+def create_mask(png: np.array, csv: pd.DataFrame, label: int) -> np.array:
     """
     Returns the image with only the pixels of the class given in label.
     The pixel values are truncated to uint8.
@@ -43,7 +43,9 @@ def create_mask(png, csv, label):
             mask[mask==idx] = 0
     return np.array(mask, dtype=np.uint8)
 
-def format_contour(contour):
+Point = tuple[float,float]
+Contour = list[Point]
+def format_contour(contour: Contour) -> Contour:
     """
     Auxiliary function to pass from the cv2.findContours format to
     an array of shape (N,2). Additionally, the first point is added
@@ -53,7 +55,7 @@ def format_contour(contour):
     new_contour.append(new_contour[0])
     return new_contour
 
-def pngcsv2features(png, csv, label):
+def pngcsv2features(png: np.array, csv: pd.DataFrame, label: int) -> list[Dict[str, Any]]:
     """
     Computes geojson features of contours of a given class.
     """
@@ -62,22 +64,13 @@ def pngcsv2features(png, csv, label):
     contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), label) for c in contours])
     return create_geojson(contours)
 
-"""WRONG VERSION"""
-# def pngcsv2geojson(png, csv):
-#     """
-#     Computes geojson as list of features representing contours.
-#     """
-#     features_tumour = pngcsv2features(png, csv, 2)
-#     features_nontumour = pngcsv2features(png, csv, 1)
-#     features_tumour.extend(features_nontumour)
-#     return features_tumour
-
-def pngcsv2geojson(png, csv):
+def pngcsv2geojson(png: np.array, csv: pd.DataFrame) -> list[Dict[str, Any]]:
     """
     Computes geojson as list of features representing contours.
+    Contours are approximated by method cv2.CHAIN_APPROX_SIMPLE.
     """
     total_contours = []
-    for i, (idx, cell_label) in csv.iterrows():
+    for _, (idx, cell_label) in csv.iterrows():
         mask = png.copy()
         mask[mask != idx] = 0
         mask[mask == idx] = 1
