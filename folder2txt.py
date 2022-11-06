@@ -28,7 +28,7 @@ parser.add_argument('--test', type=str,
 parser.add_argument('--out_dir', type=str,
                     help='Path to save the txt files.')
 
-def remove_coordinates(name):
+def remove_coordinates(name: str) -> str:
     """
     Removes the pattern (number, number).npy from the name.
     """
@@ -38,7 +38,7 @@ def remove_coordinates(name):
     npy_len = len('.npy')
     return name[:-(par_len + npy_len)]
 
-def read_files(path):
+def read_files(path: str) -> list[str]:
     """
     Returns a list of names at path without the (x,y).npy at the end.
     """
@@ -49,7 +49,7 @@ def read_files(path):
     file_list = list(set(file_list))
     return file_list
 
-def save_txt(file_list, path, name):
+def save_txt(file_list: list[str], path: str, name: str) -> None:
     """
     Saves list of files in a txt, one name per line.
     """

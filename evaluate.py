@@ -28,23 +28,26 @@ parser.add_argument('--pred_path', type=str, required=True,
 parser.add_argument('--save_name', type=str, required=True,
                     help='Name to save the result, without file type.')
 
-def generate_tree(centroids):
+def generate_tree(centroids: list[tuple[int,int,int]]) -> KDTree:
     """
-    Input format: list of (x,y,class) tuples
+    Input format: list of (x,y,class) tuples.
     """
     centroids_ = np.array(list(map(lambda x: (x[0], x[1]), centroids)))
     return KDTree(centroids_)
 
-def find_nearest(a, B):
+def find_nearest(a: tuple[int,int,int], B: KDTree) -> int:
     """
-    a: (x,y,class) tuple
-    B: KDTree to search for nearest point
+    a: (x,y,class) tuple.
+    B: KDTree to search for nearest point.
     """
     x, y = a[0], a[1]
     dist, idx = B.query([x,y], k=1)
     return idx
 
-def get_confusion_matrix(gt_centroids, pred_centroids):
+def get_confusion_matrix(
+    gt_centroids: list[tuple[int,int,int]], 
+    pred_centroids: list[tuple[int,int,int]]
+    ) -> np.array:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
     Class is 0=non-tumour, 1=tumour.
@@ -69,9 +72,9 @@ def get_confusion_matrix(gt_centroids, pred_centroids):
     t0 = time.time()
     return M
 
-def get_weighted_F1_score(M):
+def get_weighted_F1_score(M: np.array) -> tuple[tuple[float,float], float]:
     """
-    Computes weighted F1 score from confusion matrix
+    Computes weighted F1 score from confusion matrix.
     """
     if M is None:
         return -1, -1
@@ -92,7 +95,7 @@ def get_weighted_F1_score(M):
 
     return [f1, wf1]
 
-def compute_percentage(arr):
+def compute_percentage(arr: np.array) -> float:
     """
     arr is an array of integers representing classes
     It returns the the percentage of class 2: #2 / (#1 + #2)
@@ -101,14 +104,22 @@ def compute_percentage(arr):
     n_two = np.sum(arr==2)
     return n_two / (n_one + n_two)
 
-def get_percentages(gt_centroids, pred_centroids):
+def get_percentages(
+    gt_centroids: list[tuple[int,int,int]],
+    pred_centroids: list[tuple[int,int,int]]
+    ) -> tuple[float, float]:
     gt_labels = gt_centroids[:,2]
     pred_labels = pred_centroids[:,2]
     gt_per = compute_percentage(gt_labels)
     pred_per = compute_percentage(pred_labels)
     return gt_per, pred_per
 
-def save_score(scores, name, percentages, save_path):
+def save_score(
+    scores: tuple[tuple[float,float], float], 
+    name: str, 
+    percentages: tuple[float,float], 
+    save_path: str
+    ) -> None:
     """
     Appends the F1 score and weighted f1 score in scores in the file results.txt.
     The name of the labels file should be given.
@@ -121,7 +132,14 @@ def save_score(scores, name, percentages, save_path):
         print('    GT percentage: {:.3f}\n    Pred percentage: {:.3f}\n'.format(gt_per, pred_per), file=f, end='')
         print('    Error: {:.3f}\n'.format(abs(gt_per - pred_per)), file=f)
 
-def save_csv(metrics, save_path):
+def save_csv(
+    metrics: list[tuple[str,float,float,float,float,float,float]], 
+    save_path: str
+    ) -> None:
+    """
+    Saves metrics in csv format for later use.
+    Columns: 'name', 'F1_1', 'F1_2', 'WF1', 'GT_per', 'Pred_per', 'diff_pere'
+    """
     metrics_df = pd.DataFrame(metrics, columns=['name', 'F1_1', 'F1_2', 'WF1', 'GT_per', 'Pred_per', 'diff_pere'])
     metrics_df.to_csv(save_path + '.csv', index=False)
 
