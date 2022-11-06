@@ -4,8 +4,10 @@ import cv2
 import pandas as pd
 import numpy as np
 import json
+from typing import Dict, Any
 
-def parse_path(path):
+
+def parse_path(path: str) -> str:
     """
     Checks for trailing slash and adds it in case it isn't there.
     """
@@ -13,14 +15,14 @@ def parse_path(path):
         return path + '/'
     return path
 
-def create_dir(path):
+def create_dir(path: str) -> None:
     """
-    Checks if the folder exists, if it doesn't, it is created
+    Checks if the folder exists, if it doesn't, it is created.
     """
     if not os.path.isdir(path):
         os.mkdir(path)
 
-def get_names(path, pattern):
+def get_names(path: str, pattern: str) -> list[str]:
     """
     Returns a list with all the files in <path> containing <pattern>.
     It removes the <pattern> substring from the names.
@@ -32,7 +34,7 @@ def get_names(path, pattern):
             names.append(name[:-len(pattern)])
     return names
 
-def read_names(file_path):
+def read_names(file_path: str) -> list[str]:
     """
     Given txt with one name at each line,
     returns a list with all the names.
@@ -42,7 +44,7 @@ def read_names(file_path):
         files = [line.strip() for line in lines]
     return files
 
-def read_labels(name, png_path, csv_path):
+def read_labels(name: str, png_path: str, csv_path: str) -> tuple[np.array, pd.DataFrame]:
     """
     Input: name of file and paths to their location in png and csv format.
            Files should end in .GT_cells.png and .class.csv respectively.
@@ -56,7 +58,7 @@ def read_labels(name, png_path, csv_path):
     except:
         return None, None
 
-def read_json(json_path):
+def read_json(json_path: str) -> Dict[str, Any]:
     """
     Input: Hovernet json path
     Output: Dictionary with nuclei information
@@ -66,12 +68,12 @@ def read_json(json_path):
         nuc_info = data['nuc']
     return nuc_info
 
-def create_geojson(contours):
+def create_geojson(contours: list[tuple[int,int]]) -> list[Dict[str, Any]]:
     """
     Input: List of pairs (contour, label).
         Contour is a list of points starting and finishing in the same point.
         label is an integer representing the class of the cell (1: non-tumour, 2: tumour)
-    Returns: A dictionary with the geojson format of QuPath
+    Returns: A list of dictionaries with the geojson format of QuPath
     """
     label_dict = ["background", "non-tumour", "tumour", "segmented"]
     colour_dict = [-9408287, -9408287, -9408287, -9408287]
@@ -91,16 +93,15 @@ def create_geojson(contours):
         features.append(feat)
     return features
 
-def save_pngcsv(png, csv, png_path, csv_path, name):
+def save_pngcsv(png: np.array, csv: pd.DataFrame, png_path: str, csv_path: str, name: str) -> None:
     """
-    Save png, csv pair in the folders indicated by png_path and csv_path with 
-    the name given in name.
+    Save png, csv pair in the folders png_path and csv_path with the given name.
     """
     png = np.array(png, dtype=np.uint16)
     cv2.imwrite(png_path + name + '.GT_cells.png', png)
     csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)
 
-def read_centroids(name, path):
+def read_centroids(name: str, path: str) -> pd.DataFrame:
     """
     Format of the csv should be columns: X, Y, class
     """
