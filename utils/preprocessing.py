@@ -68,6 +68,14 @@ def read_json(json_path: str) -> Dict[str, Any]:
         nuc_info = data['nuc']
     return nuc_info
 
+def read_centroids(name: str, path: str) -> pd.DataFrame:
+    """
+    Format of the csv should be columns: X, Y, class
+    """
+    centroid_csv = pd.read_csv(path + name + '.centroids.csv')
+    centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
+    return centroid_csv.to_numpy(dtype=int)
+
 def create_geojson(contours: list[tuple[int,int]]) -> list[Dict[str, Any]]:
     """
     Input: List of pairs (contour, label).
@@ -100,11 +108,3 @@ def save_pngcsv(png: np.array, csv: pd.DataFrame, png_path: str, csv_path: str, 
     png = np.array(png, dtype=np.uint16)
     cv2.imwrite(png_path + name + '.GT_cells.png', png)
     csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)
-
-def read_centroids(name: str, path: str) -> pd.DataFrame:
-    """
-    Format of the csv should be columns: X, Y, class
-    """
-    centroid_csv = pd.read_csv(path + name + '.centroids.csv')
-    centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
-    return centroid_csv.to_numpy(dtype=int)
