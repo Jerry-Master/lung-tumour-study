@@ -28,6 +28,11 @@ tests = [
         np.hstack((np.linspace(0,30,11).reshape(-1,1)**2, np.ones((11,1)))),
         np.hstack((np.linspace(0,30,11).reshape(-1,1), np.ones((11,1))*2)), 
         np.array([1, 1, np.sqrt(3**2+1), np.sqrt(3**2+1), np.sqrt(3**2+1), np.sqrt(6**2+1), np.sqrt(6**2+1)])
+    ),
+    (
+        np.hstack((np.linspace(0,300000,100001).reshape(-1,1), np.ones((100001,1))))+np.array([[1,0]]),
+        np.hstack((np.linspace(0,300,101).reshape(-1,1), np.ones((101,1))*2)), 
+        np.ones((20,)) * np.sqrt(2)
     )
 ]
 def exec_conversion(A,B, result):
@@ -44,7 +49,7 @@ def exec_conversion(A,B, result):
 # cProfile.runctx('exec_conversion(*tests[1])', None, locals(), filename='prof2.txt')
 # cProfile.runctx('exec_conversion(*tests[2])', None, locals(), filename='prof3.txt')
 
-for i in range(3):
+for i in range(len(tests)):
     pr = cProfile.Profile()
     pr.enable()
 
