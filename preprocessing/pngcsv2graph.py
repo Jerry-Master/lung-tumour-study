@@ -3,13 +3,15 @@
 Computes a graph representation from the images and pngcsv labels.
 
 """
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 import argparse
 import pandas as pd
 import numpy as np
+import numpy.ma as ma
 import sys
 import os
 import cv2
+from concurrent.futures import ThreadPoolExecutor
 
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
@@ -25,6 +27,7 @@ parser.add_argument('--orig_dir', type=str, required=True,
                     help='Path to original images.')
 parser.add_argument('--output_path', type=str, required=True,
                     help='Path to save files.')
+parser.add_argument('--num_workers', type=int, default=1)
 
 def read_image(name: str, path: str) -> np.array:
     """
@@ -55,7 +58,7 @@ def apply_mask(img: np.array, mask: np.array) -> Tuple[np.array, int, int]:
     img_aux = img.copy()
     img_aux = img_aux * mask.reshape(*mask.shape, 1)
     x,y,w,h = cv2.boundingRect((mask * 255).astype(np.uint8))
-    return img_aux[y:y+h, x:x+w].copy(), int(y+h/2), int(x+w/2)
+    return img_aux[y:y+h, x:x+w].copy(), mask[y:y+h, x:x+w].copy(), int(y+h/2), int(x+w/2)
 
 def compute_perimeter(c: Contour) -> float:
     """
@@ -66,24 +69,43 @@ def compute_perimeter(c: Contour) -> float:
     dists = np.hypot(diff[:,0], diff[:,1])
     return dists.sum()
 
-def extract_features(msk_img: np.array) -> Dict[str, np.array]:
+def extract_features(msk_img: np.array, bin_msk: np.array, debug=False) -> Dict[str, np.array]:
     """
-    Given RGB bounding box of a cell,
+    Given RGB bounding box of a cell and the mask of the cell,
     returns a dictionary with different extracted features.
     """
     if len(msk_img) == 0 or msk_img.max() == 0:
         return {}
     gray_msk = cv2.cvtColor(msk_img, cv2.COLOR_RGB2GRAY)
-    bin_msk = (gray_msk > 0) * 1
+    # bin_msk = (gray_msk > 0) * 1
     feats = {}
     feats['area'] = bin_msk.sum()
 
+    if debug: import pdb; pdb.set_trace()
     contours, _ = cv2.findContours(
         (bin_msk * 255).astype(np.uint8), 
         mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE
     )
-    contour = format_contour(contours)
+    contour = format_contour(contours[0])
     feats['perimeter'] = compute_perimeter(contour)
+    
+    gray_msk = ma.masked_array(
+        gray_msk, mask=1-bin_msk
+    )
+    feats['std'] = gray_msk.std()
+
+    msk_img = ma.masked_array(
+        msk_img, mask=1-np.repeat(bin_msk.reshape((*bin_msk.shape,1)), 3, axis=2)
+    )
+    red = msk_img[:,:,0].compressed()
+    red_bins, _ = np.histogram(red, bins=5, density=True)
+    feats['red'] = red_bins
+    green = msk_img[:,:,1].compressed()
+    green_bins, _ = np.histogram(green, bins=5, density=True)
+    feats['green'] = green_bins
+    blue = msk_img[:,:,2].compressed()
+    blue_bins, _ = np.histogram(blue, bins=5, density=True)
+    feats['blue'] = blue_bins
     return feats
 
 def add_node(graph: Dict[str, float], feats: Dict[str, np.array]) -> None:
@@ -111,14 +133,19 @@ def create_graph(img: np.array, png: np.array, csv: pd.DataFrame) -> pd.DataFram
     Current attributes are:
         - X, Y of centroid
         - Area
+        - Perimeter
+        - Variance
         - Regularity (not yet)
-        - Histogram (not yet)
+        - Histogram (5 bins)
     """
     graph = {}
     for idx, cls in csv.itertuples(index=False, name=None):
         mask = get_mask(png, idx)
-        msk_img, X, Y  = apply_mask(img, mask)
-        feats = extract_features(msk_img)
+        msk_img, msk, X, Y  = apply_mask(img, mask)
+        try:
+            feats = extract_features(msk_img, msk)
+        except:
+            feats = extract_features(msk_img, msk, debug=True)
         if len(feats) > 0:
             feats['class'] = cls
             feats['id'] = idx
@@ -135,6 +162,23 @@ def save_graph(graph: pd.DataFrame, path: str) -> None:
     graph.sort_index(inplace=True)
     graph.to_csv(path)
 
+
+def main(name: str, k: int, names: List[str])-> None:
+    """
+    Wrapper to use multiprocessing
+    """
+    print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
+    png, csv = read_labels(name, PNG_DIR, CSV_DIR)
+    img = read_image(name, ORIG_DIR)
+    try:
+        graph = create_graph(img, png, csv)
+        save_graph(graph, os.path.join(OUTPUT_PATH, name+'.nodes.csv'))
+    except Exception as e:
+        print()
+        print(e)
+        print()
+        print('Failed at:', name)
+
 if __name__ == '__main__':
     args = parser.parse_args()
     PNG_DIR = parse_path(args.png_dir)
@@ -144,10 +188,7 @@ if __name__ == '__main__':
     create_dir(OUTPUT_PATH)
 
     names = get_names(PNG_DIR, '.GT_cells.png')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        png, csv = read_labels(name, PNG_DIR, CSV_DIR)
-        img = read_image(name, ORIG_DIR)
-        graph = create_graph(img, png, csv)
-        save_graph(graph, os.path.join(OUTPUT_PATH, name+'.csv'))
+    with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+        for k, name in enumerate(names):
+            executor.submit(main, name, k, names)      
     print()

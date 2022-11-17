@@ -4,7 +4,7 @@ import cv2
 import pandas as pd
 import numpy as np
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 
 def parse_path(path: str) -> str:
@@ -22,7 +22,7 @@ def create_dir(path: str) -> None:
     if not os.path.isdir(path):
         os.mkdir(path)
 
-def get_names(path: str, pattern: str) -> list[str]:
+def get_names(path: str, pattern: str) -> List[str]:
     """
     Returns a list with all the files in <path> containing <pattern>.
     It removes the <pattern> substring from the names.
@@ -34,7 +34,7 @@ def get_names(path: str, pattern: str) -> list[str]:
             names.append(name[:-len(pattern)])
     return names
 
-def read_names(file_path: str) -> list[str]:
+def read_names(file_path: str) -> List[str]:
     """
     Given txt with one name at each line,
     returns a list with all the names.
@@ -44,7 +44,7 @@ def read_names(file_path: str) -> list[str]:
         files = [line.strip() for line in lines]
     return files
 
-def read_labels(name: str, png_path: str, csv_path: str) -> tuple[np.array, pd.DataFrame]:
+def read_labels(name: str, png_path: str, csv_path: str) -> Tuple[np.array, pd.DataFrame]:
     """
     Input: name of file and paths to their location in png and csv format.
            Files should end in .GT_cells.png and .class.csv respectively.
@@ -76,8 +76,8 @@ def read_centroids(name: str, path: str) -> pd.DataFrame:
     centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
     return centroid_csv.to_numpy(dtype=int)
 
-Point = tuple[float,float]
-Contour = list[Point]
+Point = Tuple[float,float]
+Contour = List[Point]
 def format_contour(contour: Contour) -> Contour:
     """
     Auxiliary function to pass from the cv2.findContours format to
@@ -88,7 +88,7 @@ def format_contour(contour: Contour) -> Contour:
     new_contour.append(new_contour[0])
     return new_contour
 
-def create_geojson(contours: list[tuple[int,int]]) -> list[Dict[str, Any]]:
+def create_geojson(contours: List[Tuple[int,int]]) -> List[Dict[str, Any]]:
     """
     Input: List of pairs (contour, label).
         Contour is a list of points starting and finishing in the same point.
