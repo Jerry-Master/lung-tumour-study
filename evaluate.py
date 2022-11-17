@@ -13,10 +13,10 @@ Weighted F1-score between the prediction and the GT at cell-level.
 """
 import pandas as pd
 import numpy as np
-from scipy.spatial import KDTree
 import argparse
 import time
 from utils.preprocessing import *
+from utils.nearest import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--names', type=str, required=True,
@@ -27,22 +27,6 @@ parser.add_argument('--pred_path', type=str, required=True,
                     help='Path to prediction files.')
 parser.add_argument('--save_name', type=str, required=True,
                     help='Name to save the result, without file type.')
-
-def generate_tree(centroids: list[tuple[int,int,int]]) -> KDTree:
-    """
-    Input format: list of (x,y,class) tuples.
-    """
-    centroids_ = np.array(list(map(lambda x: (x[0], x[1]), centroids)))
-    return KDTree(centroids_)
-
-def find_nearest(a: tuple[int,int,int], B: KDTree) -> int:
-    """
-    a: (x,y,class) tuple.
-    B: KDTree to search for nearest point.
-    """
-    x, y = a[0], a[1]
-    dist, idx = B.query([x,y], k=1)
-    return idx
 
 def get_confusion_matrix(
     gt_centroids: list[tuple[int,int,int]], 
