@@ -3,7 +3,7 @@
 Computes a graph representation from the images and pngcsv labels.
 
 """
-from typing import Dict
+from typing import Dict, Tuple
 import argparse
 import pandas as pd
 import numpy as np
@@ -44,17 +44,27 @@ def get_mask(png: np.array, idx: int) -> np.array:
     png_aux[png_aux!=0] = 1
     return png_aux
 
-##### CHECK X-Y REFERENCE FRAME #####
-def apply_mask(img: np.array, mask: np.array) -> np.array:
+def apply_mask(img: np.array, mask: np.array) -> Tuple[np.array, int, int]:
     """
     Given RGB image and binary mask, 
     returns the masked image.
-    For efficiency only the bounded box of the mask is returned.
+    For efficiency only the bounded box of the mask is returned,
+    together with the center of the box.
+    Coordinates are indices of array.
     """
     img_aux = img.copy()
     img_aux = img_aux * mask.reshape(*mask.shape, 1)
     x,y,w,h = cv2.boundingRect((mask * 255).astype(np.uint8))
-    return img_aux[y:y+h, x:x+w].copy()
+    return img_aux[y:y+h, x:x+w].copy(), int(y+h/2), int(x+w/2)
+
+def compute_perimeter(c: Contour) -> float:
+    """
+    Given contour returns its perimeter.
+    Prerequisites: First and last point must be the same.
+    """
+    diff = np.diff(c, axis=0)
+    dists = np.hypot(diff[:,0], diff[:,1])
+    return dists.sum()
 
 def extract_features(msk_img: np.array) -> Dict[str, np.array]:
     """
@@ -67,9 +77,13 @@ def extract_features(msk_img: np.array) -> Dict[str, np.array]:
     bin_msk = (gray_msk > 0) * 1
     feats = {}
     feats['area'] = bin_msk.sum()
-    X, Y = np.where(bin_msk == 1)
-    feats['X'] = X.mean()
-    feats['Y'] = Y.mean()
+
+    contours, _ = cv2.findContours(
+        (bin_msk * 255).astype(np.uint8), 
+        mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE
+    )
+    contour = format_contour(contours)
+    feats['perimeter'] = compute_perimeter(contour)
     return feats
 
 def add_node(graph: Dict[str, float], feats: Dict[str, np.array]) -> None:
@@ -103,11 +117,13 @@ def create_graph(img: np.array, png: np.array, csv: pd.DataFrame) -> pd.DataFram
     graph = {}
     for idx, cls in csv.itertuples(index=False, name=None):
         mask = get_mask(png, idx)
-        msk_img = apply_mask(img, mask)
+        msk_img, X, Y  = apply_mask(img, mask)
         feats = extract_features(msk_img)
         if len(feats) > 0:
             feats['class'] = cls
             feats['id'] = idx
+            feats['X'] = X
+            feats['Y'] = Y
         add_node(graph, feats)
     return pd.DataFrame(graph)
 

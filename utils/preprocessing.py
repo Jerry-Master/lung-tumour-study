@@ -76,6 +76,18 @@ def read_centroids(name: str, path: str) -> pd.DataFrame:
     centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
     return centroid_csv.to_numpy(dtype=int)
 
+Point = tuple[float,float]
+Contour = list[Point]
+def format_contour(contour: Contour) -> Contour:
+    """
+    Auxiliary function to pass from the cv2.findContours format to
+    an array of shape (N,2). Additionally, the first point is added
+    to the end to close the contour.
+    """
+    new_contour = np.reshape(contour, (-1,2)).tolist()
+    new_contour.append(new_contour[0])
+    return new_contour
+
 def create_geojson(contours: list[tuple[int,int]]) -> list[Dict[str, Any]]:
     """
     Input: List of pairs (contour, label).

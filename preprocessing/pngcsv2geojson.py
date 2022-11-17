@@ -43,18 +43,6 @@ def create_mask(png: np.array, csv: pd.DataFrame, label: int) -> np.array:
             mask[mask==idx] = 0
     return np.array(mask, dtype=np.uint8)
 
-Point = tuple[float,float]
-Contour = list[Point]
-def format_contour(contour: Contour) -> Contour:
-    """
-    Auxiliary function to pass from the cv2.findContours format to
-    an array of shape (N,2). Additionally, the first point is added
-    to the end to close the contour.
-    """
-    new_contour = np.reshape(contour, (-1,2)).tolist()
-    new_contour.append(new_contour[0])
-    return new_contour
-
 def pngcsv2features(png: np.array, csv: pd.DataFrame, label: int) -> list[Dict[str, Any]]:
     """
     Computes geojson features of contours of a given class.
