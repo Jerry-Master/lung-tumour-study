@@ -17,6 +17,7 @@ import argparse
 import time
 from utils.preprocessing import *
 from utils.nearest import *
+from typing import List, Tuple
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--names', type=str, required=True,
@@ -29,8 +30,8 @@ parser.add_argument('--save_name', type=str, required=True,
                     help='Name to save the result, without file type.')
 
 def get_confusion_matrix(
-    gt_centroids: list[tuple[int,int,int]], 
-    pred_centroids: list[tuple[int,int,int]]
+    gt_centroids: List[Tuple[int,int,int]], 
+    pred_centroids: List[Tuple[int,int,int]]
     ) -> np.array:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
@@ -56,7 +57,7 @@ def get_confusion_matrix(
     t0 = time.time()
     return M
 
-def get_weighted_F1_score(M: np.array) -> tuple[tuple[float,float], float]:
+def get_weighted_F1_score(M: np.array) -> Tuple[Tuple[float,float], float]:
     """
     Computes weighted F1 score from confusion matrix.
     """
@@ -86,22 +87,22 @@ def compute_percentage(arr: np.array) -> float:
     """
     n_one = np.sum(arr==1)
     n_two = np.sum(arr==2)
-    return n_two / (n_one + n_two)
+    return n_two / (n_one + n_two), n_one, n_two
 
 def get_percentages(
-    gt_centroids: list[tuple[int,int,int]],
-    pred_centroids: list[tuple[int,int,int]]
-    ) -> tuple[float, float]:
+    gt_centroids: List[Tuple[int,int,int]],
+    pred_centroids: List[Tuple[int,int,int]]
+    ) -> Tuple[float, float]:
     gt_labels = gt_centroids[:,2]
     pred_labels = pred_centroids[:,2]
-    gt_per = compute_percentage(gt_labels)
-    pred_per = compute_percentage(pred_labels)
-    return gt_per, pred_per
+    gt_per, gt_one, gt_two = compute_percentage(gt_labels)
+    pred_per, pred_one, pred_two = compute_percentage(pred_labels)
+    return (gt_per, pred_per), gt_one, gt_two, pred_one, pred_two
 
 def save_score(
-    scores: tuple[tuple[float,float], float], 
+    scores: Tuple[Tuple[float,float], float], 
     name: str, 
-    percentages: tuple[float,float], 
+    percentages: Tuple[float,float], 
     save_path: str
     ) -> None:
     """
@@ -117,7 +118,7 @@ def save_score(
         print('    Error: {:.3f}\n'.format(abs(gt_per - pred_per)), file=f)
 
 def save_csv(
-    metrics: list[tuple[str,float,float,float,float,float,float]], 
+    metrics: List[Tuple[str,float,float,float,float,float,float]], 
     save_path: str
     ) -> None:
     """
@@ -131,16 +132,35 @@ if __name__ == '__main__':
     args = parser.parse_args()
     names = read_names(args.names)
     metrics = []
+    global_conf_mat = None
+    global_gt_one, global_gt_two, global_pred_one, global_pred_two = 0,0,0,0
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
+        # Read
         gt_centroids = read_centroids(name, args.gt_path)
         pred_centroids = read_centroids(name, args.pred_path)
+        # Compute score
         confusion_matrix = get_confusion_matrix(gt_centroids, pred_centroids)
+        if global_conf_mat is None:
+            global_conf_mat = confusion_matrix
+        else:
+            global_conf_mat += confusion_matrix
         scores = get_weighted_F1_score(confusion_matrix)
         if scores[0] is None or pd.isna(scores[0]).any():
             scores[0] = [-1,-1]
-        percentages = get_percentages(gt_centroids, pred_centroids)
+        # Compute percentages
+        percentages, gt_one, gt_two, pred_one, pred_two = get_percentages(gt_centroids, pred_centroids)
+        global_gt_one += gt_one; global_gt_two += gt_two
+        global_pred_one += pred_one; global_pred_two += pred_two
+        # Save
         save_score(scores, name, percentages, args.save_name)
         metrics.append([name, *scores[0], scores[1], *percentages, abs(percentages[0]-percentages[1])])
     save_csv(metrics, args.save_name)
+    # Global scores and percentages
+    global_scores = get_weighted_F1_score(global_conf_mat)
+    global_percentages = global_gt_one / (global_gt_one + global_gt_two), global_pred_one / (global_pred_one + global_pred_two) 
+    save_csv([[
+        'All', *global_scores[0], global_scores[1], 
+        *global_percentages, abs(global_percentages[0]-global_percentages[1])
+        ]], args.save_name + '_all')
 
