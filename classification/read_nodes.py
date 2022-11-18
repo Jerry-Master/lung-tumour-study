@@ -17,18 +17,19 @@ sys.path.append(PKG_DIR)
 
 from utils.preprocessing import *
 
-### NEEDS DEBUGGING ###
+
 def read_node_matrix(file: str) -> Tuple[np.array, np.array]:
     """
     Read csv and creates X and y matrices.
     Centroids coordinates are removed.
+    Labels are subtracted 1 to be in 0-1 range.
     """
     df = pd.read_csv(file)
-    y = df['class'].to_numpy()
-    X = df.drop(['class', 'X', 'Y'], axis=1).to_numpy()
+    y = df['class'].to_numpy() - 1
+    X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
     return X, y
 
-def global_split(node_dir: str, names: List[str]) -> List[np.array]:
+def read_all_nodes(node_dir: str, names: List[str]) -> List[np.array]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
@@ -48,38 +49,46 @@ def global_split(node_dir: str, names: List[str]) -> List[np.array]:
             y = np.hstack([y, y_])
     return X, y
 
-def create_node_splits(node_dir: str, val_size: float, test_size: float, mode: Optional[str] = 'total') -> List[np.array]:
+def create_node_splits(
+    node_dir: str, val_size: float, test_size: float, 
+    seed: Optional[int] = None,
+    mode: Optional[str] = 'total') -> List[np.array]:
     """
     Input
       node_dir: Path to folder with csv files containing node eatures.
       val_size: Percentage of data to use as validation.
       test_size: Percentage of data to use as test.
+      seed: Seed for the random split.
       mode: Whether to mix images in the splits or not. It can be 'total' or 'by_img'. 
     Output
       X_train, X_val, X_test, y_train, y_val, y_test: Node features and labels.
     """
-    names = get_names(node_dir, '.nodes.csv')
-    N = len(names)
-    N_ts = int(N * test_size)
-    N_val = int(N * val_size)
-    N_tr = N - N_val - N_ts
+    ext = '.nodes.csv'
+    names = get_names(node_dir, ext)
+    names = [x+ext for x in names]
     if mode == 'total':
-        X, y = global_split(node_dir, names)
+        X, y = read_all_nodes(node_dir, names)
         X_tr_val, X_test, y_tr_val, y_test = train_test_split(
-            X, y, test_size=N_ts, stratify=y, random_state=None
+            X, y, test_size=test_size, stratify=y, random_state=seed
         )
         X_train, X_val, y_train, y_val = train_test_split(
-            X_tr_val, y_tr_val, test_size=N_val, stratify=y_tr_val, random_state=None
+            X_tr_val, y_tr_val, test_size=val_size / (1-test_size), 
+            stratify=y_tr_val, random_state=seed
         )
         return X_train, X_val, X_test, y_train, y_val, y_test
     elif mode == 'by_img':
+        random.seed(seed)
         random.shuffle(names)
+        N = len(names)
+        N_ts = int(N * test_size)
+        N_val = int(N * val_size)
+        N_tr = N - N_val - N_ts
         train_names = names[:N_tr]
-        val_names = names[N_tr+1:N_val+N_tr]
-        test_names = names[N_val+N_tr+1:]
-        X_train, y_train = global_split(node_dir, train_names)
-        X_val, y_val = global_split(node_dir, val_names)
-        X_test, y_test = global_split(node_dir, test_names)
+        val_names = names[N_tr:N_val+N_tr]
+        test_names = names[N_val+N_tr:]
+        X_train, y_train = read_all_nodes(node_dir, train_names)
+        X_val, y_val = read_all_nodes(node_dir, val_names)
+        X_test, y_test = read_all_nodes(node_dir, test_names)
         return X_train, X_val, X_test, y_train, y_val, y_test
     else:
         assert False, 'Wrong mode.'
