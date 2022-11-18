@@ -11,6 +11,10 @@ Apart from those two formats there are other two formats storing additional info
 * Centroids: For evaluation purposes the centroids of the cells are precomputed and stored as a table (CSV) with the columns X, Y and class.
 * Hovernet JSON: The output of the hovernet model comes with a JSON that has extra information like the position of the centroids or the contours. 
 
+There is yet another format for storing graph nodes:
+
+* `.graph.csv`: Stores extracted attributes of cells and saves them in a csv. Current attributes are: (X,Y) center of bounding box, area, perimeter, gray level variance and RGB histogram.
+
 ## Files description
 
 The supported conversions and their corresponding implementations are: 
@@ -20,6 +24,7 @@ The supported conversions and their corresponding implementations are:
 * [Hovernet JSON >> Centroids], implemented in `hovernet2centroids.py`.
 * [Hovernet JSON >> GeoJSON], implemented in `hovernet2geojson.py`.
 * [Centroids >> PNG], implemented in `centroids2png.py`. The png format here is different from the one mentioned above, this one just contains the centroids with a pixel value of 255.
+* [PNG <-> CSV >> Graph], implemented in `pngcsv2graph.py`. It is implemented with multiprocessing because is a quite slow process. You can specify the number of threads in the flag `--num_workers`.
 
 ## Script usage
 
@@ -30,5 +35,6 @@ All the scripts are used in the same way `python3 [SCRIPT_NAME].py [FLAGS]`. The
 * `--json_dir`: Path to hovernet jsons, only used as input.
 * `--output_path`: Path to save the centroids tables, only used as output.
 * `--centroids_path`: Path used in the `centroids2png.py` file to retrieve the centroids.
+* `--orig_dir`: Path to original images.
 
 If any folder indicated as output doesn't exist, it is created at runtime.
