@@ -48,7 +48,7 @@ class GraphDataset(Dataset):
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
         X, y, xx, yy = read_node_matrix(os.path.join(self.node_dir, file_name), return_coordinates=True)
-        source, dest, dists = self.create_edges(xx, yy, self.max_degree, self.max_dist)
+        source, dest, dists = GraphDataset.create_edges(xx, yy, self.max_degree, self.max_dist)
         g = dgl.graph((source, dest), num_nodes=len(X))
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
         g.ndata['y'] = torch.tensor(y, dtype=torch.long)
@@ -58,7 +58,8 @@ class GraphDataset(Dataset):
     def __len__(self):
         return len(self.node_names)
 
-    def create_edges(self, xx: List[float], yy: List[float],
+    @staticmethod
+    def create_edges(xx: List[float], yy: List[float],
         max_degree: int, threshold: float) -> Tuple[List[int], List[int]]:
         """
         Creates edges between nearby nodes.
