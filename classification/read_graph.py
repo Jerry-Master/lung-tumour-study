@@ -51,7 +51,7 @@ class GraphDataset(Dataset):
         source, dest, dists = self.create_edges(xx, yy, self.max_degree, self.max_dist)
         g = dgl.graph((source, dest), num_nodes=len(X))
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
-        g.ndata['y'] = torch.tensor(y, dtype=torch.int32)
+        g.ndata['y'] = torch.tensor(y, dtype=torch.long)
         g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1,1))
         return g
 
