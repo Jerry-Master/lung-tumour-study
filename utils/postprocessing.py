@@ -1,29 +1,16 @@
 from typing import Callable
 from scipy.spatial import KDTree
+import sys
+import os
+
+PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PKG_DIR)
+
+from utils.nearest import get_N_closest_pairs_dists, get_N_closest_pairs_idx
 
 Point = tuple[float,float]
 Contour = list[Point]
 Cell = tuple[int, int, Contour] # id, class
-
-def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int) -> list[float]:
-    """
-    Given two sets of points, 
-    returns the N closests pairs distances.
-    Complexity: O((n+m)log(m)), being m = max(|a|,|b|) and n = min(|a|,|b|)
-    """
-    if len(a) > len(b):
-        tree = KDTree(a)
-        query_set = b
-    else:
-        tree = KDTree(b)
-        query_set = a
-    cpairs = []
-    for point in query_set:
-        dist, idx = tree.query(point, k=N)
-        cpairs.extend(dist)
-        cpairs.sort()
-        cpairs = cpairs[:N]
-    return cpairs
 
 def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,Contour], bool]:
     """
@@ -42,30 +29,6 @@ def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,
                 return False
         return True
     return is_equal
-
-def get_N_closest_pairs_idx(a: Contour, b: Contour, N: int) -> tuple[list[int],list[int]]:
-    """
-    Given two sets of points, 
-    returns the N closests pairs indices. 
-    Complexity: O((n+m)log(m)), being m = max(|a|,|b|) and n = min(|a|,|b|)
-    """
-    is_a_tree = len(a) > len(b)
-    if is_a_tree:
-        tree = KDTree(a)
-        query_set = b
-    else:
-        tree = KDTree(b)
-        query_set = a
-    cpairs = []
-    for idx2, point in enumerate(query_set):
-        dist, idx = tree.query(point, k=N)
-        cpairs.extend(zip(dist, idx, [idx2 for _ in range(len(idx))]))
-        cpairs.sort()
-        cpairs = cpairs[:N]
-    dists, idxa, idxb = list(zip(*cpairs))
-    if not is_a_tree:
-        idxa, idxb = idxb, idxa
-    return list(idxa), list(idxb)
 
 def get_greatest_connected_component(idx: list[int], max_idx: int) -> tuple[int,int]:
     """

@@ -18,7 +18,7 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 
-def read_node_matrix(file: str) -> Tuple[np.array, np.array]:
+def read_node_matrix(file: str, return_coordinates: Optional[bool] = False) -> Tuple[np.array, np.array]:
     """
     Read csv and creates X and y matrices.
     Centroids coordinates are removed.
@@ -27,7 +27,12 @@ def read_node_matrix(file: str) -> Tuple[np.array, np.array]:
     df = pd.read_csv(file)
     y = df['class'].to_numpy() - 1
     X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
-    return X, y
+    if not return_coordinates:
+        return X, y
+    else:
+        xx = df['X'].to_numpy()
+        yy = df['Y'].to_numpy()
+        return X, y, xx, yy
 
 def read_all_nodes(node_dir: str, names: List[str]) -> List[np.array]:
     """

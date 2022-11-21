@@ -1,6 +1,6 @@
 from scipy.spatial import KDTree
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 def generate_tree(centroids: List[Tuple[int,int,int]]) -> KDTree:
     """
@@ -26,3 +26,57 @@ def find_nearest_dist_idx(a: Tuple[int,int,int], B: KDTree) -> Tuple[float, int]
     x, y = a[0], a[1]
     dist, idx = B.query([x,y], k=1)
     return dist, idx
+
+Point = tuple[float,float]
+Contour = list[Point]
+Cell = tuple[int, int, Contour] # id, class
+
+def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int,
+    threshold: Optional[float] = np.inf) -> List[float]:
+    """
+    Given two sets of points, 
+    returns the N closests pairs distances.
+
+    Prunes the search for distandes greater than threshold.
+    Complexity: O((n+m)log(m)), being m = max(|a|,|b|) and n = min(|a|,|b|)
+    """
+    if len(a) > len(b):
+        tree = KDTree(a)
+        query_set = b
+    else:
+        tree = KDTree(b)
+        query_set = a
+    cpairs = []
+    for point in query_set:
+        dist, idx = tree.query(point, k=N, distance_upper_bound=threshold)
+        cpairs.extend(dist)
+        cpairs.sort()
+        cpairs = cpairs[:N]
+    return cpairs
+
+def get_N_closest_pairs_idx(a: Contour, b: Contour, N: int,
+    threshold: Optional[float] = np.inf) -> Tuple[List[int],List[int]]:
+    """
+    Given two sets of points, 
+    returns the N closests pairs indices. 
+
+    Prunes the search for distandes greater than threshold.
+    Complexity: O((n+m)log(m)), being m = max(|a|,|b|) and n = min(|a|,|b|)
+    """
+    is_a_tree = len(a) > len(b)
+    if is_a_tree:
+        tree = KDTree(a)
+        query_set = b
+    else:
+        tree = KDTree(b)
+        query_set = a
+    cpairs = []
+    for idx2, point in enumerate(query_set):
+        dist, idx = tree.query(point, k=N, distance_upper_bound=threshold)
+        cpairs.extend(zip(dist, idx, [idx2 for _ in range(len(idx))]))
+        cpairs.sort()
+        cpairs = cpairs[:N]
+    dists, idxa, idxb = list(zip(*cpairs))
+    if not is_a_tree:
+        idxa, idxb = idxb, idxa
+    return list(idxa), list(idxb)
