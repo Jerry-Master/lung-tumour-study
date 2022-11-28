@@ -3,9 +3,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Optimizer
+import dgl
 from dgl.dataloading import GraphDataLoader
-from dgl.nn import GraphConv
 from read_graph import GraphDataset
+from models.gcn import GCN
+from models.hgao import HardGAT
+from models.gat import GAT
 import argparse
 from torch.utils.tensorboard import SummaryWriter
 import warnings
@@ -18,27 +21,6 @@ sys.path.append(PKG_DIR)
 
 from utils.preprocessing import *
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
-
-class GCN(nn.Module):
-    def __init__(self, in_feats, h_feats, num_classes):
-        super(GCN, self).__init__()
-        self.conv1 = GraphConv(in_feats, h_feats, allow_zero_in_degree=True)
-        self.conv2 = GraphConv(h_feats, h_feats, allow_zero_in_degree=True)
-        self.conv3 = GraphConv(h_feats, h_feats, allow_zero_in_degree=True)
-        self.conv4 = GraphConv(h_feats, h_feats, allow_zero_in_degree=True)
-        self.conv5 = GraphConv(h_feats, num_classes, allow_zero_in_degree=True)
-
-    def forward(self, g, in_feat):
-        h = self.conv1(g, in_feat)
-        h = F.relu(h)
-        h = self.conv2(g, h)
-        h = F.relu(h)
-        h = self.conv3(g, h)
-        h = F.relu(h)
-        h = self.conv4(g, h)
-        h = F.relu(h)
-        h = self.conv5(g, h)
-        return h
 
 def train(
     tr_loader: GraphDataset, 
@@ -53,6 +35,10 @@ def train(
     for epoch in range(n_epochs):
         model.train()
         for step, tr_g in enumerate(tr_loader):
+            # self-loops
+            tr_g = dgl.remove_self_loop(tr_g)
+            tr_g = dgl.add_self_loop(tr_g)
+            # data
             features = tr_g.ndata['X'].to(device)
             labels = tr_g.ndata['y'].to(device)
             # Forward
@@ -76,6 +62,10 @@ def train(
         model.eval()
         preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1)
         for val_g in val_loader:
+            # self-loops
+            val_g = dgl.remove_self_loop(val_g)
+            val_g = dgl.add_self_loop(val_g)
+            # data
             features = val_g.ndata['X'].to(device)
             # Forward
             logits = model(val_g, features)
@@ -87,11 +77,11 @@ def train(
             labels = np.vstack((labels, label))
         # Compute metrics on validation    
         val_acc = accuracy_score(labels, preds)
-        writer.add_scalar('Accuracy/validation', val_acc, step+len(tr_loader)*epoch)
+        writer.add_scalar('Accuracy/validation', val_acc, step+len(val_loader)*epoch)
         val_f1 = f1_score(labels, preds)
-        writer.add_scalar('F1/validation', val_f1, step+len(tr_loader)*epoch)
+        writer.add_scalar('F1/validation', val_f1, step+len(val_loader)*epoch)
         val_auc = roc_auc_score(labels, probs)
-        writer.add_scalar('ROC_AUC/validation', val_auc, step+len(tr_loader)*epoch)
+        writer.add_scalar('ROC_AUC/validation', val_auc, step+len(val_loader)*epoch)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--node-dir', type=str, required=True,
@@ -106,6 +96,7 @@ if __name__=='__main__':
     NUM_CLASSES = 2
     NUM_FEATS = 18
     HIDDEN_FEATS = 100
+    NUM_LAYERS = 5
     LOG_DIR = parse_path(args.log_dir)
     create_dir(LOG_DIR)
 
@@ -114,6 +105,11 @@ if __name__=='__main__':
     train_dataloader = GraphDataLoader(train_dataset, batch_size=20, shuffle=True)
     val_dataset = GraphDataset(node_dir=os.path.join(args.node_dir, 'validation'), max_dist=200, max_degree=10)
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=True)
-    model = GCN(NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES)
+    model = GCN(NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, NUM_LAYERS)
+    NUM_HEADS = 8
+    NUM_OUT_HEADS = 1
+    heads = ([NUM_HEADS] * NUM_LAYERS) + [NUM_OUT_HEADS]
+    # model = GAT(NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, heads, NUM_LAYERS)
+    # model = HardGAT(NUM_LAYERS, NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, heads, F.elu)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     train(train_dataloader, val_dataloader, model, optimizer, writer, args.epochs)
