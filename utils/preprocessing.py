@@ -68,7 +68,7 @@ def read_json(json_path: str) -> Dict[str, Any]:
         nuc_info = data['nuc']
     return nuc_info
 
-def read_centroids(name: str, path: str) -> pd.DataFrame:
+def read_centroids(name: str, path: str) -> np.array:
     """
     Format of the csv should be columns: X, Y, class
     """

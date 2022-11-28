@@ -9,7 +9,7 @@ PKG_DIR = os.path.dirname(TEST_DIR)
 sys.path.append(PKG_DIR)
 
 from utils.preprocessing import get_names, parse_path
-from evaluate import get_confusion_matrix
+from evaluate import get_pairs
 
 CENTROIDS_DIR = parse_path(TEST_DIR) + 'centroids/'
 
@@ -23,9 +23,10 @@ CSV files must have headers, except for [name].result.csv which should
 only be the confusion matrix.
 """
 @pytest.mark.parametrize("name", get_names(CENTROIDS_DIR, '.result.csv'))
-def test_metric(name):
+def test_metric_pairs(name):
     A_centroids = pd.read_csv(CENTROIDS_DIR + name + '.A.csv').to_numpy()
     B_centroids = pd.read_csv(CENTROIDS_DIR + name + '.B.csv').to_numpy()
     result = pd.read_csv(CENTROIDS_DIR + name + '.result.csv', header=None).to_numpy()
-    confusion_matrix = get_confusion_matrix(A_centroids, B_centroids)
-    assert((result == confusion_matrix).all())
+    true, pred = get_pairs(A_centroids, B_centroids)
+    conf_matrix = confusion_matrix(true, pred, labels=[0,1])
+    assert((result == conf_matrix).all())
