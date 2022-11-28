@@ -88,9 +88,12 @@ def compute_metrics(true_labels: np.array, pred_labels: np.array) -> Tuple[float
     Given arrays of binary prediction and true labels,
     returns F1 score, Accuracy, ROC AUC and percentage error.
     """
-    f1 = f1_score(true_labels, pred_labels)
+    f1 = f1_score(true_labels, pred_labels, zero_division=1)
     acc = accuracy_score(true_labels, pred_labels)
-    auc = roc_auc_score(true_labels, pred_labels)
+    if len(np.unique(true_labels)) > 1:
+        auc = roc_auc_score(true_labels, pred_labels)
+    else:
+        auc = -1
     true_perc, _, _ = compute_percentage(true_labels+1)
     pred_perc, _, _ = compute_percentage(pred_labels+1)
     err = abs(true_perc - pred_perc)
@@ -120,6 +123,7 @@ if __name__ == '__main__':
         # Read
         gt_centroids = read_centroids(name, args.gt_path)
         pred_centroids = read_centroids(name, args.pred_path)
+        pred_centroids[pred_centroids[:,2]==0] = 1
         # Make pairs
         true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
         if true_labels is None:
@@ -128,7 +132,11 @@ if __name__ == '__main__':
         global_true.extend(true_labels)
         global_pred.extend(pred_labels)
         # Compute per image scores
-        f1, acc, auc, err = compute_metrics(true_labels, pred_labels)
+        try:
+            f1, acc, auc, err = compute_metrics(true_labels, pred_labels)
+        except Exception as e:
+            print(e)
+            print(name)
         metrics['F1'].append(f1)
         metrics['Accuracy'].append(acc)
         metrics['ROC_AUC'].append(auc)
