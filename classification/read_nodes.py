@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 import random
 import sys
 import os
@@ -60,7 +61,7 @@ def create_node_splits(
     mode: Optional[str] = 'total') -> List[np.array]:
     """
     Input
-      node_dir: Path to folder with csv files containing node eatures.
+      node_dir: Path to folder with csv files containing node features.
       val_size: Percentage of data to use as validation.
       test_size: Percentage of data to use as test.
       seed: Seed for the random split.
@@ -97,3 +98,11 @@ def create_node_splits(
         return X_train, X_val, X_test, y_train, y_val, y_test
     else:
         assert False, 'Wrong mode.'
+
+def normalize(X_train: np.array, X_val: np.array, X_test: np.array) -> Tuple[np.array, np.array, np.array]:
+    """
+    Normalizes using the mean and deviation of the trainining dataset.
+    """
+    sc = StandardScaler()
+    sc.fit(X_train)
+    return sc.transform(X_train), sc.transform(X_val), sc.transform(X_test)

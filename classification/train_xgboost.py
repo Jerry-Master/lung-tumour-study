@@ -1,6 +1,6 @@
 """
 
-Script to train classification models.
+Script to train xgboost models.
 Right now only supports classification over nodes, without edges.
 
 """
@@ -12,6 +12,7 @@ import pickle
 from sklearn.metrics import f1_score, accuracy_score
 import numpy as np
 from typing import Tuple
+from sklearn.model_selection import StratifiedKFold
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -27,6 +28,7 @@ parser.add_argument('--seed', type=int, default=None,
 parser.add_argument('--by_img', action='store_true',
                      help='Whether to separate images in the split. Default: False.')
 parser.add_argument('--num_workers', type=int, default=1)
+parser.add_argument('--cv_folds', type=int, default=10)
 
 def logprob2prob(predt: np.ndarray) -> np.ndarray:
     """
@@ -65,6 +67,20 @@ if __name__=='__main__':
             GRAPH_DIR, args.val_size, args.test_size, args.seed, 
             'by_img' if args.by_img else 'total'
         )
+
+    X = np.vstack((X_train, X_val))
+    y = np.hstack((y_train, y_val))
+    skf = StratifiedKFold(n_splits=args.cv_folds)
+    skf.get_n_splits(X, y)
+
+    for train_index, test_index in skf.split(X, y):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        ## Train
+
+        ## Save metrics
+
+
     dtrain = xgb.DMatrix(X_train, label=y_train)
     dval = xgb.DMatrix(X_val, label=y_val)
     evallist = [(dtrain, 'train'), (dval, 'eval')]

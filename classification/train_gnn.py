@@ -6,6 +6,7 @@ from torch.optim import Optimizer
 import dgl
 from dgl.dataloading import GraphDataLoader
 from read_graph import GraphDataset
+from read_nodes import read_all_nodes
 from models.gcn import GCN
 from models.hgao import HardGAT
 from models.gat import GAT
@@ -21,6 +22,7 @@ sys.path.append(PKG_DIR)
 
 from utils.preprocessing import *
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
+from sklearn.preprocessing import StandardScaler
 
 def train(
     tr_loader: GraphDataset, 
@@ -101,10 +103,17 @@ if __name__=='__main__':
     create_dir(LOG_DIR)
 
     writer = SummaryWriter(log_dir=LOG_DIR)
-    train_dataset = GraphDataset(node_dir=os.path.join(args.node_dir,'train'), max_dist=200, max_degree=10)
+    # Normalization function
+    train_dir = os.path.join(args.node_dir,'train')
+    X, y = read_all_nodes(train_dir, os.listdir(train_dir))
+    sc = StandardScaler()
+    sc.fit(X)
+    # Datasets
+    train_dataset = GraphDataset(node_dir=os.path.join(args.node_dir,'train'), max_dist=200, max_degree=10, transform=sc.transform)
     train_dataloader = GraphDataLoader(train_dataset, batch_size=20, shuffle=True)
-    val_dataset = GraphDataset(node_dir=os.path.join(args.node_dir, 'validation'), max_dist=200, max_degree=10)
+    val_dataset = GraphDataset(node_dir=os.path.join(args.node_dir, 'validation'), max_dist=200, max_degree=10, transform=sc.transform)
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=True)
+    # Models
     model = GCN(NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, NUM_LAYERS)
     NUM_HEADS = 8
     NUM_OUT_HEADS = 1

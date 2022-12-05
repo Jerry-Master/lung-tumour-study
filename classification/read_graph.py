@@ -4,9 +4,10 @@ Module to create graph from nodes.
 
 """
 from itertools import tee
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Callable
 import sys
 import os
+import numpy as np
 
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
@@ -28,7 +29,8 @@ class GraphDataset(Dataset):
     Graph edges are generated on the fly.
     """
     def __init__(self, node_dir: str, max_dist: float, max_degree: int,
-        files: Optional[List[str]] = None):
+        files: Optional[List[str]] = None,
+        transform: Optional[Callable[[np.array], np.array]] = None):
         """
         node_dir: Path to .nodes.csv files.
         max_dist: Maximum distance to consider two nodes as neighbours.
@@ -44,10 +46,13 @@ class GraphDataset(Dataset):
             self.node_names = sorted(get_names(node_dir, '.nodes.csv'))
         self.max_dist = max_dist
         self.max_degree = max_degree
+        self.transform = transform
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
         X, y, xx, yy = read_node_matrix(os.path.join(self.node_dir, file_name), return_coordinates=True)
+        if self.transform is not None:
+            X = self.transform(X)
         source, dest, dists = GraphDataset.create_edges(xx, yy, self.max_degree, self.max_dist)
         g = dgl.graph((source, dest), num_nodes=len(X))
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
