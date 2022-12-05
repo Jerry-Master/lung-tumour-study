@@ -12,7 +12,7 @@ import numpy as np
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--graph_dir', type=str, required=True,
+parser.add_argument('--graph-dir', type=str, required=True,
                      help='Folder containing .graph.csv files.')
 
 if __name__=='__main__':

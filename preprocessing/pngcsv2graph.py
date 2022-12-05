@@ -19,15 +19,15 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--png_dir', type=str, required=True,
+parser.add_argument('--png-dir', type=str, required=True,
                     help='Path to png files.')
-parser.add_argument('--csv_dir', type=str, required=True,
+parser.add_argument('--csv-dir', type=str, required=True,
                     help='Path to csv files.')
-parser.add_argument('--orig_dir', type=str, required=True,
+parser.add_argument('--orig-dir', type=str, required=True,
                     help='Path to original images.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save files.')
-parser.add_argument('--num_workers', type=int, default=1)
+parser.add_argument('--num-workers', type=int, default=1)
 
 def read_image(name: str, path: str) -> np.array:
     """
@@ -37,7 +37,7 @@ def read_image(name: str, path: str) -> np.array:
     aux = cv2.imread(os.path.join(path, name+'.png'))
     return cv2.cvtColor(aux, cv2.COLOR_BGR2RGB)
 
-def get_mask(png: np.array, idx: int) -> np.array:
+def get_mask(png: np.ndarray, idx: int) -> np.ndarray:
     """
     Given segmentation mask with indices as pixel values, 
     returns the mask corresponding to the given index.
@@ -47,7 +47,7 @@ def get_mask(png: np.array, idx: int) -> np.array:
     png_aux[png_aux!=0] = 1
     return png_aux
 
-def apply_mask(img: np.array, mask: np.array) -> Tuple[np.array, int, int]:
+def apply_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, int, int]:
     """
     Given RGB image and binary mask, 
     returns the masked image.
@@ -69,7 +69,7 @@ def compute_perimeter(c: Contour) -> float:
     dists = np.hypot(diff[:,0], diff[:,1])
     return dists.sum()
 
-def extract_features(msk_img: np.array, bin_msk: np.array, debug=False) -> Dict[str, np.array]:
+def extract_features(msk_img: np.ndarray, bin_msk: np.ndarray, debug=False) -> Dict[str, np.ndarray]:
     """
     Given RGB bounding box of a cell and the mask of the cell,
     returns a dictionary with different extracted features.
@@ -108,7 +108,7 @@ def extract_features(msk_img: np.array, bin_msk: np.array, debug=False) -> Dict[
     feats['blue'] = blue_bins
     return feats
 
-def add_node(graph: Dict[str, float], feats: Dict[str, np.array]) -> None:
+def add_node(graph: Dict[str, float], feats: Dict[str, np.ndarray]) -> None:
     """
     [Inplace operation]
     Given a dictionary with vectorial features,
@@ -126,7 +126,7 @@ def add_node(graph: Dict[str, float], feats: Dict[str, np.array]) -> None:
                 graph[k] = []
             graph[k].append(v)
 
-def create_graph(img: np.array, png: np.array, csv: pd.DataFrame) -> pd.DataFrame:
+def create_graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
     Given original image and pngcsv labels, 
     returns nodes with extracted attributes in a DataFrame.

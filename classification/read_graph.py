@@ -30,7 +30,7 @@ class GraphDataset(Dataset):
     """
     def __init__(self, node_dir: str, max_dist: float, max_degree: int,
         files: Optional[List[str]] = None,
-        transform: Optional[Callable[[np.array], np.array]] = None):
+        transform: Optional[Callable[[np.ndarray], np.ndarray]] = None):
         """
         node_dir: Path to .nodes.csv files.
         max_dist: Maximum distance to consider two nodes as neighbours.

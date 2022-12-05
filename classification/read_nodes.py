@@ -19,7 +19,7 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 
-def read_node_matrix(file: str, return_coordinates: Optional[bool] = False) -> Tuple[np.array, np.array]:
+def read_node_matrix(file: str, return_coordinates: Optional[bool] = False) -> Tuple[np.ndarray, np.ndarray]:
     """
     Read csv and creates X and y matrices.
     Centroids coordinates are removed.
@@ -35,7 +35,7 @@ def read_node_matrix(file: str, return_coordinates: Optional[bool] = False) -> T
         yy = df['Y'].to_numpy()
         return X, y, xx, yy
 
-def read_all_nodes(node_dir: str, names: List[str]) -> List[np.array]:
+def read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
@@ -58,7 +58,7 @@ def read_all_nodes(node_dir: str, names: List[str]) -> List[np.array]:
 def create_node_splits(
     node_dir: str, val_size: float, test_size: float, 
     seed: Optional[int] = None,
-    mode: Optional[str] = 'total') -> List[np.array]:
+    mode: Optional[str] = 'total') -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
@@ -99,7 +99,7 @@ def create_node_splits(
     else:
         assert False, 'Wrong mode.'
 
-def normalize(X_train: np.array, X_val: np.array, X_test: np.array) -> Tuple[np.array, np.array, np.array]:
+def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Normalizes using the mean and deviation of the trainining dataset.
     """

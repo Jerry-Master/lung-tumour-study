@@ -5,7 +5,6 @@ into a CSV format with columns X,Y,class
 The class output format is 0=non-tumour, 1=tumour.
 
 """
-import json
 import pandas as pd
 import argparse
 import sys
@@ -17,9 +16,9 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--json_dir', type=str, required=True,
+parser.add_argument('--json-dir', type=str, required=True,
                     help='Path to json files.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save files.')
 
 

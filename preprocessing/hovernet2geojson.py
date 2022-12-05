@@ -15,9 +15,9 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--json_dir', type=str, default='./',
+parser.add_argument('--json-dir', type=str, default='./',
                     help='Path to json files.')
-parser.add_argument('--gson_dir', type=str, default='./',
+parser.add_argument('--gson-dir', type=str, default='./',
                     help='Path to save files.')
 
 Point = tuple[float,float]

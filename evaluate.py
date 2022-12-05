@@ -23,17 +23,17 @@ from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 parser = argparse.ArgumentParser()
 parser.add_argument('--names', type=str, required=True,
                     help='Path to txt file with names.')
-parser.add_argument('--gt_path', type=str, required=True,
+parser.add_argument('--gt-path', type=str, required=True,
                     help='Path to GT files.')
-parser.add_argument('--pred_path', type=str, required=True,
+parser.add_argument('--pred-path', type=str, required=True,
                     help='Path to prediction files.')
-parser.add_argument('--save_name', type=str, required=True,
+parser.add_argument('--save-name', type=str, required=True,
                     help='Name to save the result, without file type.')
 
 def get_confusion_matrix(
     gt_centroids: List[Tuple[int,int,int]], 
     pred_centroids: List[Tuple[int,int,int]]
-    ) -> np.array:
+    ) -> np.ndarray:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
     Class is 1=non-tumour, 2=tumour.
@@ -54,7 +54,7 @@ def get_confusion_matrix(
 def get_pairs(
     gt_centroids: List[Tuple[int,int,int]], 
     pred_centroids: List[Tuple[int,int,int]]
-    ) -> Tuple[np.array, np.array]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
     Class is 1=non-tumour, 2=tumour.
@@ -74,7 +74,7 @@ def get_pairs(
             pred_labels.append(closest[2]-1)
     return np.array(true_labels), np.array(pred_labels)
 
-def compute_percentage(arr: np.array) -> float:
+def compute_percentage(arr: np.ndarray) -> float:
     """
     arr is an array of integers representing classes
     It returns the the percentage of class 2: #2 / (#1 + #2)
@@ -83,7 +83,7 @@ def compute_percentage(arr: np.array) -> float:
     n_two = np.sum(arr==2)
     return n_two / (n_one + n_two), n_one, n_two
 
-def compute_metrics(true_labels: np.array, pred_labels: np.array) -> Tuple[float, float, float, float]:
+def compute_metrics(true_labels: np.ndarray, pred_labels: np.ndarray) -> Tuple[float, float, float, float]:
     """
     Given arrays of binary prediction and true labels,
     returns F1 score, Accuracy, ROC AUC and percentage error.

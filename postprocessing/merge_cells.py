@@ -15,16 +15,16 @@ from utils.preprocessing import *
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--png_dir', type=str, required=True,
+parser.add_argument('--png-dir', type=str, required=True,
                     help='Path to png files.')
-parser.add_argument('--csv_dir', type=str, required=True,
+parser.add_argument('--csv-dir', type=str, required=True,
                     help='Path to csv files.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save files.')
 
 MAX_CELLS = 1500
 
-def create_id_map() -> tuple[Callable[[np.array], np.array], Dict[int, tuple[int,int]]]:
+def create_id_map() -> tuple[Callable[[np.ndarray], np.ndarray], Dict[int, tuple[int,int]]]:
     """
     Map index to some function so that difference is unique per pair.
     Also returns the inverse mapping of the differences and the 
@@ -43,7 +43,7 @@ def create_id_map() -> tuple[Callable[[np.array], np.array], Dict[int, tuple[int
     vec_mapping = np.vectorize(f)
     return vec_mapping, inv_diff_mapping
 
-def get_gradient(png: np.array) -> np.array:
+def get_gradient(png: np.ndarray) -> np.ndarray:
     """
     Apply a dilation, subtract the image and remove pixels in background.
     """
@@ -55,10 +55,10 @@ def get_gradient(png: np.array) -> np.array:
     return grad_bkgr
 
 def merge_cells(
-    png: np.array, 
-    vec_mapping: Callable[[np.array], np.array], 
+    png: np.ndarray, 
+    vec_mapping: Callable[[np.ndarray], np.ndarray], 
     inv_diff_mapping: Dict[int, tuple[int,int]]
-    ) -> np.array:
+    ) -> np.ndarray:
     """
     Merges all the cells that share a frontier of more than 13 pixels.
     """
@@ -88,7 +88,7 @@ def merge_cells(
             png[png==pair[1]] = M
     return png
 
-def remove_lost_ids(png: np.array, csv: pd.DataFrame) -> pd.DataFrame:
+def remove_lost_ids(png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
     Removes identifiers in csv that are not in png.
     """

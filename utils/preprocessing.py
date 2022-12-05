@@ -44,7 +44,7 @@ def read_names(file_path: str) -> List[str]:
         files = [line.strip() for line in lines]
     return files
 
-def read_labels(name: str, png_path: str, csv_path: str) -> Tuple[np.array, pd.DataFrame]:
+def read_labels(name: str, png_path: str, csv_path: str) -> Tuple[np.ndarray, pd.DataFrame]:
     """
     Input: name of file and paths to their location in png and csv format.
            Files should end in .GT_cells.png and .class.csv respectively.
@@ -68,7 +68,7 @@ def read_json(json_path: str) -> Dict[str, Any]:
         nuc_info = data['nuc']
     return nuc_info
 
-def read_centroids(name: str, path: str) -> np.array:
+def read_centroids(name: str, path: str) -> np.ndarray:
     """
     Format of the csv should be columns: X, Y, class
     """
@@ -113,7 +113,7 @@ def create_geojson(contours: List[Tuple[int,int]]) -> List[Dict[str, Any]]:
         features.append(feat)
     return features
 
-def save_pngcsv(png: np.array, csv: pd.DataFrame, png_path: str, csv_path: str, name: str) -> None:
+def save_pngcsv(png: np.ndarray, csv: pd.DataFrame, png_path: str, csv_path: str, name: str) -> None:
     """
     Save png, csv pair in the folders png_path and csv_path with the given name.
     """

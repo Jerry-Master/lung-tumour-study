@@ -17,11 +17,11 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--png_dir', type=str, required=True,
+parser.add_argument('--png-dir', type=str, required=True,
                     help='Path to png files.')
-parser.add_argument('--csv_dir', type=str, required=True,
+parser.add_argument('--csv-dir', type=str, required=True,
                     help='Path to csv files.')
-parser.add_argument('--gson_dir', type=str, required=True,
+parser.add_argument('--gson-dir', type=str, required=True,
                     help='Path to save files.')
 
 
@@ -32,7 +32,7 @@ def save_geojson(gson: list[Dict[str, Any]], name: str, path: str) -> None:
     with open(path + name + '.geojson', 'w') as f:
         geojson.dump(gson, f)
 
-def create_mask(png: np.array, csv: pd.DataFrame, label: int) -> np.array:
+def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
     """
     Returns the image with only the pixels of the class given in label.
     The pixel values are truncated to uint8.
@@ -43,7 +43,7 @@ def create_mask(png: np.array, csv: pd.DataFrame, label: int) -> np.array:
             mask[mask==idx] = 0
     return np.array(mask, dtype=np.uint8)
 
-def pngcsv2features(png: np.array, csv: pd.DataFrame, label: int) -> list[Dict[str, Any]]:
+def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int) -> list[Dict[str, Any]]:
     """
     Computes geojson features of contours of a given class.
     """
@@ -52,7 +52,7 @@ def pngcsv2features(png: np.array, csv: pd.DataFrame, label: int) -> list[Dict[s
     contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), label) for c in contours])
     return create_geojson(contours)
 
-def pngcsv2geojson(png: np.array, csv: pd.DataFrame) -> list[Dict[str, Any]]:
+def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame) -> list[Dict[str, Any]]:
     """
     Computes geojson as list of features representing contours.
     Contours are approximated by method cv2.CHAIN_APPROX_SIMPLE.

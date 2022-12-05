@@ -15,12 +15,12 @@ from utils.preprocessing import *
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--centroids_path', type=str, required=True,
+parser.add_argument('--centroids-path', type=str, required=True,
                     help='Path to centroid files.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save png files with points.')
 
-def centroids2png(centroids: list[tuple[int,int,int]]) -> np.array:
+def centroids2png(centroids: list[tuple[int,int,int]]) -> np.ndarray:
     """
     Generates blank image with pixel value 255 at centroids coordinates.
     """

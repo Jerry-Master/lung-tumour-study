@@ -15,15 +15,15 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--png_dir', type=str, required=True,
+parser.add_argument('--png-dir', type=str, required=True,
                     help='Path to png files.')
-parser.add_argument('--csv_dir', type=str, required=True,
+parser.add_argument('--csv-dir', type=str, required=True,
                     help='Path to csv files.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save files.')
 
 
-def get_centroid_by_id(img: np.array, idx: int) -> tuple[int, int]:
+def get_centroid_by_id(img: np.ndarray, idx: int) -> tuple[int, int]:
     """
     img contains a different id value per component at each pixel
     """
@@ -32,7 +32,7 @@ def get_centroid_by_id(img: np.array, idx: int) -> tuple[int, int]:
         return -1, -1
     return X.mean(), Y.mean()
 
-def extract_centroids(img: np.array, csv: pd.DataFrame) -> list[tuple[int,int,int]]:
+def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> list[tuple[int,int,int]]:
     """
     Output format: list of (x,y,class) tuples
     """

@@ -18,11 +18,11 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--gson_dir', type=str, required=True, 
+parser.add_argument('--gson-dir', type=str, required=True, 
                     help='Path to the geojson files.')
-parser.add_argument('--png_dir', type=str, required=True,
+parser.add_argument('--png-dir', type=str, required=True,
                     help='Path to save the png files.')  
-parser.add_argument('--csv_dir', type=str, required=True,
+parser.add_argument('--csv-dir', type=str, required=True,
                     help='Path to save the csv files.')      
 
 def read_gson(name: str, path: str) -> list[Dict[str,Any]]:
@@ -33,7 +33,7 @@ def read_gson(name: str, path: str) -> list[Dict[str,Any]]:
         gson = geojson.load(f)
     return gson
 
-def geojson2pngcsv(gson: list[Dict[str, Any]]) -> tuple[np.array, pd.DataFrame]:
+def geojson2pngcsv(gson: list[Dict[str, Any]]) -> tuple[np.ndarray, pd.DataFrame]:
     """
     Computes png <-> csv labels from geojson. 
     Width and height are assumed to be 1024.

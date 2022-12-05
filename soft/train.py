@@ -18,19 +18,19 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--img_dir', type=str, required=True,
+parser.add_argument('--img-dir', type=str, required=True,
                     help='Path to original image folder.')
-parser.add_argument('--mask_dir_count', type=str, required=True,
+parser.add_argument('--mask-dir-count', type=str, required=True,
                     help='Path to count masks folder.')
-parser.add_argument('--mask_dir_segment', type=str, required=True,
+parser.add_argument('--mask-dir-segment', type=str, required=True,
                     help='Path to segment masks folder.')
-parser.add_argument('--cls_dir', type=str, required=True,
+parser.add_argument('--cls-dir', type=str, required=True,
                     help='Path to class folder.')
-parser.add_argument('--train_path', type=str, required=True,
+parser.add_argument('--train-path', type=str, required=True,
                     help='Path to train.txt.')
-parser.add_argument('--val_path', type=str, required=True,
+parser.add_argument('--val-path', type=str, required=True,
                     help='Path to validation.txt.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save models.')
 
 ENCODER = 'se_resnext50_32x4d'

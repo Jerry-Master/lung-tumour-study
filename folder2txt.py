@@ -25,7 +25,7 @@ parser.add_argument('--validation', type=str,
                     help='Path to validation folder as created by my_extract_patches.py')
 parser.add_argument('--test', type=str,
                     help='Path to test folder as created by my_extract_patches.py')
-parser.add_argument('--out_dir', type=str,
+parser.add_argument('--out-dir', type=str,
                     help='Path to save the txt files.')
 
 def remove_coordinates(name: str) -> str:

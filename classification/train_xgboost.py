@@ -17,18 +17,18 @@ from sklearn.model_selection import StratifiedKFold
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--graph_dir', type=str, required=True,
+parser.add_argument('--graph-dir', type=str, required=True,
                      help='Folder containing .graph.csv files.')
-parser.add_argument('--val_size', type=float, default=0.2,
+parser.add_argument('--val-size', type=float, default=0.2,
                      help='Percentage of nodes given to validation set. Default: 0.2')
-parser.add_argument('--test_size', type=float, default=0.2,
+parser.add_argument('--test-size', type=float, default=0.2,
                      help='Percentage of nodes given to test set. Default: 0.2')
 parser.add_argument('--seed', type=int, default=None,
                      help='Seed for random split. Default: None')
-parser.add_argument('--by_img', action='store_true',
+parser.add_argument('--by-img', action='store_true',
                      help='Whether to separate images in the split. Default: False.')
-parser.add_argument('--num_workers', type=int, default=1)
-parser.add_argument('--cv_folds', type=int, default=10)
+parser.add_argument('--num-workers', type=int, default=1)
+parser.add_argument('--cv-folds', type=int, default=10)
 
 def logprob2prob(predt: np.ndarray) -> np.ndarray:
     """
