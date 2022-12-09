@@ -1,0 +1,13 @@
+auto-sklearn results:
+  Dataset name: 5993f150-77e7-11ed-911e-8c8590171916
+  Metric: f1
+  Best validation score: 0.673874
+  Number of target algorithm runs: 36
+  Number of successful target algorithm runs: 26
+  Number of crashed target algorithm runs: 0
+  Number of target algorithms that exceeded the time limit: 10
+  Number of target algorithms that exceeded the memory limit: 0
+
+F1 Score: 0.671
+Accuracy: 0.777
+ROC AUC: 0.823

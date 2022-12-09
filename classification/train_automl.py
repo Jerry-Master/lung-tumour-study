@@ -22,8 +22,10 @@ import argparse
 from read_nodes import create_node_splits
 import os
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+import autosklearn
 from autosklearn.classification import AutoSklearnClassifier
 import numpy as np
+from datetime import datetime
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,14 +42,13 @@ parser.add_argument('--by-img', action='store_true',
                      help='Whether to separate images in the split. Default: False.')
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--total-limit', type=int, default=1, 
-                    help='Limit in time to find a model.')
-parser.add_argument('--per-model-limit', type=int, default=1, 
-                    help='Limit in time to search for hyperparameters for each given model.')
+                    help='Limit in time (min) to find a model. Default: 1.')
+parser.add_argument('--per-model-limit', type=int, default=30, 
+                    help='Limit in time (sec) to search for hyperparameters for each given model. Default: 30')
+parser.add_argument('--log-dir', type=str, required=True, 
+                    help='Folder to save logs.')
 
-if __name__=='__main__':
-    args = parser.parse_args()
-    GRAPH_DIR = args.graph_dir
-
+def read_data(GRAPH_DIR, args):
     X_train, X_val, X_test, y_train, y_val, y_test = \
         create_node_splits(
             GRAPH_DIR, args.val_size, args.test_size, args.seed, 
@@ -55,21 +56,55 @@ if __name__=='__main__':
         )
     X_train = np.vstack((X_train, X_val))
     y_train = np.hstack((y_train, y_val))
-    # define search
+    return X_train, X_test, y_train, y_test
+
+def train(X_train, y_train, args):
     model = AutoSklearnClassifier(
         time_left_for_this_task=args.total_limit*60, 
         per_run_time_limit=args.per_model_limit, 
-        n_jobs=args.num_workers
+        n_jobs=args.num_workers, memory_limit=1000000000,
+        metric=autosklearn.metrics.f1,
+        scoring_functions=[
+            autosklearn.metrics.f1, 
+            autosklearn.metrics.accuracy, 
+            autosklearn.metrics.roc_auc
+        ]
     )
     # perform the search
     model.fit(X_train, y_train)
-    # summarize
+    return model
+
+def summarize(model, X_test, y_test, args):
+    now = datetime.now()
+    date = now.strftime("%m-%d-%Y-%H-%M-%S")
+    # Standard statistics
     print(model.sprint_statistics())
-    # evaluate best model
+    with open(os.path.join(args.log_dir, date + 'automl.txt'), 'w') as f:
+        print(model.sprint_statistics(), file = f)
+    # Leaderboard of all models
+    results = model.leaderboard(detailed=True)
+    results.to_csv(os.path.join(args.log_dir, date + 'results.csv'))
+    # Evaluate best model
     y_hat = model.predict(X_test)
+    y_proba = model.predict_proba(X_test)[:,1]
     f1 = f1_score(y_test, y_hat)
     acc = accuracy_score(y_test, y_hat)
-    auc = roc_auc_score(y_test, y_hat)
+    auc = roc_auc_score(y_test, y_proba)
     print("F1 Score: %.3f" % f1)
     print("Accuracy: %.3f" % acc)
     print("ROC AUC: %.3f" % auc)
+    with open(os.path.join(args.log_dir, date + 'automl.txt'), 'a') as f:
+        print("F1 Score: %.3f" % f1, file=f)
+        print("Accuracy: %.3f" % acc, file=f)
+        print("ROC AUC: %.3f" % auc, file=f)
+
+def main():
+    args = parser.parse_args()
+    GRAPH_DIR = args.graph_dir
+
+    X_train, X_test, y_train, y_test = read_data(GRAPH_DIR, args)   
+    model = train(X_train, y_train, args)
+    summarize(model, X_test, y_test, args)
+
+if __name__=='__main__':
+    main()
