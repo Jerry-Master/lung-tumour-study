@@ -103,7 +103,7 @@ def train(
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--node-dir', type=str, required=True,
-                     help="Path to .nodes.csv files.")
+                     help="Path to folder containing train and validation folder with .nodes.csv files.")
 parser.add_argument('--log-dir', type=str, required=True,
                      help="Path to save tensorboard logs.")
 parser.add_argument('--epochs', type=int, required=True,
@@ -119,21 +119,20 @@ if __name__=='__main__':
     create_dir(LOG_DIR)
 
     writer = SummaryWriter(log_dir=LOG_DIR)
-    # Normalization function
-    train_dir = os.path.join(args.node_dir,'train')
-    X, y = read_all_nodes(train_dir, os.listdir(train_dir))
-    sc = StandardScaler()
-    sc.fit(X)
     # Datasets
-    train_dataset = GraphDataset(node_dir=os.path.join(args.node_dir,'train'), max_dist=200, max_degree=10, transform=sc.transform)
+    train_dataset = GraphDataset(
+        node_dir=os.path.join(args.node_dir,'train'), 
+        max_dist=200, max_degree=10, column_normalize=True)
     train_dataloader = GraphDataLoader(train_dataset, batch_size=20, shuffle=True)
-    val_dataset = GraphDataset(node_dir=os.path.join(args.node_dir, 'validation'), max_dist=200, max_degree=10, transform=sc.transform)
+    val_dataset = GraphDataset(
+        node_dir=os.path.join(args.node_dir, 'validation'), 
+        max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=True)
     # Models
     model = GCN(NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, NUM_LAYERS)
-    NUM_HEADS = 8
-    NUM_OUT_HEADS = 1
-    heads = ([NUM_HEADS] * NUM_LAYERS) + [NUM_OUT_HEADS]
+    # NUM_HEADS = 8
+    # NUM_OUT_HEADS = 1
+    # heads = ([NUM_HEADS] * NUM_LAYERS) + [NUM_OUT_HEADS]
     # model = GAT(NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, heads, NUM_LAYERS)
     # model = HardGAT(NUM_LAYERS, NUM_FEATS, HIDDEN_FEATS, NUM_CLASSES, heads, F.elu)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

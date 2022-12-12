@@ -22,10 +22,9 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 import random
-import sys
 import os
+import sys
 
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
@@ -53,7 +52,7 @@ def read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
-      names: List of files to read. Must not have file extension.
+      names: List of files to read. Must have file extension.
     Output
       X: Input data in array format.
       y: Labels in array format.
@@ -112,11 +111,3 @@ def create_node_splits(
         return X_train, X_val, X_test, y_train, y_val, y_test
     else:
         assert False, 'Wrong mode.'
-
-def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Normalizes using the mean and deviation of the trainining dataset.
-    """
-    sc = StandardScaler()
-    sc.fit(X_train)
-    return sc.transform(X_train), sc.transform(X_val), sc.transform(X_test)
