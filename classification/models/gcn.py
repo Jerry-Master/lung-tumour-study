@@ -12,16 +12,16 @@ from dgl.nn import GraphConv
 from .norm import Norm
 
 class GCN(nn.Module):
-    def __init__(self, in_feats, h_feats, num_classes, num_layers, drop_rate=0.5):
+    def __init__(self, in_feats, h_feats, num_classes, num_layers, drop_rate, norm_type):
         super(GCN, self).__init__()
         self.conv_layers = nn.ModuleList()
         self.conv_layers.append(GraphConv(in_feats, h_feats, activation=F.elu))
         self.conv_layers.append(nn.Dropout(drop_rate)) # Feature map dropout
-        self.conv_layers.append(Norm(norm_type='bn', hidden_dim=h_feats))
+        self.conv_layers.append(Norm(norm_type=norm_type, hidden_dim=h_feats))
         for l in range(1,num_layers):
             self.conv_layers.append(GraphConv(h_feats, h_feats, activation=F.elu))
             self.conv_layers.append(nn.Dropout(drop_rate))
-            self.conv_layers.append(Norm(norm_type='bn', hidden_dim=h_feats))
+            self.conv_layers.append(Norm(norm_type=norm_type, hidden_dim=h_feats))
         self.conv_layers.append(GraphConv(h_feats, num_classes))
 
     def forward(self, g, in_feat):

@@ -17,6 +17,7 @@ from dgl.base import DGLError
 from dgl.nn.pytorch import edge_softmax
 from dgl.nn.pytorch.utils import Identity
 from dgl.sampling import select_topk
+from .norm import Norm
 
 
 class HardGAO(nn.Module):
@@ -133,24 +134,25 @@ class HardGAO(nn.Module):
 class HardGAT(nn.Module):
     def __init__(
         self,
-        num_layers,
         in_dim,
         num_hidden,
         num_classes,
         heads,
-        activation,
-        feat_drop=0.6,
-        attn_drop=0.6,
+        num_layers,
+        dropout,
+        norm_type,
+        activation=F.elu,
         negative_slope=0.2,
         residual=False,
         k=8,
     ):
         super(HardGAT, self).__init__()
+        feat_drop=dropout
+        attn_drop=dropout
         self.num_layers = num_layers
         self.gat_layers = nn.ModuleList()
         self.activation = activation
         gat_layer = partial(HardGAO, k=k)
-        muls = heads
         # input projection (no residual)
         self.gat_layers.append(
             gat_layer(
@@ -164,12 +166,13 @@ class HardGAT(nn.Module):
                 self.activation,
             )
         )
+        self.gat_layers.append(Norm(norm_type=norm_type, hidden_dim=num_hidden * heads[0]))
         # hidden layers
         for l in range(1, num_layers):
             # due to multi-head, the in_dim = num_hidden * num_heads
             self.gat_layers.append(
                 gat_layer(
-                    num_hidden * muls[l - 1],
+                    num_hidden * heads[l - 1],
                     num_hidden,
                     heads[l],
                     feat_drop,
@@ -179,10 +182,11 @@ class HardGAT(nn.Module):
                     self.activation,
                 )
             )
+            self.gat_layers.append(Norm(norm_type=norm_type, hidden_dim=num_hidden * heads[l]))
         # output projection
         self.gat_layers.append(
             gat_layer(
-                num_hidden * muls[-2],
+                num_hidden * heads[-2],
                 num_classes,
                 heads[-1],
                 feat_drop,
