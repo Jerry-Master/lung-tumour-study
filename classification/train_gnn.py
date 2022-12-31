@@ -63,7 +63,7 @@ parser.add_argument('--save-file', type=str, required=True,
 parser.add_argument('--num-confs', type=int, default=50,
                      help='Upper bound on the number of configurations to try.')
 parser.add_argument('--save-dir', type=str,
-                     help='Folder to save models weights and confs.')                     
+                     help='Folder to save models weights and confs.')
 
 def evaluate(
     loader: GraphDataLoader,
