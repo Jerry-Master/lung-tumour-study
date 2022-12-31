@@ -95,8 +95,8 @@ def save_probs(probs: Dict[str, np.ndarray]) -> None:
     """
     for name, prob in probs.items():
         orig = pd.read_csv(NODE_DIR + name)
-        orig['probs'] = prob
-        orig.to_csv(OUTPUT_DIR + name)
+        orig['prob1'] = prob
+        orig.to_csv(OUTPUT_DIR + name, index=False)
 
 
 def main(args):
