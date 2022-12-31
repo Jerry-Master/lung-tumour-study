@@ -1,4 +1,6 @@
 """
+Script to train and save several GNN configurations.
+
 Copyright (C) 2023  Jose Pérez Cano
 
 This program is free software: you can redistribute it and/or modify
@@ -17,7 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import math
-from typing import Optional, Tuple, Dict, List
+from typing import Optional, Tuple, Dict, List, Any
+from sklearn.preprocessing import Normalizer
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,11 +38,13 @@ import warnings
 warnings.filterwarnings('ignore')
 import sys
 import os
+import json
+import pickle
 
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import *
+from utils.preprocessing import parse_path, create_dir
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 
 parser = argparse.ArgumentParser()
@@ -50,12 +56,14 @@ parser.add_argument('--early-stopping-rounds', type=int, required=True,
                      help='Number of epochs needed to consider convergence when worsening.')
 parser.add_argument('--batch-size', type=int, required=True,
                      help='Batch size. No default.')
-parser.add_argument('--model', type=str, required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'],
+parser.add_argument('--model-name', type=str, required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'],
                      help='Which model to use. Options: GCN, ATT, HATT, SAGE, BOOST')
 parser.add_argument('--save-file', type=str, required=True,
                      help='Name to file where to save the results. Must not contain extension.')
 parser.add_argument('--num-confs', type=int, default=50,
                      help='Upper bound on the number of configurations to try.')
+parser.add_argument('--save-dir', type=str,
+                     help='Folder to save models weights and confs.')                     
 
 def evaluate(
     loader: GraphDataLoader,
@@ -194,7 +202,7 @@ def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataL
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
 
-def generate_configurations(max_confs: int) -> List[Dict[str, int]]:
+def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, int]]:
     """
     Generates a grid in the search space with no more than max_confs configurations.
     Parameters changed: NUM_LAYERS, DROPOUT, NORM_TYPE
@@ -208,19 +216,21 @@ def generate_configurations(max_confs: int) -> List[Dict[str, int]]:
         num_layers = int(num_layers)
         for dropout in np.linspace(0,0.9, num_dropout_confs):
             conf = {}
+            conf['MODEL_NAME'] = model_name
             conf['NUM_LAYERS'] = num_layers
             conf['DROPOUT'] = dropout
             conf['NORM_TYPE'] = 'bn'
             confs.append(conf)
 
             conf = {}
+            conf['MODEL_NAME'] = model_name
             conf['NUM_LAYERS'] = num_layers
             conf['DROPOUT'] = dropout
             conf['NORM_TYPE'] = 'gn'
             confs.append(conf)
     return confs
 
-def load_model(name: str, conf: Dict[str,int]) -> nn.Module:
+def load_model(conf: Dict[str,Any]) -> nn.Module:
     """
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
@@ -228,13 +238,13 @@ def load_model(name: str, conf: Dict[str,int]) -> nn.Module:
     num_feats = 18
     num_classes = 2
     hidden_feats = 100
-    if name == 'GCN':
+    if conf['MODEL_NAME'] == 'GCN':
         return GCN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
-    if name == 'ATT' or name == 'HATT':
-        NUM_HEADS = 8
-        NUM_OUT_HEADS = 1
-        heads = ([NUM_HEADS] * conf['NUM_LAYERS']) + [NUM_OUT_HEADS]
-        if name == 'ATT':
+    if conf['MODEL_NAME'] == 'ATT' or conf['MODEL_NAME'] == 'HATT':
+        num_heads = 8
+        num_out_heads = 1
+        heads = ([num_heads] * conf['NUM_LAYERS']) + [num_out_heads]
+        if conf['MODEL_NAME'] == 'ATT':
             return GAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
         return HardGAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
     assert False, 'Model not implemented.'
@@ -257,6 +267,24 @@ def append_results(
     with open(filename + '.csv', 'a') as f:
         print(f1, acc, auc, num_layers, dropout, bn_type, file=f, sep=',')
 
+def name_from_conf(conf: Dict[str, Any]) -> str:
+    """
+    Generates a name from the configuration object.
+    """
+    return conf['MODEL_NAME'] + '_' + str(conf['NUM_LAYERS']) + '_' \
+        + str(conf['DROPOUT']) + '_' + str(conf['NORM_TYPE']) 
+
+def save_model(model: nn.Module, conf: Dict[str, Any], normalizers: Tuple[Normalizer]) -> None:
+    """
+    Save model weights and configuration file to SAVE_DIR
+    """
+    name = name_from_conf(conf)
+    state_dict = model.state_dict()
+    torch.save(state_dict, SAVE_DIR + 'weights/' + name + '.pth')
+    with open(SAVE_DIR + 'confs/' + name + '.json', 'w') as f:
+        json.dump(conf, f)
+    with open(SAVE_DIR + 'normalizers/' + name + '.pkl', 'wb') as f:
+        pickle.dump(normalizers, f)
 
 def main(args):
     # Tensorboard logs
@@ -264,20 +292,30 @@ def main(args):
     # Datasets
     train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size)
     # Configurations
-    confs = generate_configurations(args.num_confs)
+    confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file)
     for conf in confs:
         # Model
-        model = load_model(args.model, conf)
+        model = load_model(conf)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         # Train
         train(train_dataloader, val_dataloader, model, optimizer, writer, args.early_stopping_rounds)
         test_f1, test_acc, test_auc = evaluate(test_dataloader, model, 'cpu')
         append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+        if SAVE_WEIGHTS:
+            save_model(model, conf, train_dataloader.dataset.get_normalizers())
 
 
 if __name__=='__main__':   
     args = parser.parse_args()
     LOG_DIR = parse_path(args.log_dir)
     create_dir(LOG_DIR)
+    SAVE_WEIGHTS = False
+    if args.save_dir is not None:
+        SAVE_WEIGHTS = True
+        SAVE_DIR = parse_path(args.save_dir)
+        create_dir(SAVE_DIR)
+        create_dir(SAVE_DIR + 'weights')
+        create_dir(SAVE_DIR + 'confs')
+        create_dir(SAVE_DIR + 'normalizers')
     main(args)

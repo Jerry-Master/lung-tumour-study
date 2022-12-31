@@ -50,7 +50,8 @@ class GraphDataset(Dataset):
         transform: Optional[Callable[[np.ndarray], np.ndarray]] = None,
         column_normalize: Optional[bool] = False,
         row_normalize: Optional[bool] = False,
-        normalizers: Optional[Tuple[Any]] = None):
+        normalizers: Optional[Tuple[Any]] = None,
+        return_names: Optional[bool] = False):
         """
         node_dir: Path to .nodes.csv files.
         max_dist: Maximum distance to consider two nodes as neighbours.
@@ -74,6 +75,7 @@ class GraphDataset(Dataset):
         self.row_normalize = row_normalize
         self.normalizers = normalizers
         self.initialize_normalizers()
+        self.return_names = return_names
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
@@ -92,6 +94,8 @@ class GraphDataset(Dataset):
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
         g.ndata['y'] = torch.tensor(y, dtype=torch.long)
         g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1,1))
+        if self.return_names:
+            return g, file_name
         return g
 
     def __len__(self):
