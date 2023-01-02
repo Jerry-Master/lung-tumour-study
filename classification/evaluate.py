@@ -3,18 +3,21 @@
 Script to evaluate predictions.
 
 """
-from typing import Dict, List
+from typing import Dict, List, Optional
 import sys
 import os
 
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import parse_path
+from utils.preprocessing import parse_path, create_dir
 import pandas as pd
 import numpy as np
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 from calibration_error import calibration_error
+from sklearn.calibration import calibration_curve
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -24,6 +27,12 @@ parser.add_argument('--save-file', type=str, required=True,
                      help='Name to file where to save the results. Must not contain extension.')
 parser.add_argument('--by-img', action='store_true',
                      help='Whether to separate images in the split. Default: False.')
+parser.add_argument('--draw', action='store_true',
+                     help='Whether to draw reliability diagrams.')
+parser.add_argument('--draw-dir', type=str, 
+                     help='Folder to save reliability diagram on by-img mode.')
+parser.add_argument('--name', type=str, default='Method', 
+                     help='The name of the model used. Default: Method.')
 
 def check_imbalance(labels: np.ndarray) -> bool:
     """
@@ -39,7 +48,53 @@ def percentage_error(labels: np.ndarray, preds: np.ndarray) -> float:
     pred_perc = (preds==1).sum() / len(preds)
     return abs(gt_perc - pred_perc)
 
-def compute_metrics(nodes_df: pd.DataFrame) -> Dict[str, float]:
+def abline(slope: float, intercept: float, axes: Axes) -> None:
+    """
+    Plot a line from slope and intercept on current axis.
+    """
+    x_vals = np.array(axes.get_xlim())
+    y_vals = intercept + slope * x_vals
+    axes.plot(x_vals, y_vals, linestyle='dotted', color='k')
+
+def draw_reliability_diagram(
+    y_true: np.ndarray, 
+    y_probs: np.ndarray, 
+    save_path: str, 
+    method_name: str
+    ) -> None:
+    """
+    Draws reliability diagram into save_path.
+    save_path must not contain extension.
+    """
+    prob_true, prob_pred = calibration_curve(y_true, y_probs, n_bins=20)
+
+    fig, ax = plt.subplots(1,2, figsize=(16,6))
+    ax[0].plot(prob_pred, prob_true, marker='s', color='forestgreen')
+    abline(1, 0, ax[0])
+    ax[0].set(
+        title='Reliability diagram', 
+        xlabel='Mean predicted probability', 
+        ylabel='Fraction of positives'
+    )
+    ax[0].legend([method_name, 'Perfectly calibrated'])
+
+    ax[1].hist(
+        y_probs,
+        range=(0, 1),
+        bins=20,
+        label=method_name,
+        color='forestgreen',
+    )
+    ax[1].set(title=method_name, xlabel="Mean predicted probability", ylabel="Count")
+
+    fig.savefig(save_path + '.png')
+    plt.close(fig)
+
+def compute_metrics(
+    nodes_df: pd.DataFrame, 
+    draw_on: Optional[str] = None, 
+    method_name: Optional[str] = 'Method'
+    ) -> Dict[str, float]:
     """
     Computes F1-score, Accuracy, ROC AUC, Expected Calibration Error and percentage error.
     Dataframe must contain columns class and prob1.
@@ -48,6 +103,9 @@ def compute_metrics(nodes_df: pd.DataFrame) -> Dict[str, float]:
     labels = nodes_df['class'].to_numpy()-1
     probs = nodes_df['prob1'].to_numpy()
     preds = (probs > 0.5) * 1
+
+    if draw_on is not None:
+        draw_reliability_diagram(labels, probs, draw_on, method_name)
 
     acc = accuracy_score(labels, preds)
     f1 = f1_score(labels, preds, zero_division=0)
@@ -84,7 +142,13 @@ def main(args):
     if args.by_img:
         for node_path, node_file in zip(node_paths, node_files):
             nodes_df = pd.read_csv(node_path)
-            aux_metrics = compute_metrics(nodes_df)
+            if args.draw:
+                assert args.draw_dir is not None, 'In by-img mode you must provide a folder for saving drawings.'
+                draw_dir = parse_path(args.draw_dir)
+                create_dir(draw_dir)
+                aux_metrics = compute_metrics(nodes_df, draw_on=draw_dir + node_file, method_name=args.name)
+            else:
+                aux_metrics = compute_metrics(nodes_df)
             aux_metrics['name'] = node_file[:-10]
             join_dictionaries(metrics, aux_metrics)
     else:
@@ -94,7 +158,10 @@ def main(args):
             total_nodes_df = pd.concat([total_nodes_df,nodes_df])
         total_nodes_df.reset_index(inplace=True)
         total_nodes_df.drop('index', axis=1, inplace=True)
-        aux_metrics = compute_metrics(total_nodes_df)
+        if args.draw:
+            aux_metrics = compute_metrics(total_nodes_df, draw_on=args.save_file, method_name=args.name)
+        else:
+            aux_metrics = compute_metrics(total_nodes_df)
         join_dictionaries(metrics, aux_metrics)
     save_metrics(metrics, args.save_file)
 
