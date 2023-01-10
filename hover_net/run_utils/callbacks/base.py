@@ -84,7 +84,7 @@ class PeriodicSaver(BaseCallbacks):
         for net_name, net_info in state.run_info.items():
             net_checkpoint = {}
             for key, value in net_info.items():
-                if key != "extra_info":
+                if key != "extra_info" and key != "use_cpu":
                     net_checkpoint[key] = value.state_dict()
             torch.save(
                 net_checkpoint,
@@ -137,7 +137,7 @@ class ConditionalSaver(BaseCallbacks):
         for net_name, net_info in state.run_info.items():
             net_checkpoint = {}
             for key, value in net_info.items():
-                if key != "extra_info":
+                if key != "extra_info" and key != "use_cpu":
                     net_checkpoint[key] = value.state_dict()
             torch.save(
                 net_checkpoint,

@@ -28,7 +28,7 @@ def get_config(nr_type, mode):
                 "run_info": {
                     # may need more dynamic for each network
                     "net": {
-                        "use_cpu": True,
+                        "use_cpu": False,
                         "desc": lambda: create_model(
                             input_ch=3, nr_types=nr_type, 
                             freeze=True, mode=mode
@@ -51,20 +51,20 @@ def get_config(nr_type, mode):
                         },
                         # path to load, -1 to auto load checkpoint from previous phase,
                         # None to start from scratch
-                        # "pretrained": "/home/usuaris/imatge/jose.perez.cano/hover_net/weights/ImageNet-ResNet50-Preact_pytorch.tar",
+                        # "pretrained": -1,
                         "pretrained": "/mnt/gpid08/users/jose.perez.cano/checkpoints/4/01/net_epoch=50.tar",
-                        # 'pretrained': None,
+                        # 'pretrained': None,
                     },
                 },
                 "target_info": {"gen": (gen_targets, {}), "viz": (prep_sample, {})},
-                "batch_size": {"train": 1, "valid": 2,},  # engine name : value
+                "batch_size": {"train": 2, "valid": 2,},  # engine name : value
                 "nr_epochs": 50,
             },
             {
                 "run_info": {
                     # may need more dynamic for each network
                     "net": {
-                        "use_cpu": True,
+                        "use_cpu": False,
                         "desc": lambda: create_model(
                             input_ch=3, nr_types=nr_type, 
                             freeze=False, mode=mode
@@ -91,7 +91,7 @@ def get_config(nr_type, mode):
                     },
                 },
                 "target_info": {"gen": (gen_targets, {}), "viz": (prep_sample, {})},
-                "batch_size": {"train": 1, "valid": 2,}, # batch size per gpu
+                "batch_size": {"train": 2, "valid": 2,}, # batch size per gpu
                 "nr_epochs": 50,
             },
         ],

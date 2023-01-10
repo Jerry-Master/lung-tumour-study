@@ -14,7 +14,7 @@ class Config(object):
         if model_mode not in ["original", "fast"]:
             raise Exception("Must use either `original` or `fast` as model mode")
 
-        nr_type = 5 # number of nuclear types (including background)
+        nr_type = 3 # number of nuclear types (including background)
 
         # whether to predict the nuclear type, availability depending on dataset!
         self.type_classification = True
