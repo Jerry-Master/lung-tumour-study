@@ -52,8 +52,8 @@ def get_config(nr_type, mode):
                         # path to load, -1 to auto load checkpoint from previous phase,
                         # None to start from scratch
                         # "pretrained": "/home/usuaris/imatge/jose.perez.cano/hover_net/weights/ImageNet-ResNet50-Preact_pytorch.tar",
-                       #  "pretrained": "/mnt/gpid08/users/jose.perez.cano/checkpoints/4/01/net_epoch=50.tar",
-                        'pretrained': None,
+                        "pretrained": "/mnt/gpid08/users/jose.perez.cano/checkpoints/4/01/net_epoch=50.tar",
+                        # 'pretrained': None,
                     },
                 },
                 "target_info": {"gen": (gen_targets, {}), "viz": (prep_sample, {})},
