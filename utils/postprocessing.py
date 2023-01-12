@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 
-from typing import Callable
+from typing import Callable, Tuple, List
 from scipy.spatial import KDTree
 import sys
 import os
@@ -29,9 +29,9 @@ sys.path.append(PKG_DIR)
 
 from utils.nearest import get_N_closest_pairs_dists, get_N_closest_pairs_idx
 
-Point = tuple[float,float]
-Contour = list[Point]
-Cell = tuple[int, int, Contour] # id, class
+Point = Tuple[float,float]
+Contour = List[Point]
+Cell = Tuple[int, int, Contour] # id, class
 
 def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,Contour], bool]:
     """
@@ -51,7 +51,7 @@ def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,
         return True
     return is_equal
 
-def get_greatest_connected_component(idx: list[int], max_idx: int) -> tuple[int,int]:
+def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int,int]:
     """
     Given a list of indices, returns the left and right value of the 
     greatest connected component.
@@ -86,7 +86,7 @@ def get_greatest_connected_component(idx: list[int], max_idx: int) -> tuple[int,
             r_final, l_final = r_aux, l_aux
     return idx[l_final], idx[r_final]
 
-def remove_idx(a: Cell, a_idx: list[int]) -> Cell:
+def remove_idx(a: Cell, a_idx: List[int]) -> Cell:
     """
     Removes all the indices in a's contour such that they are included
     in a_idx greatest connected component.

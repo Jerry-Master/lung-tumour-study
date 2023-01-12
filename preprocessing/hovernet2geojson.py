@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List
 import argparse
 import geojson
 import sys
@@ -35,8 +35,8 @@ parser.add_argument('--json-dir', type=str, default='./',
 parser.add_argument('--gson-dir', type=str, default='./',
                     help='Path to save files.')
 
-Point = tuple[float,float]
-Contour = list[Point]
+Point = Tuple[float,float]
+Contour = List[Point]
 def parse_contours(nuc: Dict[str, Any]) -> list[Contour]:
     """
     Input: hovernet json dictionary with nuclei information.
