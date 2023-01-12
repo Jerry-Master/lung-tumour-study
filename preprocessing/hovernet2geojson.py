@@ -37,7 +37,7 @@ parser.add_argument('--gson-dir', type=str, default='./',
 
 Point = Tuple[float,float]
 Contour = List[Point]
-def parse_contours(nuc: Dict[str, Any]) -> list[Contour]:
+def parse_contours(nuc: Dict[str, Any]) -> List[Contour]:
     """
     Input: hovernet json dictionary with nuclei information.
     Output: list of contours of cells as list of points.
@@ -58,7 +58,7 @@ def parse_contours(nuc: Dict[str, Any]) -> list[Contour]:
     return contours_
 
 
-def save_contours(out_dir: str, name: str, contours: list[Contour]) -> None:
+def save_contours(out_dir: str, name: str, contours: List[Contour]) -> None:
     """
     Saves geojson in a file. It doesn't change the format.
     """
