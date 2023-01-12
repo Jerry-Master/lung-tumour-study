@@ -7,7 +7,7 @@ Centroids in a csv with columns X,Y and class. Both for prediction and GT.
 
 Output
 ------
-F1-score, accuracy, ROC AUC and error percentage between the prediction and the GT at cell-level.
+F1-score (binary, macro and weighted), accuracy, ROC AUC and error percentage between the prediction and the GT at cell-level.
 
 Copyright (C) 2023  Jose Pérez Cano
 
@@ -29,7 +29,6 @@ Contact information: joseperez2000@hotmail.es
 import pandas as pd
 import numpy as np
 import argparse
-import time
 from utils.preprocessing import *
 from utils.nearest import *
 from typing import List, Tuple
@@ -51,19 +50,32 @@ def get_confusion_matrix(
     ) -> np.ndarray:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
-    Class is 1=non-tumour, 2=tumour.
+    Matrix has (N+1)x(N+1) entries, one more for background when no match is found.
+    N is the maximum value encountered for class.
     """
     if len(gt_centroids) == 0:
         return None
-
+    if type(gt_centroids) == list:
+        gt_centroids = np.array(gt_centroids)
+    if type(pred_centroids) == list:
+        pred_centroids = np.array(pred_centroids)
+    N = max(np.max(gt_centroids[:,2]), np.max(pred_centroids[:,2]))
+    assert min(np.min(gt_centroids[:,2]), np.min(pred_centroids[:,2])) > 0, 'Zero should not be a class.'
     gt_tree = generate_tree(gt_centroids[:,:2])
     pred_tree = generate_tree(pred_centroids[:,:2])
-    M = np.zeros((2,2)) 
+    M = np.zeros((N+1,N+1)) 
     for point_id, point in enumerate(gt_centroids):
         closest_id = find_nearest(point[:2], pred_tree)
         closest = pred_centroids[closest_id]
-        if closest[2] != -1 and point[2] != -1 and point_id == find_nearest(closest[:2], gt_tree):
-            M[int(point[2]-1)][int(closest[2]-1)] += 1
+        if point_id == find_nearest(closest[:2], gt_tree):
+            M[int(point[2])][int(closest[2])] += 1 # 1-1 matchings
+        else:
+            M[int(point[2])][0] += 1 # GT not matched in prediction
+    for point_id, point in enumerate(pred_centroids):
+        closest_id = find_nearest(point[:2], gt_tree)
+        closest = gt_centroids[closest_id]
+        if point_id != find_nearest(closest[:2], pred_tree):
+            M[0][int(point[2])] += 1 # Prediction not matched in GT
     return M
 
 def get_pairs(
@@ -114,6 +126,62 @@ def compute_metrics(true_labels: np.ndarray, pred_labels: np.ndarray) -> Tuple[f
     err = abs(true_perc - pred_perc)
     return f1, acc, auc, err
 
+def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
+    """
+    Returns f1 score of given class against the rest.
+    If no positive or predictive positive classes are found, zero is returned.
+    """
+    TP = conf_mat[cls, cls]
+    PP = conf_mat[:, cls].sum()
+    if PP == 0:
+        return None
+    P = conf_mat[cls, :].sum()
+    if P == 0:
+        return None
+    precision = TP / PP
+    recall = TP / P
+    return 2 * precision * recall / (precision + recall)
+
+def compute_metrics_from_matrix(conf_mat: np.ndarray) -> Tuple[float, float, float, float]:
+    """
+    Given confusion matrix,
+    returns F1 score, Accuracy, ROC AUC and percentage error.
+    """
+    total = np.sum(conf_mat)
+    acc = np.matrix.trace(conf_mat) / total
+    n_classes = len(conf_mat)
+    macro, weighted = 0, 0
+    real_n_classes = n_classes
+    adjust_weighted = 1
+    for k in range(n_classes):
+        f1_class = compute_f1_score_from_matrix(conf_mat, cls=k)
+        cls_supp = conf_mat[k,:].sum() / total
+        if f1_class is not None:
+            macro += f1_class
+            weighted += f1_class * cls_supp
+        else:
+            real_n_classes -= 1
+            adjust_weighted -= cls_supp
+    macro /= real_n_classes
+    weighted /= adjust_weighted
+    return macro, weighted, acc
+
+
+def add_matrices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """
+    Adds two matrices even if their shapes are different.
+    If B is bigger than A, A is enlarged with zeros.
+    """
+    if A.shape == B.shape:
+        return A + B
+    n, m = A.shape[0], B.shape[0]
+    assert m > n, 'add_matrices only supports bigger B than A, not vice versa.'
+    res = np.zeros((m,m))
+    res[:n,:n] += A
+    res += B
+    return res
+
+
 def save_csv(
     metrics: List[Tuple[str,float,float,float,float,float,float]], 
     save_path: str
@@ -125,12 +193,13 @@ def save_csv(
     metrics_df = pd.DataFrame(metrics)
     metrics_df.to_csv(save_path + '.csv', index=False)
 
-if __name__ == '__main__':
-    args = parser.parse_args()
+def main(args):
     names = read_names(args.names)
-    metrics = {'Name': [], 'F1': [], 'Accuracy': [], 'ROC_AUC': [], 'Perc_err': []}
+    metrics = {
+        'Name': [], 'F1': [], 'Accuracy': [], 'ROC_AUC': [], 'Perc_err': [],
+        'Macro F1': [], 'Weighted F1': [], 'Micro F1': []
+    }
     global_conf_mat = None
-    global_gt_one, global_gt_two, global_pred_one, global_pred_two = 0,0,0,0
     global_pred, global_true = [], []
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
@@ -138,17 +207,29 @@ if __name__ == '__main__':
         # Read
         gt_centroids = read_centroids(name, args.gt_path)
         pred_centroids = read_centroids(name, args.pred_path)
-        pred_centroids[pred_centroids[:,2]==0] = 1
-        # Make pairs
-        true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
-        if true_labels is None:
-            continue
+        # Compute pairs and confusion matrix
+        conf_mat = get_confusion_matrix(gt_centroids, pred_centroids)
+        if len(conf_mat) == 3:
+            true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
+        else:
+            true_labels, pred_labels = None, None
         # Save for later
-        global_true.extend(true_labels)
-        global_pred.extend(pred_labels)
-        # Compute per image scores
+        if true_labels is not None and pred_labels is not None:
+            global_true.extend(true_labels)
+            global_pred.extend(pred_labels)
+        else:
+            global_true, global_pred = None, None
+        if global_conf_mat is None:
+            global_conf_mat = conf_mat
+        else:
+            global_conf_mat = add_matrices(global_conf_mat, conf_mat)
+        # Compute per image scores and percentages
         try:
-            f1, acc, auc, err = compute_metrics(true_labels, pred_labels)
+            if true_labels is not None and pred_labels is not None:
+                f1, acc, auc, err = compute_metrics(true_labels, pred_labels)
+            else:
+                f1, acc, auc, err = -1, -1, -1, -1
+            macro, weighted, micro = compute_metrics_from_matrix(conf_mat)
         except Exception as e:
             print(e)
             print(name)
@@ -156,9 +237,23 @@ if __name__ == '__main__':
         metrics['Accuracy'].append(acc)
         metrics['ROC_AUC'].append(auc)
         metrics['Perc_err'].append(err)
+        metrics['Macro F1'].append(macro)
+        metrics['Weighted F1'].append(weighted)
+        metrics['Micro F1'].append(micro)
+    print(metrics)
     save_csv(metrics, args.save_name)
     # Global scores and percentages
-    f1, acc, auc, err = compute_metrics(np.array(global_true), np.array(global_pred))
-    global_metrics = {'Name': ['All'], 'F1': [f1], 'Accuracy': [acc], 'ROC_AUC': [auc], 'Perc_err': [err]}
+    if global_true is not None and global_pred is not None:
+        f1, acc, auc, err = compute_metrics(np.array(global_true), np.array(global_pred))
+    else:
+        f1, acc, auc, err = -1, -1, -1, -1
+    macro, weighted, micro = compute_metrics_from_matrix(global_conf_mat)
+    global_metrics = {
+        'Name': ['All'], 'F1': [f1], 'Accuracy': [acc], 'ROC_AUC': [auc], 'Perc_err': [err],
+        'Macro F1': [macro], 'Weighted F1': [weighted], 'Micro F1': [micro]
+    }
     save_csv(global_metrics, args.save_name + '_all')
 
+if __name__ == '__main__':
+    args = parser.parse_args()
+    main(args)

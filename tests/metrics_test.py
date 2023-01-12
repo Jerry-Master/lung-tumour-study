@@ -20,7 +20,6 @@ import pytest
 import sys
 import os
 import pandas as pd
-from sklearn.metrics import confusion_matrix
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PKG_DIR = os.path.dirname(TEST_DIR)
@@ -46,4 +45,5 @@ def test_metric(name):
     B_centroids = pd.read_csv(CENTROIDS_DIR + name + '.B.csv').to_numpy()
     result = pd.read_csv(CENTROIDS_DIR + name + '.result.csv', header=None).to_numpy()
     confusion_matrix = get_confusion_matrix(A_centroids, B_centroids)
+    confusion_matrix = confusion_matrix[1:, 1:]
     assert((result == confusion_matrix).all())

@@ -57,7 +57,7 @@ def get_config(nr_type, mode):
                     },
                 },
                 "target_info": {"gen": (gen_targets, {}), "viz": (prep_sample, {})},
-                "batch_size": {"train": 2, "valid": 2,},  # engine name : value
+                "batch_size": {"train": 4, "valid": 2,},  # engine name : value
                 "nr_epochs": 50,
             },
             {
