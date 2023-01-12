@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List
 import argparse
 import geojson
 from skimage.draw import polygon
@@ -40,7 +40,7 @@ parser.add_argument('--png-dir', type=str, required=True,
 parser.add_argument('--csv-dir', type=str, required=True,
                     help='Path to save the csv files.')      
 
-def read_gson(name: str, path: str) -> list[Dict[str,Any]]:
+def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
     """
     Reads gson at path + name.
     """
@@ -48,7 +48,7 @@ def read_gson(name: str, path: str) -> list[Dict[str,Any]]:
         gson = geojson.load(f)
     return gson
 
-def geojson2pngcsv(gson: list[Dict[str, Any]]) -> tuple[np.ndarray, pd.DataFrame]:
+def geojson2pngcsv(gson: List[Dict[str, Any]]) -> Tuple[np.ndarray, pd.DataFrame]:
     """
     Computes png <-> csv labels from geojson. 
     Width and height are assumed to be 1024.
