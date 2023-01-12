@@ -132,6 +132,8 @@ def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
     If no positive or predictive positive classes are found, zero is returned.
     """
     TP = conf_mat[cls, cls]
+    if TP == 0:
+        return None
     PP = conf_mat[:, cls].sum()
     if PP == 0:
         return None
