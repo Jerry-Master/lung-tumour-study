@@ -47,9 +47,9 @@ def find_nearest_dist_idx(a: Tuple[int,int,int], B: KDTree) -> Tuple[float, int]
     dist, idx = B.query([x,y], k=1)
     return dist, idx
 
-Point = tuple[float,float]
-Contour = list[Point]
-Cell = tuple[int, int, Contour] # id, class
+Point = Tuple[float,float]
+Contour = List[Point]
+Cell = Tuple[int, int, Contour] # id, class
 
 def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int,
     threshold: Optional[float] = np.inf) -> List[float]:
