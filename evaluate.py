@@ -29,8 +29,8 @@ Contact information: joseperez2000@hotmail.es
 import pandas as pd
 import numpy as np
 import argparse
-from utils.preprocessing import *
-from utils.nearest import *
+from utils.preprocessing import read_names, read_centroids
+from utils.nearest import generate_tree, find_nearest
 from typing import List, Tuple
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 
@@ -240,7 +240,6 @@ def main(args):
         metrics['Macro F1'].append(macro)
         metrics['Weighted F1'].append(weighted)
         metrics['Micro F1'].append(micro)
-    print(metrics)
     save_csv(metrics, args.save_name)
     # Global scores and percentages
     if global_true is not None and global_pred is not None:
