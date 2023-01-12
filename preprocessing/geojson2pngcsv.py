@@ -30,7 +30,7 @@ import os
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import *
+from utils.preprocessing import parse_path, create_dir, get_names, save_pngcsv
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gson-dir', type=str, required=True, 

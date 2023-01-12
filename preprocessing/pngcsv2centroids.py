@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
+from typing import List, Tuple
 import argparse
 import pandas as pd
 import numpy as np
@@ -27,7 +28,7 @@ import os
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import *
+from utils.preprocessing import read_labels, parse_path, create_dir, get_names
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--png-dir', type=str, required=True,
@@ -38,7 +39,7 @@ parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save files.')
 
 
-def get_centroid_by_id(img: np.ndarray, idx: int) -> tuple[int, int]:
+def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
     """
     img contains a different id value per component at each pixel
     """
@@ -47,7 +48,7 @@ def get_centroid_by_id(img: np.ndarray, idx: int) -> tuple[int, int]:
         return -1, -1
     return X.mean(), Y.mean()
 
-def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> list[tuple[int,int,int]]:
+def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int,int,int]]:
     """
     Output format: list of (x,y,class) tuples
     """

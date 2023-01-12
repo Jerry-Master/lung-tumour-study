@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
+from typing import List, Tuple
 import numpy as np
 import cv2
 import sys
@@ -26,7 +27,7 @@ import os
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import *
+from utils.preprocessing import parse_path, create_dir, get_names, read_centroids
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -35,7 +36,7 @@ parser.add_argument('--centroids-path', type=str, required=True,
 parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save png files with points.')
 
-def centroids2png(centroids: list[tuple[int,int,int]]) -> np.ndarray:
+def centroids2png(centroids: List[Tuple[int,int,int]]) -> np.ndarray:
     """
     Generates blank image with pixel value 255 at centroids coordinates.
     """

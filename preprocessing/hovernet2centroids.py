@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
+from typing import Dict, Any, List, Tuple
 import pandas as pd
 import argparse
 import sys
@@ -28,7 +29,7 @@ import os
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import *
+from utils.preprocessing import create_dir, read_json, parse_path, get_names
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--json-dir', type=str, required=True,
@@ -37,7 +38,7 @@ parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save files.')
 
 
-def parse_centroids(nuc: Dict[str, Any]) -> list[tuple[int,int,int]]:
+def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
     """
     Input: Hovernet json nuclei dictionary as given by read_json.
     Output: List of (X,Y,class) tuples representing centroids.
