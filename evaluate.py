@@ -129,11 +129,13 @@ def compute_metrics(true_labels: np.ndarray, pred_labels: np.ndarray) -> Tuple[f
 def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
     """
     Returns f1 score of given class against the rest.
-    If no positive or predictive positive classes are found, zero is returned.
+    If no positive or predictive positive classes are found, None is returned.
     """
+    if cls == 0:
+        return None
     TP = conf_mat[cls, cls]
     if TP == 0:
-        return None
+        return 0
     PP = conf_mat[:, cls].sum()
     if PP == 0:
         return None
