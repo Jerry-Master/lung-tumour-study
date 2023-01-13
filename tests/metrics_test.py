@@ -20,6 +20,7 @@ import pytest
 import sys
 import os
 import pandas as pd
+import numpy as np
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 PKG_DIR = os.path.dirname(TEST_DIR)
@@ -46,4 +47,8 @@ def test_metric(name):
     result = pd.read_csv(CENTROIDS_DIR + name + '.result.csv', header=None).to_numpy()
     confusion_matrix = get_confusion_matrix(A_centroids, B_centroids)
     confusion_matrix = confusion_matrix[1:, 1:]
+    if confusion_matrix.shape == (1,1):
+        aux = np.zeros((2,2))
+        aux[0,0] = confusion_matrix[0,0]
+        confusion_matrix = aux
     assert((result == confusion_matrix).all())

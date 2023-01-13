@@ -59,7 +59,7 @@ def get_confusion_matrix(
         gt_centroids = np.array(gt_centroids)
     if type(pred_centroids) == list:
         pred_centroids = np.array(pred_centroids)
-    N = max(np.max(gt_centroids[:,2]), np.max(pred_centroids[:,2]))
+    N = int(max(np.max(gt_centroids[:,2]), np.max(pred_centroids[:,2])))
     assert min(np.min(gt_centroids[:,2]), np.min(pred_centroids[:,2])) > 0, 'Zero should not be a class.'
     gt_tree = generate_tree(gt_centroids[:,:2])
     pred_tree = generate_tree(pred_centroids[:,:2])
