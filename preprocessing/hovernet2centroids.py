@@ -51,15 +51,19 @@ def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
         centroids_.append((inst_centroid[1], inst_centroid[0], inst_type)) 
     return centroids_
 
-if __name__ == '__main__':
-    args = parser.parse_args()
-    names = get_names(args.json_dir, '.json')
-    create_dir(parse_path(args.output_path))
+def main(args):
+    create_dir(OUTPUT_PATH)
+    names = get_names(JSON_DIR, '.json')
     for k, name in enumerate(names):
         print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        json_path = args.json_dir + name + '.json'
+        json_path = JSON_DIR + name + '.json'
         nuc = read_json(json_path)
         centroids = parse_centroids(nuc)
         df = pd.DataFrame(centroids, columns=['X','Y','class'])
-        df.to_csv(args.output_path + name + '.centroids.csv', index=False)
-            
+        df.to_csv(OUTPUT_PATH + name + '.centroids.csv', index=False)
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    OUTPUT_PATH = parse_path(args.output_path)
+    JSON_DIR = parse_path(args.json_dir)
+    main(args)
