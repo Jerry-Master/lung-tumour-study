@@ -43,6 +43,8 @@ parser.add_argument('--pred-path', type=str, required=True,
                     help='Path to prediction files.')
 parser.add_argument('--save-name', type=str, required=True,
                     help='Name to save the result, without file type.')
+parser.add_argument('--debug-path', type=str, default=None,
+                    help='Name of file where to save confusion matrices (optional).')
 
 def get_confusion_matrix(
     gt_centroids: List[Tuple[int,int,int]], 
@@ -134,8 +136,6 @@ def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
     if cls == 0:
         return None
     TP = conf_mat[cls, cls]
-    if TP == 0:
-        return 0
     PP = conf_mat[:, cls].sum()
     if PP == 0:
         return None
@@ -144,6 +144,8 @@ def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
         return None
     precision = TP / PP
     recall = TP / P
+    if TP == 0:
+        return 0
     return 2 * precision * recall / (precision + recall)
 
 def compute_metrics_from_matrix(conf_mat: np.ndarray) -> Tuple[float, float, float, float]:
@@ -197,6 +199,17 @@ def save_csv(
     metrics_df = pd.DataFrame(metrics)
     metrics_df.to_csv(save_path + '.csv', index=False)
 
+def save_debug_matrix(
+    mat: np.ndarray,
+    save_path: str
+    ) -> None:
+    """
+    Saves metrics in csv format for later use.
+    Columns: 'name', 'F1', 'Accuracy', 'ROC_AUC', 'Perc_err'
+    """
+    metrics_df = pd.DataFrame(mat)
+    metrics_df.to_csv(save_path + '.csv')
+
 def main(args):
     names = read_names(args.names)
     metrics = {
@@ -213,6 +226,8 @@ def main(args):
         pred_centroids = read_centroids(name, args.pred_path)
         # Compute pairs and confusion matrix
         conf_mat = get_confusion_matrix(gt_centroids, pred_centroids)
+        if args.debug_path is not None:
+            save_debug_matrix(conf_mat, args.debug_path + '_' + name)
         if len(conf_mat) == 3:
             true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
         else:
@@ -244,6 +259,8 @@ def main(args):
         metrics['Macro F1'].append(macro)
         metrics['Weighted F1'].append(weighted)
         metrics['Micro F1'].append(micro)
+    if args.debug_path is not None:
+        save_debug_matrix(global_conf_mat, args.debug_path + '_global')
     save_csv(metrics, args.save_name)
     # Global scores and percentages
     if global_true is not None and global_pred is not None:
