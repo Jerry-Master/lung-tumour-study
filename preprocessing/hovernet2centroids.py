@@ -48,7 +48,10 @@ def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
         inst_info = nuc[inst]
         inst_centroid = inst_info['centroid']
         inst_type = inst_info['type']
-        centroids_.append((inst_centroid[1], inst_centroid[0], inst_type)) 
+        if inst_type == 0:
+            print('Found cell with class 0, removing it.')
+        else:
+            centroids_.append((inst_centroid[1], inst_centroid[0], inst_type)) 
     return centroids_
 
 def main(args):
