@@ -177,14 +177,19 @@ def add_matrices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     """
     Adds two matrices even if their shapes are different.
     If B is bigger than A, A is enlarged with zeros.
+    And vice versa.
     """
     if A.shape == B.shape:
         return A + B
     n, m = A.shape[0], B.shape[0]
-    assert m > n, 'add_matrices only supports bigger B than A, not vice versa.'
-    res = np.zeros((m,m))
-    res[:n,:n] += A
-    res += B
+    if m > n:
+        res = np.zeros((m,m))
+        res[:n,:n] += A
+        res += B
+    else:
+        res = np.zeros((n,n))
+        res[:m,:m] += B
+        res += A
     return res
 
 
@@ -236,8 +241,6 @@ def main(args):
         if true_labels is not None and pred_labels is not None:
             global_true.extend(true_labels)
             global_pred.extend(pred_labels)
-        else:
-            global_true, global_pred = None, None
         if global_conf_mat is None:
             global_conf_mat = conf_mat
         else:
@@ -263,7 +266,7 @@ def main(args):
         save_debug_matrix(global_conf_mat, args.debug_path + '_global')
     save_csv(metrics, args.save_name)
     # Global scores and percentages
-    if global_true is not None and global_pred is not None:
+    if len(global_true) > 0 and len(global_pred) > 0:
         f1, acc, auc, err = compute_metrics(np.array(global_true), np.array(global_pred))
     else:
         f1, acc, auc, err = -1, -1, -1, -1

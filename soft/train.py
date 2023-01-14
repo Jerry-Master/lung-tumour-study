@@ -37,16 +37,22 @@ from utils.preprocessing import *
 parser = argparse.ArgumentParser()
 parser.add_argument('--img-dir', type=str, required=True,
                     help='Path to original image folder.')
-parser.add_argument('--mask-dir-count', type=str, required=True,
-                    help='Path to count masks folder.')
-parser.add_argument('--mask-dir-segment', type=str, required=True,
-                    help='Path to segment masks folder.')
-parser.add_argument('--cls-dir', type=str, required=True,
-                    help='Path to class folder.')
+parser.add_argument('--mask-dir-count-train', type=str, required=True,
+                    help='Path to count masks folder of training.')
+parser.add_argument('--mask-dir-count-val', type=str, required=True,
+                    help='Path to count masks folder of validation.')
+parser.add_argument('--mask-dir-segment-train', type=str, required=True,
+                    help='Path to segment masks folder of training.')
+parser.add_argument('--mask-dir-segment-val', type=str, required=True,
+                    help='Path to segment masks folder of validation.')
+parser.add_argument('--cls-dir-train', type=str, required=True,
+                    help='Path to class folder of training.')
+parser.add_argument('--cls-dir-val', type=str, required=True,
+                    help='Path to class folder of validation.')
 parser.add_argument('--train-path', type=str, required=True,
-                    help='Path to train.txt.')
+                    help='Path to train_names.txt.')
 parser.add_argument('--val-path', type=str, required=True,
-                    help='Path to validation.txt.')
+                    help='Path to validation_names.txt.')
 parser.add_argument('--output-path', type=str, required=True,
                     help='Path to save models.')
 
@@ -203,9 +209,12 @@ def hyperparameter_optimization(num, thresholds, sigmes, losses, learn_rates, op
 if __name__=='__main__':
     args = parser.parse_args()
     IMG_DIR = parse_path(args.img_dir)
-    MASK_DIR_COUNT = parse_path(args.mask_dir_count)
-    MASK_DIR_SEGMENT = parse_path(args.mask_dir_segment)
-    CLS_DIR = parse_path(args.cls_dir)
+    MASK_DIR_COUNT_TRAIN = parse_path(args.mask_dir_count_train)
+    MASK_DIR_SEGMENT_TRAIN = parse_path(args.mask_dir_segment_train)
+    CLS_DIR_TRAIN = parse_path(args.cls_dir_train)
+    MASK_DIR_COUNT_VAL = parse_path(args.mask_dir_count_val)
+    MASK_DIR_SEGMENT_VAL = parse_path(args.mask_dir_segment_val)
+    CLS_DIR_VAL = parse_path(args.cls_dir_val)
     OUTPUT_PATH = parse_path(args.output_path)
     create_dir(OUTPUT_PATH)
     OUT_SEGMENT = OUTPUT_PATH + 'segment/'
@@ -230,11 +239,11 @@ if __name__=='__main__':
     DA_params = {'flip':True, 'shift':True}
     # Segment
     train_dataset = softDataset(
-        images_fps=train_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_SEGMENT, class_path=CLS_DIR, mode='segment',
+        images_fps=train_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_SEGMENT_TRAIN, class_path=CLS_DIR_TRAIN, mode='segment',
         augmentation=get_training_augmentation(DA_params), preprocessing=get_preprocessing(preprocessing_fn)
     )
     valid_dataset = softDataset(
-        images_fps=val_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_SEGMENT, class_path=CLS_DIR, mode='segment',
+        images_fps=val_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_SEGMENT_VAL, class_path=CLS_DIR_VAL, mode='segment',
         augmentation=get_validation_augmentation(), preprocessing=get_preprocessing(preprocessing_fn)
     )
     hyperparameter_optimization(num_model, thresholds, sigmes, losses, learn_rates, optimizers, epochs, batch_sizes, train_dataset, valid_dataset, OUT_SEGMENT, 3, mode='segment')
@@ -243,11 +252,11 @@ if __name__=='__main__':
     # Loss
     losses = ['mse']
     train_dataset = softDataset(
-        images_fps=train_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_COUNT, mode='count', sigma=sigmes[0],
+        images_fps=train_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_COUNT_TRAIN, mode='count', sigma=sigmes[0],
         augmentation=get_training_augmentation(DA_params), preprocessing=get_preprocessing(preprocessing_fn)
     )
     valid_dataset = softDataset(
-        images_fps=val_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_COUNT, mode='count', sigma=sigmes[0],
+        images_fps=val_names, images_dir=IMG_DIR, masks_dir=MASK_DIR_COUNT_VAL, mode='count', sigma=sigmes[0],
         augmentation=get_validation_augmentation(), preprocessing=get_preprocessing(preprocessing_fn)
     )
     hyperparameter_optimization(num_model, thresholds, sigmes, losses, learn_rates, optimizers, epochs, batch_sizes, train_dataset, valid_dataset, OUT_COUNT, 1, mode='count')
