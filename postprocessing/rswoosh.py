@@ -16,17 +16,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Callable
+from typing import Callable, Tuple, List
 
-Point = tuple[float,float]
-Contour = list[Point]
-Cell = tuple[int, int, Contour] # id, class
+Point = Tuple[float,float]
+Contour = List[Point]
+Cell = Tuple[int, int, Contour] # id, class
 
 def rswoosh(
-    I: list[Cell], 
+    I: List[Cell], 
     isEqual: Callable[[Contour,Contour], bool], 
     merge: Callable[[Cell, Cell], Cell]
-    ) -> list[Cell]:
+    ) -> List[Cell]:
     """
     Given a list of cells, returns the same list without duplicates.
     Must provide a function to check equality and another to merge cells.

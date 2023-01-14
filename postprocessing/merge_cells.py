@@ -19,8 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Callable, Dict
+from typing import Callable, Dict, Tuple
 import numpy as np
+import pandas as pd
 import skimage
 import os
 import sys
@@ -28,7 +29,9 @@ import sys
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PKG_DIR)
 
-from utils.preprocessing import *
+from utils.preprocessing import (
+    parse_path, create_dir, get_names, save_pngcsv, read_labels
+)
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -41,7 +44,7 @@ parser.add_argument('--output-path', type=str, required=True,
 
 MAX_CELLS = 1500
 
-def create_id_map() -> tuple[Callable[[np.ndarray], np.ndarray], Dict[int, tuple[int,int]]]:
+def create_id_map() -> Tuple[Callable[[np.ndarray], np.ndarray], Dict[int, Tuple[int,int]]]:
     """
     Map index to some function so that difference is unique per pair.
     Also returns the inverse mapping of the differences and the 
@@ -74,7 +77,7 @@ def get_gradient(png: np.ndarray) -> np.ndarray:
 def merge_cells(
     png: np.ndarray, 
     vec_mapping: Callable[[np.ndarray], np.ndarray], 
-    inv_diff_mapping: Dict[int, tuple[int,int]]
+    inv_diff_mapping: Dict[int, Tuple[int,int]]
     ) -> np.ndarray:
     """
     Merges all the cells that share a frontier of more than 13 pixels.
