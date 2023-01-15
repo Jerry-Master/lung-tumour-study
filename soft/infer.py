@@ -372,13 +372,13 @@ def save_results(mask, probab, output_path, name, num_cls):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--img_dir', type=str, required=True,
+parser.add_argument('--img-dir', type=str, required=True,
                     help='Directory of all the images to process.')
-parser.add_argument('--output_path', type=str, required=True,
+parser.add_argument('--output-path', type=str, required=True,
                     help='Directory to save all processed images.')
-parser.add_argument('--count_path', type=str, required=True,
+parser.add_argument('--count-path', type=str, required=True,
                     help='Path to count model.')
-parser.add_argument('--segment_path', type=str, required=True,
+parser.add_argument('--segment-path', type=str, required=True,
                     help='Path to segment model.')
 #note: execution of the images 
 if __name__=='__main__':
