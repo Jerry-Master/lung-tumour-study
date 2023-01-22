@@ -70,6 +70,8 @@ parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu'
                      help='Device to execute. Either cpu or cuda. Default: cpu.')
 parser.add_argument('--num-workers', type=int, default=1, 
                      help='Number of processors to use. Default: 1.')
+parser.add_argument('--checkpoint-iters', type=int, default=-1, 
+                     help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
 
 def evaluate(
         loader: GraphDataLoader,
@@ -163,7 +165,10 @@ def train(
         optimizer: Optimizer,
         writer: SummaryWriter,
         n_early: int,
-        device: Optional[str] = 'cpu'
+        device: Optional[str] = 'cpu',
+        check_iters: Optional[int] = -1,
+        conf: Optional[Dict[str,Any]] = None,
+        normalizers: Optional[Tuple[Normalizer]] = None
         ) -> None:
     """
     Train the model with early stopping on F1 score or until 1000 iterations.
@@ -175,6 +180,9 @@ def train(
     for epoch in range(n_epochs):
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
         val_f1, val_acc, val_auc = evaluate(val_loader, model, device, writer, epoch, 'validation')
+        # Save checkpoint
+        if SAVE_WEIGHTS and check_iters != -1 and epoch > 0 and epoch % check_iters == 0:
+            save_model(model, conf, normalizers, prefix='last_')
         # Early stopping
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
@@ -289,11 +297,16 @@ def name_from_conf(conf: Dict[str, Any]) -> str:
     return conf['MODEL_NAME'] + '_' + str(conf['NUM_LAYERS']) + '_' \
         + str(conf['DROPOUT']) + '_' + str(conf['NORM_TYPE']) 
 
-def save_model(model: nn.Module, conf: Dict[str, Any], normalizers: Tuple[Normalizer]) -> None:
+def save_model(
+        model: nn.Module,
+        conf: Dict[str, Any],
+        normalizers: Tuple[Normalizer],
+        prefix: Optional[str] = ''
+        ) -> None:
     """
     Save model weights and configuration file to SAVE_DIR
     """
-    name = name_from_conf(conf)
+    name = prefix + name_from_conf(conf)
     model = model.cpu()
     state_dict = model.state_dict()
     torch.save(state_dict, SAVE_DIR + 'weights/' + name + '.pth')
@@ -307,7 +320,7 @@ def train_one_conf(
         conf: Dict[str, Any],
         train_dataloader: GraphDataLoader,
         val_dataloader: GraphDataLoader,
-        test_dataloader: GraphDataLoader
+        test_dataloader: GraphDataLoader,
         ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, name_from_conf(conf)))
@@ -318,7 +331,7 @@ def train_one_conf(
     train(
         train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
-        args.device
+        args.device, args.check_iters, conf, train_dataloader.dataset.get_normalizers()
     )
     test_f1, test_acc, test_auc = evaluate(test_dataloader, model, args.device)
     model = model.cpu()
@@ -333,13 +346,16 @@ def main(args: Namespace):
     with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
         futures = []
         for conf in confs:
-            future = executor.submit(train_one_conf, args, conf, train_dataloader, val_dataloader, test_dataloader)
+            future = executor.submit(
+                train_one_conf,
+                args, conf, train_dataloader, val_dataloader, test_dataloader
+            )
             futures.append(future)
         for future in futures:
             test_f1, test_acc, test_auc, model, conf = future.result()
             append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
             if SAVE_WEIGHTS:
-                save_model(model, conf, train_dataloader.dataset.get_normalizers())
+                save_model(model, conf, train_dataloader.dataset.get_normalizers(), 'best_')
 
 
 if __name__=='__main__':   
