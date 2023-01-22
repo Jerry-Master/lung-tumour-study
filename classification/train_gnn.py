@@ -122,7 +122,7 @@ def train_one_iter(
         optimizer: Optimizer,
         epoch: int,
         writer: SummaryWriter
-        ) -> None:
+        ) -> nn.Module:
     """
     Trains for one iteration, as the name says.
     """
@@ -157,6 +157,7 @@ def train_one_iter(
         writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
         if train_auc is not None:
             writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
+    return model
 
 def train(
         tr_loader: GraphDataLoader, 
@@ -169,7 +170,7 @@ def train(
         check_iters: Optional[int] = -1,
         conf: Optional[Dict[str,Any]] = None,
         normalizers: Optional[Tuple[Normalizer]] = None
-        ) -> None:
+        ) -> nn.Module:
     """
     Train the model with early stopping on F1 score or until 1000 iterations.
     """
@@ -178,7 +179,7 @@ def train(
     best_val_f1 = 0
     early_stop_rounds = 0
     for epoch in range(n_epochs):
-        train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
+        model = train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
         val_f1, val_acc, val_auc = evaluate(val_loader, model, device, writer, epoch, 'validation')
         # Save checkpoint
         if SAVE_WEIGHTS and check_iters != -1 and epoch % check_iters == 0:
@@ -190,7 +191,8 @@ def train(
         elif early_stop_rounds < n_early:
             early_stop_rounds += 1
         else:
-            return
+            return model
+    return model
         
 
 def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
@@ -328,7 +330,7 @@ def train_one_conf(
     model = load_model(conf)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
-    train(
+    model = train(
         train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
         args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers()
