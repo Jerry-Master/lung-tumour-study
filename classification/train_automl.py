@@ -27,6 +27,7 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 import autosklearn
 from autosklearn.classification import AutoSklearnClassifier
 import numpy as np
+import pickle
 from datetime import datetime
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -74,22 +75,32 @@ def train(X_train, y_train, args):
             autosklearn.metrics.f1, 
             autosklearn.metrics.accuracy, 
             autosklearn.metrics.roc_auc
-        ]
+        ],
+        tmp_folder=LOG_DIR
     )
     # perform the search
     model.fit(X_train, y_train)
     return model
 
-def summarize(model, X_test, y_test, args):
+def save_model(model):
+    with open(os.path.join(LOG_DIR, 'best.pkl'), 'wb') as f:
+        pickle.dump(model, f)
+    x = model.show_models()
+    results = {"ensemble": x}
+    with open(os.path.join(LOG_DIR, 'fname.pickle'),'wb') as f:
+        pickle.dump(results, f)
+
+
+def summarize(model, X_test, y_test):
     now = datetime.now()
     date = now.strftime("%m-%d-%Y-%H-%M-%S")
     # Standard statistics
     print(model.sprint_statistics())
-    with open(os.path.join(LOG_DIR, date + 'automl.txt'), 'w') as f:
+    with open(os.path.join(LOG_DIR, date + '-automl.txt'), 'w') as f:
         print(model.sprint_statistics(), file = f)
     # Leaderboard of all models
     results = model.leaderboard(detailed=True)
-    results.to_csv(os.path.join(LOG_DIR, date + 'results.csv'))
+    results.to_csv(os.path.join(LOG_DIR, date + '-results.csv'))
     # Evaluate best model
     y_hat = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:,1]
@@ -99,7 +110,7 @@ def summarize(model, X_test, y_test, args):
     print("F1 Score: %.3f" % f1)
     print("Accuracy: %.3f" % acc)
     print("ROC AUC: %.3f" % auc)
-    with open(os.path.join(LOG_DIR, date + 'automl.txt'), 'a') as f:
+    with open(os.path.join(LOG_DIR, date + '-automl.txt'), 'a') as f:
         print("F1 Score: %.3f" % f1, file=f)
         print("Accuracy: %.3f" % acc, file=f)
         print("ROC AUC: %.3f" % auc, file=f)
@@ -107,6 +118,7 @@ def summarize(model, X_test, y_test, args):
 def main(args):
     X_train, X_test, y_train, y_test = read_data(GRAPH_DIR, args)   
     model = train(X_train, y_train, args)
+    save_model(model)
     summarize(model, X_test, y_test, args)
 
 if __name__=='__main__':
