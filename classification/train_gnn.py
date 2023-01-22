@@ -89,12 +89,12 @@ def evaluate(
     model.eval()
     preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1)
     for g in loader:
+        g = g.to(device)
         # self-loops
         g = dgl.remove_self_loop(g)
         g = dgl.add_self_loop(g)
         # data
-        g = g.to(device)
-        features = g.ndata['X'].to(device)
+        features = g.ndata['X']
         # Forward
         logits = model(g, features)
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
@@ -122,19 +122,19 @@ def train_one_iter(
         optimizer: Optimizer,
         epoch: int,
         writer: SummaryWriter
-        ) -> nn.Module:
+        ) -> None:
     """
     Trains for one iteration, as the name says.
     """
     model.train()
     for step, tr_g in enumerate(tr_loader):
+        tr_g = tr_g.to(device)
         # self-loops
         tr_g = dgl.remove_self_loop(tr_g)
         tr_g = dgl.add_self_loop(tr_g)
         # data
-        tr_g = tr_g.to(device)
-        features = tr_g.ndata['X'].to(device)
-        labels = tr_g.ndata['y'].to(device)
+        features = tr_g.ndata['X']
+        labels = tr_g.ndata['y']
         # Forward
         logits = model(tr_g, features)
         loss = F.cross_entropy(logits, labels)
@@ -157,7 +157,6 @@ def train_one_iter(
         writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
         if train_auc is not None:
             writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
-    return model
 
 def train(
         tr_loader: GraphDataLoader, 
@@ -170,7 +169,7 @@ def train(
         check_iters: Optional[int] = -1,
         conf: Optional[Dict[str,Any]] = None,
         normalizers: Optional[Tuple[Normalizer]] = None
-        ) -> nn.Module:
+        ) -> None:
     """
     Train the model with early stopping on F1 score or until 1000 iterations.
     """
@@ -179,7 +178,7 @@ def train(
     best_val_f1 = 0
     early_stop_rounds = 0
     for epoch in range(n_epochs):
-        model = train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
+        train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
         val_f1, val_acc, val_auc = evaluate(val_loader, model, device, writer, epoch, 'validation')
         # Save checkpoint
         if SAVE_WEIGHTS and check_iters != -1 and epoch % check_iters == 0:
@@ -191,8 +190,7 @@ def train(
         elif early_stop_rounds < n_early:
             early_stop_rounds += 1
         else:
-            return model
-    return model
+            return
         
 
 def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
@@ -309,7 +307,6 @@ def save_model(
     Save model weights and configuration file to SAVE_DIR
     """
     name = prefix + name_from_conf(conf)
-    model = model.cpu()
     state_dict = model.state_dict()
     torch.save(state_dict, SAVE_DIR + 'weights/' + name + '.pth')
     with open(SAVE_DIR + 'confs/' + name + '.json', 'w') as f:
@@ -330,7 +327,7 @@ def train_one_conf(
     model = load_model(conf)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
-    model = train(
+    train(
         train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
         args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers()
