@@ -33,11 +33,13 @@ from models.gcn import GCN
 from models.hgao import HardGAT
 from models.gat import GAT
 import argparse
+from argparse import Namespace
 from torch.utils.tensorboard import SummaryWriter
 import warnings
 warnings.filterwarnings('ignore')
 import sys
 import os
+from concurrent.futures import ThreadPoolExecutor
 import json
 import pickle
 
@@ -66,6 +68,8 @@ parser.add_argument('--save-dir', type=str,
                      help='Folder to save models weights and confs.')
 parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu',
                      help='Device to execute. Either cpu or cuda. Default: cpu.')
+parser.add_argument('--num-workers', type=int, default=1, 
+                     help='Number of processors to use. Default: 1.')
 
 def evaluate(
         loader: GraphDataLoader,
@@ -83,12 +87,12 @@ def evaluate(
     model.eval()
     preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1)
     for g in loader:
+        g = g.to(device)
         # self-loops
         g = dgl.remove_self_loop(g)
         g = dgl.add_self_loop(g)
         # data
-        features = g.ndata['X'].to(device)
-        g = g.to(device)
+        features = g.ndata['X']
         # Forward
         logits = model(g, features)
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
@@ -122,13 +126,13 @@ def train_one_iter(
     """
     model.train()
     for step, tr_g in enumerate(tr_loader):
+        tr_g = tr_g.to(device)
         # self-loops
         tr_g = dgl.remove_self_loop(tr_g)
         tr_g = dgl.add_self_loop(tr_g)
         # data
-        features = tr_g.ndata['X'].to(device)
-        labels = tr_g.ndata['y'].to(device)
-        tr_g = tr_g.to(device)
+        features = tr_g.ndata['X']
+        labels = tr_g.ndata['y']
         # Forward
         logits = model(tr_g, features)
         loss = F.cross_entropy(logits, labels)
@@ -298,28 +302,44 @@ def save_model(model: nn.Module, conf: Dict[str, Any], normalizers: Tuple[Normal
     with open(SAVE_DIR + 'normalizers/' + name + '.pkl', 'wb') as f:
         pickle.dump(normalizers, f)
 
-def main(args):
+def train_one_conf(
+        args: Namespace,
+        conf: Dict[str, Any],
+        train_dataloader: GraphDataLoader,
+        val_dataloader: GraphDataLoader,
+        test_dataloader: GraphDataLoader
+        ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
+    # Tensorboard logs
+    writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, name_from_conf(conf)))
+    # Model
+    model = load_model(conf)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    # Train
+    train(
+        train_dataloader, val_dataloader,
+        model, optimizer, writer, args.early_stopping_rounds,
+        args.device
+    )
+    test_f1, test_acc, test_auc = evaluate(test_dataloader, model, args.device)
+    model = model.cpu()
+    return test_f1, test_acc, test_auc, model, conf
+
+def main(args: Namespace):
     # Datasets
     train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size)
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file)
-    for conf in confs:
-        # Tensorboard logs
-        writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, name_from_conf(conf)))
-        # Model
-        model = load_model(conf)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        # Train
-        train(
-            train_dataloader, val_dataloader,
-            model, optimizer, writer, args.early_stopping_rounds,
-            args.device
-        )
-        test_f1, test_acc, test_auc = evaluate(test_dataloader, model, args.device)
-        append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
-        if SAVE_WEIGHTS:
-            save_model(model, conf, train_dataloader.dataset.get_normalizers())
+    with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+        futures = []
+        for conf in confs:
+            future = executor.submit(train_one_conf, args, conf, train_dataloader, val_dataloader, test_dataloader)
+            futures.append(future)
+        for future in futures:
+            test_f1, test_acc, test_auc, model, conf = future.result()
+            append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+            if SAVE_WEIGHTS:
+                save_model(model, conf, train_dataloader.dataset.get_normalizers())
 
 
 if __name__=='__main__':   
