@@ -64,8 +64,8 @@ parser.add_argument('--num-confs', type=int, default=50,
                      help='Upper bound on the number of configurations to try.')
 parser.add_argument('--save-dir', type=str,
                      help='Folder to save models weights and confs.')
-parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='cpu',
-                     help='Device to execute. Either cpu or gpu. Default: cpu.')
+parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu',
+                     help='Device to execute. Either cpu or cuda. Default: cpu.')
 
 def evaluate(
     loader: GraphDataLoader,
