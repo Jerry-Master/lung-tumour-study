@@ -45,6 +45,8 @@ parser.add_argument('--num-workers', type=int, default=1,
                      help='Number of processors to use. Default: 1.')
 parser.add_argument('--cv-folds', type=int, default=10, 
                      help='Number of CV folds. Default: 10.')
+parser.add_argument('--save-name', type=str, required=True,
+                    help='Name to save the result, without file type.')
 
 
 def train(
@@ -138,5 +140,6 @@ if __name__=='__main__':
                 ]
         )
         metrics = pd.concat((metrics, tmp))
-    save(metrics, 'tmp.csv')
+        save(metrics, args.save_name + '.csv')
+    save(metrics, args.save_name + '.csv')
     
