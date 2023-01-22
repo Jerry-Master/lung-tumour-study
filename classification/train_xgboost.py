@@ -50,12 +50,12 @@ parser.add_argument('--save-name', type=str, required=True,
 
 
 def train(
-    conf: Dict[str, Any], 
-    X_tr: np.ndarray, 
-    y_tr: np.ndarray, 
-    val_size: float,
-    seed: int
-    ) -> XGBClassifier:
+        conf: Dict[str, Any], 
+        X_tr: np.ndarray, 
+        y_tr: np.ndarray, 
+        val_size: float,
+        seed: int
+        ) -> XGBClassifier:
     X_tr, X_val, y_tr, y_val = train_test_split(
         X_tr, y_tr, test_size=val_size, stratify=y_tr, random_state=seed
     )
@@ -70,10 +70,10 @@ def train(
     return model
 
 def evaluate(
-    model: XGBClassifier, 
-    X_val: np.ndarray,
-    y_val: np.ndarray
-    ) -> Tuple[float, float, float]:
+        model: XGBClassifier, 
+        X_val: np.ndarray,
+        y_val: np.ndarray
+        ) -> Tuple[float, float, float]:
     preds = model.predict(X_val)
     probs = model.predict_proba(X_val)[:,1]
     f1 = f1_score(y_val, preds)
