@@ -119,7 +119,7 @@ def main(args):
     X_train, X_test, y_train, y_test = read_data(GRAPH_DIR, args)   
     model = train(X_train, y_train, args)
     save_model(model)
-    summarize(model, X_test, y_test, args)
+    summarize(model, X_test, y_test)
 
 if __name__=='__main__':
     args = parser.parse_args()
