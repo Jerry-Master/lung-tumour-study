@@ -187,6 +187,8 @@ def train(
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
             early_stop_rounds = 0
+            if SAVE_WEIGHTS:
+                save_model(model, conf, normalizers, prefix='best_')
         elif early_stop_rounds < n_early:
             early_stop_rounds += 1
         else:
@@ -354,7 +356,7 @@ def main(args: Namespace):
             test_f1, test_acc, test_auc, model, conf = future.result()
             append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
             if SAVE_WEIGHTS:
-                save_model(model, conf, train_dataloader.dataset.get_normalizers(), 'best_')
+                save_model(model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
 
 
 if __name__=='__main__':   
