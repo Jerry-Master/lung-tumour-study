@@ -1,5 +1,5 @@
 # lung-tumour-study
-[![Python application](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml/badge.svg)](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml) ![pyversion](py_version.svg)
+[![Python application](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml/badge.svg)](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml) ![pyversion](logos/py_version.svg) ![torchversion](logos/torch_version.svg) ![dglversion](logos/dgl_version.svg)
 
 Github repository for my Bachelor's thesis. It is dedicated to study lung tumour through WSI.
 
