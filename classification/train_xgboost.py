@@ -120,7 +120,8 @@ if __name__=='__main__':
         )
 
     X = np.vstack((X_train, X_val, X_test))
-    y = np.hstack((y_train, y_val, y_test), dtype=np.int32)
+    y = np.hstack((y_train, y_val, y_test))
+    y = np.array(y, dtype=np.int32)
     skf = StratifiedKFold(n_splits=args.cv_folds)
     skf.get_n_splits(X, y)
 
