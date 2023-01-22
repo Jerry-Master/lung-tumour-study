@@ -181,7 +181,7 @@ def train(
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
         val_f1, val_acc, val_auc = evaluate(val_loader, model, device, writer, epoch, 'validation')
         # Save checkpoint
-        if SAVE_WEIGHTS and check_iters != -1 and epoch > 0 and epoch % check_iters == 0:
+        if SAVE_WEIGHTS and check_iters != -1 and epoch % check_iters == 0:
             save_model(model, conf, normalizers, prefix='last_')
         # Early stopping
         if val_f1 > best_val_f1:
