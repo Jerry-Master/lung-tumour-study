@@ -75,8 +75,7 @@ def train(X_train, y_train, args):
             autosklearn.metrics.f1, 
             autosklearn.metrics.accuracy, 
             autosklearn.metrics.roc_auc
-        ],
-        tmp_folder=os.path.join(LOG_DIR, 'tmp')
+        ]
     )
     # perform the search
     model.fit(X_train, y_train)
