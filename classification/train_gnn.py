@@ -88,6 +88,7 @@ def evaluate(
         g = dgl.add_self_loop(g)
         # data
         features = g.ndata['X'].to(device)
+        g = g.to(device)
         # Forward
         logits = model(g, features)
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
