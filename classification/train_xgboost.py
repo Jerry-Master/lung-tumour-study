@@ -107,6 +107,35 @@ def cross_validate(args, conf, skf, X, y):
     )
     return tmp
 
+def create_confs():
+    confs = [
+        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0},
+        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0},
+        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0.5},
+        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0.5},
+        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
+        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0},
+        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0},
+        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0.5},
+        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0.5},
+        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5},
+        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5}
+    ]
+    return confs
+
 if __name__=='__main__':
     args = parser.parse_args()
     GRAPH_DIR = args.graph_dir
@@ -129,20 +158,7 @@ if __name__=='__main__':
             'f1', 'accuracy', 'auc'
         ]
     )
-    confs = [
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5}
-    ]
+    confs = create_confs()
     with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
         futures = []
         for conf in confs:
