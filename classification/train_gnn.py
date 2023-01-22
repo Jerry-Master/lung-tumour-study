@@ -331,7 +331,7 @@ def train_one_conf(
     train(
         train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
-        args.device, args.check_iters, conf, train_dataloader.dataset.get_normalizers()
+        args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers()
     )
     test_f1, test_acc, test_auc = evaluate(test_dataloader, model, args.device)
     model = model.cpu()
