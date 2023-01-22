@@ -65,7 +65,8 @@ def train(
         learning_rate=conf['learning_rate'], # 0.05
         max_depth=conf['max_depth'],
         colsample_bytree=conf['colsample_bytree'],
-        eval_metric='logloss'
+        eval_metric='logloss',
+        use_label_encoder=False
     )
     model.fit(
         X_tr, y_tr, eval_set=[(X_val, y_val)],
@@ -119,7 +120,7 @@ if __name__=='__main__':
         )
 
     X = np.vstack((X_train, X_val, X_test))
-    y = np.hstack((y_train, y_val, y_test))
+    y = np.hstack((y_train, y_val, y_test), dtype=np.int32)
     skf = StratifiedKFold(n_splits=args.cv_folds)
     skf.get_n_splits(X, y)
 
