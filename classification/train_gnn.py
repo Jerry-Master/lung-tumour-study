@@ -89,12 +89,12 @@ def evaluate(
     model.eval()
     preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1)
     for g in loader:
-        g = g.to(device)
         # self-loops
         g = dgl.remove_self_loop(g)
         g = dgl.add_self_loop(g)
         # data
-        features = g.ndata['X']
+        g = g.to(device)
+        features = g.ndata['X'].to(device)
         # Forward
         logits = model(g, features)
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
@@ -128,13 +128,13 @@ def train_one_iter(
     """
     model.train()
     for step, tr_g in enumerate(tr_loader):
-        tr_g = tr_g.to(device)
         # self-loops
         tr_g = dgl.remove_self_loop(tr_g)
         tr_g = dgl.add_self_loop(tr_g)
         # data
-        features = tr_g.ndata['X']
-        labels = tr_g.ndata['y']
+        tr_g = tr_g.to(device)
+        features = tr_g.ndata['X'].to(device)
+        labels = tr_g.ndata['y'].to(device)
         # Forward
         logits = model(tr_g, features)
         loss = F.cross_entropy(logits, labels)
