@@ -29,6 +29,7 @@ import numpy as np
 from typing import Dict, Any, Tuple
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -84,6 +85,26 @@ def evaluate(
 def save(metrics: Dict[str,Tuple[float,float,float]], path: str) -> None:
     metrics.to_csv(path, index=False)
 
+def cross_validate(args, conf, skf, X, y):
+    f1_mean, acc_mean, auc_mean = 0, 0, 0
+    for train_index, val_index in skf.split(X, y):
+        X_train, X_cval = X[train_index], X[val_index]
+        y_train, y_cval = y[train_index], y[val_index]
+        ## Train
+        model = train(conf, X_train, y_train, args.val_size, args.seed)
+        ## Save metrics
+        f1, acc, auc = evaluate(model, X_cval, y_cval)
+        f1_mean += f1; acc_mean += acc; auc_mean += auc
+    f1_mean /= args.cv_folds; acc_mean /= args.cv_folds; auc_mean /= args.cv_folds
+    tmp = pd.DataFrame(
+        [(*conf.values(), f1_mean, acc_mean, auc_mean)], 
+        columns=[
+            'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+            'f1', 'accuracy', 'auc'
+            ]
+    )
+    return tmp
+
 if __name__=='__main__':
     args = parser.parse_args()
     GRAPH_DIR = args.graph_dir
@@ -120,26 +141,15 @@ if __name__=='__main__':
         {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
         {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5}
     ]
-    for k, conf in enumerate(confs):
-        print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
-        f1_mean, acc_mean, auc_mean = 0, 0, 0
-        for train_index, val_index in skf.split(X, y):
-            X_train, X_cval = X[train_index], X[val_index]
-            y_train, y_cval = y[train_index], y[val_index]
-            ## Train
-            model = train(conf, X_train, y_train, args.val_size, args.seed)
-            ## Save metrics
-            f1, acc, auc = evaluate(model, X_cval, y_cval)
-            f1_mean += f1; acc_mean += acc; auc_mean += auc
-        f1_mean /= args.cv_folds; acc_mean /= args.cv_folds; auc_mean /= args.cv_folds
-        tmp = pd.DataFrame(
-            [(*conf.values(), f1_mean, acc_mean, auc_mean)], 
-            columns=[
-                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'f1', 'accuracy', 'auc'
-                ]
-        )
-        metrics = pd.concat((metrics, tmp))
-        save(metrics, args.save_name + '.csv')
+    with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+        futures = []
+        for conf in confs:
+            future = executor.submit(cross_validate, args, conf, skf, X, y)
+            futures.append(future)
+        for k, future in enumerate(futures):
+            print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\n')
+            tmp = future.result()
+            metrics = pd.concat((metrics, tmp))
+            save(metrics, args.save_name + '.csv')
     save(metrics, args.save_name + '.csv')
     
