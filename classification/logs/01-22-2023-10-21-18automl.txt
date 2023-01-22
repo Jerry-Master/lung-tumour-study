@@ -1,0 +1,10 @@
+auto-sklearn results:
+  Dataset name: 643478dc-9a35-11ed-9d92-0cc47aeb23af
+  Metric: f1
+  Best validation score: 0.629162
+  Number of target algorithm runs: 49
+  Number of successful target algorithm runs: 19
+  Number of crashed target algorithm runs: 2
+  Number of target algorithms that exceeded the time limit: 28
+  Number of target algorithms that exceeded the memory limit: 0
+
