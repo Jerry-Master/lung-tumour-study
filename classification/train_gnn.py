@@ -185,11 +185,7 @@ def train(
             return
         
 
-def load_dataset(
-        node_dir: str,
-        bsize: int,
-        num_workers: Optional[int] = 1
-        ) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
+def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
     """
     Creates Torch dataloaders for training. 
     Folder structure:
@@ -210,24 +206,15 @@ def load_dataset(
     train_dataset = GraphDataset(
         node_dir=os.path.join(node_dir, 'train', 'graphs'),
         max_dist=200, max_degree=10, column_normalize=True)
-    train_dataloader = GraphDataLoader(
-        train_dataset, batch_size=bsize,
-        shuffle=True, num_workers=num_workers
-    )
+    train_dataloader = GraphDataLoader(train_dataset, batch_size=bsize, shuffle=True)
     val_dataset = GraphDataset(
         node_dir=os.path.join(node_dir, 'validation', 'graphs'),
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
-    val_dataloader = GraphDataLoader(
-        val_dataset, batch_size=1,
-        shuffle=False, num_workers=num_workers
-    )
+    val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=False)
     test_dataset = GraphDataset(
         node_dir=os.path.join(node_dir, 'test', 'graphs'),
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
-    test_dataloader = GraphDataLoader(
-        test_dataset, batch_size=1,
-        shuffle=False, num_workers=num_workers
-    )
+    test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
 
 def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, int]]:
@@ -339,7 +326,7 @@ def train_one_conf(
 
 def main(args: Namespace):
     # Datasets
-    train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size, args.num_workers)
+    train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size)
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file)
