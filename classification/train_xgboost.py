@@ -65,9 +65,12 @@ def train(
         learning_rate=conf['learning_rate'], # 0.05
         max_depth=conf['max_depth'],
         colsample_bytree=conf['colsample_bytree'],
-        early_stopping_rounds=10
+        eval_metric='logloss'
     )
-    model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=False)
+    model.fit(
+        X_tr, y_tr, eval_set=[(X_val, y_val)],
+        early_stopping_rounds=10, verbose=False
+    )
     return model
 
 def evaluate(
