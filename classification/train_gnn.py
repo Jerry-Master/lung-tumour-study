@@ -64,6 +64,8 @@ parser.add_argument('--num-confs', type=int, default=50,
                      help='Upper bound on the number of configurations to try.')
 parser.add_argument('--save-dir', type=str,
                      help='Folder to save models weights and confs.')
+parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='cpu',
+                     help='Device to execute. Either cpu or gpu. Default: cpu.')
 
 def evaluate(
     loader: GraphDataLoader,
@@ -88,11 +90,11 @@ def evaluate(
         features = g.ndata['X'].to(device)
         # Forward
         logits = model(g, features)
-        pred = logits.argmax(1).detach().numpy().reshape(-1,1)
+        pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
         preds = np.vstack((preds, pred))
-        prob = F.softmax(logits, dim=1).detach().numpy()[:,1].reshape(-1,1)
+        prob = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1].reshape(-1,1)
         probs = np.vstack((probs, prob))
-        label = g.ndata['y'].detach().numpy().reshape(-1,1)
+        label = g.ndata['y'].detach().cpu().numpy().reshape(-1,1)
         labels = np.vstack((labels, label))
     # Compute metrics on validation  
     f1 = f1_score(labels, preds)  
@@ -133,16 +135,20 @@ def train_one_iter(
         loss.backward()
         optimizer.step()
         # Compute metrics on training
-        pred = logits.argmax(1).detach().numpy()
-        labels = labels.detach().numpy()
+        pred = logits.argmax(1).detach().cpu().numpy()
+        labels = labels.detach().cpu().numpy()
         train_acc = accuracy_score(labels, pred)
         train_f1 = f1_score(labels, pred)
-        probs = F.softmax(logits, dim=1).detach().numpy()[:,1]
-        train_auc = roc_auc_score(labels, probs)
+        probs = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1]
+        train_auc = None
+        if len(np.unique(labels)) > 1:
+            train_auc = roc_auc_score(labels, probs)
+        
         # Tensorboard
         writer.add_scalar('Accuracy/train', train_acc, step+len(tr_loader)*epoch)
         writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
-        writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
+        if train_auc is not None:
+            writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
 
 def train(
     tr_loader: GraphDataLoader, 
@@ -156,7 +162,7 @@ def train(
     """
     Train the model with early stopping on F1 score or until 1000 iterations.
     """
-    model.to(device)
+    model = model.to(device)
     n_epochs = 1000
     best_val_f1 = 0
     early_stop_rounds = 0
@@ -179,25 +185,28 @@ def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataL
     Folder structure:
     node_dir:
      - train
+      - graphs
        - file1.nodes.csv
        ...
      - validation
+      - graphs
        - file1.nodes.csv
        ...
      - test
+      - graphs
        - file1.nodes.csv
        ...
     """
     train_dataset = GraphDataset(
-        node_dir=os.path.join(node_dir,'train'), 
+        node_dir=os.path.join(node_dir, 'train', 'graphs'),
         max_dist=200, max_degree=10, column_normalize=True)
     train_dataloader = GraphDataLoader(train_dataset, batch_size=bsize, shuffle=True)
     val_dataset = GraphDataset(
-        node_dir=os.path.join(node_dir, 'validation'), 
+        node_dir=os.path.join(node_dir, 'validation', 'graphs'),
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=False)
     test_dataset = GraphDataset(
-        node_dir=os.path.join(node_dir, 'test'), 
+        node_dir=os.path.join(node_dir, 'test', 'graphs'),
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
@@ -279,6 +288,7 @@ def save_model(model: nn.Module, conf: Dict[str, Any], normalizers: Tuple[Normal
     Save model weights and configuration file to SAVE_DIR
     """
     name = name_from_conf(conf)
+    model = model.cpu()
     state_dict = model.state_dict()
     torch.save(state_dict, SAVE_DIR + 'weights/' + name + '.pth')
     with open(SAVE_DIR + 'confs/' + name + '.json', 'w') as f:
@@ -287,20 +297,24 @@ def save_model(model: nn.Module, conf: Dict[str, Any], normalizers: Tuple[Normal
         pickle.dump(normalizers, f)
 
 def main(args):
-    # Tensorboard logs
-    writer = SummaryWriter(log_dir=LOG_DIR)
     # Datasets
     train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size)
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file)
     for conf in confs:
+        # Tensorboard logs
+        writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, name_from_conf(conf)))
         # Model
         model = load_model(conf)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         # Train
-        train(train_dataloader, val_dataloader, model, optimizer, writer, args.early_stopping_rounds)
-        test_f1, test_acc, test_auc = evaluate(test_dataloader, model, 'cpu')
+        train(
+            train_dataloader, val_dataloader,
+            model, optimizer, writer, args.early_stopping_rounds,
+            args.device
+        )
+        test_f1, test_acc, test_auc = evaluate(test_dataloader, model, args.device)
         append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
         if SAVE_WEIGHTS:
             save_model(model, conf, train_dataloader.dataset.get_normalizers())
