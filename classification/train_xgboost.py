@@ -64,11 +64,12 @@ def train(
         max_depth=conf['max_depth'],
         colsample_bytree=conf['colsample_bytree'],
         eval_metric='logloss',
-        use_label_encoder=False
+        use_label_encoder=False,
+        early_stopping_rounds=10
     )
     model.fit(
-        X_tr, y_tr, eval_set=[(X_val, y_val)],
-        early_stopping_rounds=10, verbose=False
+        X_tr, y_tr,
+        eval_set=[(X_val, y_val)], verbose=False
     )
     return model
 
