@@ -22,6 +22,7 @@ Contact information: joseperez2000@hotmail.es
 import argparse
 from read_nodes import create_node_splits
 import os
+import sys
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 import autosklearn
 from autosklearn.classification import AutoSklearnClassifier
@@ -29,6 +30,10 @@ import numpy as np
 from datetime import datetime
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+PKG_DIR = os.path.dirname(FILE_DIR)
+sys.path.append(PKG_DIR)
+
+from utils.preprocessing import create_dir, parse_path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--graph-dir', type=str, required=True,
@@ -80,11 +85,11 @@ def summarize(model, X_test, y_test, args):
     date = now.strftime("%m-%d-%Y-%H-%M-%S")
     # Standard statistics
     print(model.sprint_statistics())
-    with open(os.path.join(args.log_dir, date + 'automl.txt'), 'w') as f:
+    with open(os.path.join(LOG_DIR, date + 'automl.txt'), 'w') as f:
         print(model.sprint_statistics(), file = f)
     # Leaderboard of all models
     results = model.leaderboard(detailed=True)
-    results.to_csv(os.path.join(args.log_dir, date + 'results.csv'))
+    results.to_csv(os.path.join(LOG_DIR, date + 'results.csv'))
     # Evaluate best model
     y_hat = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:,1]
@@ -94,18 +99,19 @@ def summarize(model, X_test, y_test, args):
     print("F1 Score: %.3f" % f1)
     print("Accuracy: %.3f" % acc)
     print("ROC AUC: %.3f" % auc)
-    with open(os.path.join(args.log_dir, date + 'automl.txt'), 'a') as f:
+    with open(os.path.join(LOG_DIR, date + 'automl.txt'), 'a') as f:
         print("F1 Score: %.3f" % f1, file=f)
         print("Accuracy: %.3f" % acc, file=f)
         print("ROC AUC: %.3f" % auc, file=f)
 
-def main():
-    args = parser.parse_args()
-    GRAPH_DIR = args.graph_dir
-
+def main(args):
     X_train, X_test, y_train, y_test = read_data(GRAPH_DIR, args)   
     model = train(X_train, y_train, args)
     summarize(model, X_test, y_test, args)
 
 if __name__=='__main__':
-    main()
+    args = parser.parse_args()
+    GRAPH_DIR = parse_path(args.graph_dir)
+    LOG_DIR = parse_path(args.log_dir)
+    create_dir(LOG_DIR)
+    main(args)
