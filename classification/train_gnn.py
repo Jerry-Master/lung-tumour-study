@@ -68,13 +68,13 @@ parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu'
                      help='Device to execute. Either cpu or cuda. Default: cpu.')
 
 def evaluate(
-    loader: GraphDataLoader,
-    model: nn.Module,
-    device: str,
-    writer: Optional[SummaryWriter] = None,
-    epoch: Optional[int] = None,
-    log_suffix: Optional[str] = None
-    ) -> Tuple[float, float, float]:
+        loader: GraphDataLoader,
+        model: nn.Module,
+        device: str,
+        writer: Optional[SummaryWriter] = None,
+        epoch: Optional[int] = None,
+        log_suffix: Optional[str] = None
+        ) -> Tuple[float, float, float]:
     """
     Evaluates model in loader.
     Logs to tensorboard with suffix log_suffix.
@@ -109,13 +109,13 @@ def evaluate(
     return f1, acc, auc
 
 def train_one_iter(
-    tr_loader: GraphDataLoader,
-    model: nn.Module,
-    device: str,
-    optimizer: Optimizer,
-    epoch: int,
-    writer: SummaryWriter
-) -> None:
+        tr_loader: GraphDataLoader,
+        model: nn.Module,
+        device: str,
+        optimizer: Optimizer,
+        epoch: int,
+        writer: SummaryWriter
+        ) -> None:
     """
     Trains for one iteration, as the name says.
     """
@@ -127,6 +127,7 @@ def train_one_iter(
         # data
         features = tr_g.ndata['X'].to(device)
         labels = tr_g.ndata['y'].to(device)
+        tr_g = tr_g.to(device)
         # Forward
         logits = model(tr_g, features)
         loss = F.cross_entropy(logits, labels)
@@ -151,14 +152,14 @@ def train_one_iter(
             writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
 
 def train(
-    tr_loader: GraphDataLoader, 
-    val_loader: GraphDataLoader, 
-    model: nn.Module,
-    optimizer: Optimizer,
-    writer: SummaryWriter,
-    n_early: int,
-    device: Optional[str] = 'cpu'
-    ) -> None:
+        tr_loader: GraphDataLoader, 
+        val_loader: GraphDataLoader, 
+        model: nn.Module,
+        optimizer: Optimizer,
+        writer: SummaryWriter,
+        n_early: int,
+        device: Optional[str] = 'cpu'
+        ) -> None:
     """
     Train the model with early stopping on F1 score or until 1000 iterations.
     """
