@@ -40,8 +40,6 @@ parser.add_argument('--val-size', type=float, default=0.2,
                      help='Validation size used for early stopping. Default: 0.2')
 parser.add_argument('--seed', type=int, default=None,
                      help='Seed for random split. Default: None')
-parser.add_argument('--by-img', action='store_true',
-                     help='Whether to separate images in the split. Default: False.')
 parser.add_argument('--num-workers', type=int, default=1, 
                      help='Number of processors to use. Default: 1.')
 parser.add_argument('--cv-folds', type=int, default=10, 
@@ -115,8 +113,7 @@ if __name__=='__main__':
 
     X_train, X_val, X_test, y_train, y_val, y_test = \
         create_node_splits(
-            GRAPH_DIR, 0.2, 0.2, 0, 
-            'by_img' if args.by_img else 'total'
+            GRAPH_DIR, 0.2, 0.2, 0, 'total'
         )
 
     X = np.vstack((X_train, X_val, X_test))
@@ -152,7 +149,7 @@ if __name__=='__main__':
             future = executor.submit(cross_validate, args, conf, skf, X, y)
             futures.append(future)
         for k, future in enumerate(futures):
-            print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\n')
+            print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
             tmp = future.result()
             metrics = pd.concat((metrics, tmp))
             save(metrics, args.save_name + '.csv')

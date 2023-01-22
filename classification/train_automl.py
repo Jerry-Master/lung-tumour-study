@@ -63,7 +63,7 @@ def train(X_train, y_train, args):
     model = AutoSklearnClassifier(
         time_left_for_this_task=args.total_limit*60, 
         per_run_time_limit=args.per_model_limit, 
-        n_jobs=args.num_workers, memory_limit=1000000000,
+        n_jobs=args.num_workers, memory_limit=1_000_000_000,
         metric=autosklearn.metrics.f1,
         scoring_functions=[
             autosklearn.metrics.f1, 
