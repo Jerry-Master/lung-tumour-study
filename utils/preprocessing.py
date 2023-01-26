@@ -66,19 +66,34 @@ def read_names(file_path: str) -> List[str]:
         files = [line.strip() for line in lines]
     return files
 
-def read_labels(name: str, png_path: str, csv_path: str) -> Tuple[np.ndarray, pd.DataFrame]:
+def read_labels(name: str, png_dir: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
     """
     Input: name of file and paths to their location in png and csv format.
            Files should end in .GT_cells.png and .class.csv respectively.
     Output: png and csv of that file.
     """
     try:
-        img = cv2.imread(png_path + name + '.GT_cells.png', -1)
-        csv = pd.read_csv(csv_path + name + '.class.csv', header=None)
+        img = cv2.imread(png_dir + name + '.GT_cells.png', -1)
+        csv = pd.read_csv(csv_dir + name + '.class.csv', header=None)
         csv.columns = ['id', 'label']
         return img, csv
     except:
         return None, None
+
+
+def read_csv(name: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
+    """
+    Input: name of file and paths to their location in csv format.
+           Files should end in .class.csv.
+    Output: csv of that file.
+    """
+    try:
+        csv = pd.read_csv(csv_dir + name + '.class.csv', header=None)
+        csv.columns = ['id', 'label']
+        return csv
+    except:
+        return None
+
 
 def read_json(json_path: str) -> Dict[str, Any]:
     """
@@ -142,3 +157,11 @@ def save_pngcsv(png: np.ndarray, csv: pd.DataFrame, png_path: str, csv_path: str
     png = np.array(png, dtype=np.uint16)
     cv2.imwrite(png_path + name + '.GT_cells.png', png)
     csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)
+
+def save_graph(graph: pd.DataFrame, path: str) -> None:
+    """
+    Saves dataframe in given path.
+    """
+    graph.set_index('id', inplace=True)
+    graph.sort_index(inplace=True)
+    graph.to_csv(path)

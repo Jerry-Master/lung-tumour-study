@@ -169,14 +169,6 @@ def create_graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.Data
         add_node(graph, feats)
     return pd.DataFrame(graph)
 
-def save_graph(graph: pd.DataFrame, path: str) -> None:
-    """
-    Saves dataframe in given path.
-    """
-    graph.set_index('id', inplace=True)
-    graph.sort_index(inplace=True)
-    graph.to_csv(path)
-
 
 def main(name: str, k: int, names: List[str])-> None:
     """

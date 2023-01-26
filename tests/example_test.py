@@ -25,4 +25,4 @@ sys.path.append(PKG_DIR)
 from utils.preprocessing import *
 
 def test_true():
-    return True
+    assert True
