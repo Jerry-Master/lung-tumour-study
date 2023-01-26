@@ -1,6 +1,5 @@
 """
-Script to train classification models.
-Right now only supports classification over nodes, without edges.
+Auxiliar script to compute how imbalanced the dataset is.
 
 Copyright (C) 2023  Jose Pérez Cano
 

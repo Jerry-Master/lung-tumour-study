@@ -13,7 +13,7 @@ Apart from those two formats there are other two formats storing additional info
 
 There is yet another format for storing graph nodes:
 
-* `.graph.csv`: Stores extracted attributes of cells and saves them in a csv. Current attributes are: (X,Y) center of bounding box, area, perimeter, gray level variance and RGB histogram.
+* `.nodes.csv`: Stores extracted attributes of cells and saves them in a csv. Current attributes are: (X,Y) center of bounding box, area, perimeter, gray level variance and RGB histogram.
 
 ## Files description
 
@@ -30,11 +30,11 @@ The supported conversions and their corresponding implementations are:
 
 All the scripts are used in the same way `python3 [SCRIPT_NAME].py [FLAGS]`. There are five different flags that correspond to the paths of the files to convert:
 
-* `--png_dir`, `--csv_dir`: The paths to the images and their labels, used in any script that converts to or from PNG <-> CSV format. It indicates input or output depending on the conversion.
-* `--gson_dir`: Path to the geojson files, either input or output depending on conversion.
-* `--json_dir`: Path to hovernet jsons, only used as input.
-* `--output_path`: Path to save the centroids tables, only used as output.
-* `--centroids_path`: Path used in the `centroids2png.py` file to retrieve the centroids.
-* `--orig_dir`: Path to original images.
+* `--png-dir`, `--csv-dir`: The paths to the images and their labels, used in any script that converts to or from PNG <-> CSV format. It indicates input or output depending on the conversion.
+* `--gson-dir`: Path to the geojson files, either input or output depending on conversion.
+* `--json-dir`: Path to hovernet jsons, only used as input.
+* `--output-path`: Path to folder where to save output, used in several scripts.
+* `--centroids-path`: Path used in the `centroids2png.py` file to retrieve the centroids.
+* `--orig-dir`: Path to original images.
 
 If any folder indicated as output doesn't exist, it is created at runtime.
