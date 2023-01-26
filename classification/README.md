@@ -22,7 +22,7 @@ To measure how heterogeneus the cell attributes are, the automl method is traine
 
 In order to achieve the bests results, different models are tried, constituting what I call a graph zoo. Right now the zoo contains graph convolutional neural network, graph attention and graph hard attention. I am planning to also include GraphSAGE and Boost the Convolve. Apart from different architectures there are also different normalization schemes, including batch normalization and instance normalization. However, the implementation of the latter seems wrong based on empirical results. Finally, different levels of dropout are tried too. 
 
-### Usage 
+### Usage
 
 The script `train_gnn.py` performs several training in parallel for a given architecture varying the number of layers, the quantity of dropout and the normalization scheme.
 
