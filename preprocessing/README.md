@@ -24,7 +24,7 @@ The supported conversions and their corresponding implementations are:
 * [Hovernet JSON >> Centroids], implemented in `hovernet2centroids.py`.
 * [Hovernet JSON >> GeoJSON], implemented in `hovernet2geojson.py`.
 * [Centroids >> PNG], implemented in `centroids2png.py`. The png format here is different from the one mentioned above, this one just contains the centroids with a pixel value of 255.
-* [PNG <-> CSV >> Graph], implemented in `pngcsv2graph.py`. It is implemented with multiprocessing because is a quite slow process. You can specify the number of threads in the flag `--num_workers`.
+* [PNG <-> CSV >> Graph], implemented in `pngcsv2graph.py`. It is implemented with multiprocessing because is a quite slow process. You can specify the number of threads in the flag `--num-workers`.
 
 ## Script usage
 
