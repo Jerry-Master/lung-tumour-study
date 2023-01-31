@@ -43,11 +43,10 @@ def test_hovernet_patches_5dim(shape):
         img_list, OUT_DIR, to5dim, False,
         ORIG_DIR, PNGCSV_DIR, PNGCSV_DIR,
         shape)
-    match shape:
-        case '518':
-            check_shape = (518,518,5)
-        case '270':
-            check_shape = (270,270,5)
+    if shape == '518':
+        check_shape = (518,518,5)
+    elif shape == '270':
+        check_shape = (270,270,5)
     npy_list = get_names(OUT_DIR, '.npy')
     for file in npy_list:
         arr = np.load(OUT_DIR + file + '.npy')
@@ -66,11 +65,10 @@ def test_hovernet_patches_4dim(shape):
         img_list, OUT_DIR, to4dim, False,
         ORIG_DIR, PNGCSV_DIR, PNGCSV_DIR,
         shape)
-    match shape:
-        case '518':
-            check_shape = (518,518,4)
-        case '270':
-            check_shape = (270,270,4)
+    if shape == '518':
+        check_shape = (518,518,4)
+    elif shape == '270':
+        check_shape = (270,270,4)
     npy_list = get_names(OUT_DIR, '.npy')
     for file in npy_list:
         arr = np.load(OUT_DIR + file + '.npy')
