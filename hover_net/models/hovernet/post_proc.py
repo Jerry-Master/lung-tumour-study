@@ -147,6 +147,7 @@ def process(pred_map, nr_types=None, return_centroids=False):
                 "centroid": inst_centroid,
                 "contour": inst_contour,
                 "type_prob": None,
+                "prob1": None, # Added probability of positive
                 "type": None,
             }
 
@@ -171,6 +172,16 @@ def process(pred_map, nr_types=None, return_centroids=False):
             type_prob = type_dict[inst_type] / (np.sum(inst_map_crop) + 1.0e-6)
             inst_info_dict[inst_id]["type"] = int(inst_type)
             inst_info_dict[inst_id]["type_prob"] = float(type_prob)
+            # Compute probability of positive (binary)
+            if not 2 in type_dict and not 1 in type_dict:
+                prob1 = 0
+            elif not 1 in type_dict:
+                prob1 = 1
+            elif not 2 in type_dict:
+                prob1 = 0
+            else:
+                prob1 = type_dict[2] / (type_dict[1] + type_dict[2])
+            inst_info_dict[inst_id]["prob1"] = float(prob1)
 
     # print('here')
     # ! WARNING: ID MAY NOT BE CONTIGUOUS
