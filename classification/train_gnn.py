@@ -260,7 +260,7 @@ def load_model(conf: Dict[str,Any]) -> nn.Module:
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
     """
-    num_feats = 18
+    num_feats = 19
     num_classes = 2
     hidden_feats = 100
     if conf['MODEL_NAME'] == 'GCN':
