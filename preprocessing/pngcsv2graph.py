@@ -73,7 +73,12 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, int, int]
     img_aux = img.copy()
     img_aux = img_aux * mask.reshape(*mask.shape, 1)
     x,y,w,h = cv2.boundingRect((mask * 255).astype(np.uint8))
-    return img_aux[y:y+h, x:x+w].copy(), mask[y:y+h, x:x+w].copy(), int(y+h/2), int(x+w/2)
+    X, Y = np.where(mask == 1)
+    if len(X) == 0 or len(Y) == 0:
+        cx, cy = -1, -1
+    else:
+        cx, cy = X.mean(), Y.mean()
+    return img_aux[y:y+h, x:x+w].copy(), mask[y:y+h, x:x+w].copy(), cx, cy
 
 def compute_perimeter(c: Contour) -> float:
     """
