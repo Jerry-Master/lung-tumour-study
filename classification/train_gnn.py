@@ -1,4 +1,3 @@
-# coding=utf-8
 """
 Script to train and save several GNN configurations.
 

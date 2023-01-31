@@ -39,7 +39,7 @@ parser.add_argument('--node-dir', type=str, required=True,
 parser.add_argument('--save-file', type=str, required=True,
                      help='Name to file where to save the results. Must not contain extension.')
 parser.add_argument('--by-img', action='store_true',
-                     help='Whether to separate images in the split. Default: False.')
+                     help='Whether to evaluate images separately or totally.')
 parser.add_argument('--draw', action='store_true',
                      help='Whether to draw reliability diagrams.')
 parser.add_argument('--draw-dir', type=str, 
