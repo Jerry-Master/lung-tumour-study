@@ -54,7 +54,7 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     for i in range(len(graph)):
         idx = graph.loc[i, 'id']
         cell = hov_json[str(idx)]
-        graph.loc[i, 'prob1'] = cell['type_prob'] if cell['type'] == 2 else 1 - cell['type_prob']
+        graph.loc[i, 'prob1'] = cell['prob1'] if cell['type'] == 2 else 1 - cell['prob1']
     assert graph['prob1'].min() != -1
     return graph
 

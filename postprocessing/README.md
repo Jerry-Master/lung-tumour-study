@@ -22,7 +22,7 @@ The usage is quite similar to that of the preprocessing files: `python3 merge_ce
 ## Hovernet probability
 
 * `join_graph_gt.py`: Updates the class labels in the graph files with the GT class labels from centroid files. It removes cells that don't have a 1-1 matching, that is, we only consider cells in the prediction who are the closest cell to its nearest cell in the GT.
-* `join_hovprob_graph.py`: Extract probabilities from hovernet json files and append them in a new column (`prob1`) of the graph files.
+* `join_hovprob_graph.py`: Extracts probabilities from my version of hovernet json files and appends them in a new column (`prob1`) of the graph files. Should be executed after `join_graph_gt.py` for efficienfy reasons.
 
 ### Usage
 
