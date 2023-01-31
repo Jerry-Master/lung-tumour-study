@@ -251,7 +251,7 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
             conf['MODEL_NAME'] = model_name
             conf['NUM_LAYERS'] = num_layers
             conf['DROPOUT'] = dropout
-            conf['NORM_TYPE'] = 'gn'
+            conf['NORM_TYPE'] = None
             confs.append(conf)
     return confs
 
