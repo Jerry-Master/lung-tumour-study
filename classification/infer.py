@@ -56,7 +56,7 @@ def load_saved_model(weights_path: str, conf_path: str) -> nn.Module:
     Loads state_dict into a torch module.
     Configuration file must match with state_dict.
     """
-    state_dict = torch.load(weights_path)
+    state_dict = torch.load(weights_path, map_location='cpu')
     with open(conf_path, 'r') as f:
         conf = json.load(f)
     model = load_model(conf)
