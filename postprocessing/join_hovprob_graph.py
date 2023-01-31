@@ -50,7 +50,8 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     """
     graph = graph.copy()
     n_cols = len(graph.columns)
-    graph.insert(n_cols, 'prob1', [-1] * len(graph))
+    if not 'prob1' in graph.columns:
+        graph.insert(n_cols, 'prob1', [-1] * len(graph))
     for i in range(len(graph)):
         idx = graph.loc[i, 'id']
         cell = hov_json[str(idx)]
