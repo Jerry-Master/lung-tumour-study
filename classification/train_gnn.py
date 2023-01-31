@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Script to train and save several GNN configurations.
 
@@ -19,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import math
-from typing import Optional, Tuple, Dict, List, Any
+from typing import Optional, Tuple, Dict, List, Any, Type, LiteralString
 from sklearn.preprocessing import Normalizer
 import numpy as np
 import torch
@@ -74,12 +75,12 @@ parser.add_argument('--checkpoint-iters', type=int, default=-1,
                      help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
 
 def evaluate(
-        loader: GraphDataLoader,
-        model: nn.Module,
-        device: str,
+        loader: Type[GraphDataLoader],
+        model: Type[nn.Module],
+        device: LiteralString,
         writer: Optional[SummaryWriter] = None,
         epoch: Optional[int] = None,
-        log_suffix: Optional[str] = None
+        log_suffix: Optional[LiteralString] = None
         ) -> Tuple[float, float, float]:
     """
     Evaluates model in loader.
@@ -116,12 +117,12 @@ def evaluate(
     return f1, acc, auc
 
 def train_one_iter(
-        tr_loader: GraphDataLoader,
-        model: nn.Module,
-        device: str,
-        optimizer: Optimizer,
+        tr_loader: Type[GraphDataLoader],
+        model: Type[nn.Module],
+        device: LiteralString,
+        optimizer: Type[Optimizer],
         epoch: int,
-        writer: SummaryWriter
+        writer: Type[SummaryWriter]
         ) -> None:
     """
     Trains for one iteration, as the name says.
@@ -159,16 +160,16 @@ def train_one_iter(
             writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
 
 def train(
-        tr_loader: GraphDataLoader, 
-        val_loader: GraphDataLoader, 
-        model: nn.Module,
-        optimizer: Optimizer,
-        writer: SummaryWriter,
+        tr_loader: Type[GraphDataLoader], 
+        val_loader: Type[GraphDataLoader], 
+        model: Type[nn.Module],
+        optimizer: Type[Optimizer],
+        writer: Type[SummaryWriter],
         n_early: int,
-        device: Optional[str] = 'cpu',
+        device: Optional[LiteralString] = 'cpu',
         check_iters: Optional[int] = -1,
-        conf: Optional[Dict[str,Any]] = None,
-        normalizers: Optional[Tuple[Normalizer]] = None
+        conf: Optional[Dict[LiteralString, Any]] = None,
+        normalizers: Optional[Tuple[Type[Normalizer]]] = None
         ) -> None:
     """
     Train the model with early stopping on F1 score or until 1000 iterations.
@@ -195,7 +196,7 @@ def train(
             return
         
 
-def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
+def load_dataset(node_dir: LiteralString, bsize: int) -> Tuple[Type[GraphDataLoader], Type[GraphDataLoader], Type[GraphDataLoader]]:
     """
     Creates Torch dataloaders for training. 
     Folder structure:
@@ -227,7 +228,7 @@ def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataL
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
 
-def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, int]]:
+def generate_configurations(max_confs: int, model_name: LiteralString) -> List[Dict[LiteralString, int]]:
     """
     Generates a grid in the search space with no more than max_confs configurations.
     Parameters changed: NUM_LAYERS, DROPOUT, NORM_TYPE
@@ -255,7 +256,7 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
             confs.append(conf)
     return confs
 
-def load_model(conf: Dict[str,Any]) -> nn.Module:
+def load_model(conf: Dict[LiteralString,Any]) -> Type[nn.Module]:
     """
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
@@ -274,7 +275,7 @@ def load_model(conf: Dict[str,Any]) -> nn.Module:
         return HardGAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
     assert False, 'Model not implemented.'
 
-def create_results_file(filename: str) -> None:
+def create_results_file(filename: LiteralString) -> None:
     """
     Creates header of .csv result file to append results.
     filename must not contain extension.
@@ -283,7 +284,7 @@ def create_results_file(filename: str) -> None:
         print('F1 Score,Accuracy,ROC AUC,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
 
 def append_results(
-    filename: str, f1: float, acc: float, auc: float, num_layers: int, dropout: float, bn_type: str
+    filename: LiteralString, f1: float, acc: float, auc: float, num_layers: int, dropout: float, bn_type: LiteralString
 ) -> None:
     """
     Appends result to given filename.
@@ -292,7 +293,7 @@ def append_results(
     with open(filename + '.csv', 'a') as f:
         print(f1, acc, auc, num_layers, dropout, bn_type, file=f, sep=',')
 
-def name_from_conf(conf: Dict[str, Any]) -> str:
+def name_from_conf(conf: Dict[LiteralString, Any]) -> LiteralString:
     """
     Generates a name from the configuration object.
     """
@@ -300,10 +301,10 @@ def name_from_conf(conf: Dict[str, Any]) -> str:
         + str(conf['DROPOUT']) + '_' + str(conf['NORM_TYPE']) 
 
 def save_model(
-        model: nn.Module,
-        conf: Dict[str, Any],
-        normalizers: Tuple[Normalizer],
-        prefix: Optional[str] = ''
+        model: Type[nn.Module],
+        conf: Dict[LiteralString, Any],
+        normalizers: Tuple[Type[Normalizer]],
+        prefix: Optional[LiteralString] = ''
         ) -> None:
     """
     Save model weights and configuration file to SAVE_DIR
@@ -317,12 +318,12 @@ def save_model(
         pickle.dump(normalizers, f)
 
 def train_one_conf(
-        args: Namespace,
-        conf: Dict[str, Any],
-        train_dataloader: GraphDataLoader,
-        val_dataloader: GraphDataLoader,
-        test_dataloader: GraphDataLoader,
-        ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
+        args: Type[Namespace],
+        conf: Dict[LiteralString, Any],
+        train_dataloader: Type[GraphDataLoader],
+        val_dataloader: Type[GraphDataLoader],
+        test_dataloader: Type[GraphDataLoader],
+        ) -> Tuple[float, float, float, Type[nn.Module], Dict[LiteralString, Any]]:
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, name_from_conf(conf)))
     # Model
@@ -338,7 +339,7 @@ def train_one_conf(
     model = model.cpu()
     return test_f1, test_acc, test_auc, model, conf
 
-def main(args: Namespace):
+def main(args: Type[Namespace]):
     # Datasets
     train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size)
     # Configurations
