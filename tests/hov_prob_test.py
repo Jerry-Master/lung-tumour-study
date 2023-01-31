@@ -29,7 +29,7 @@ from utils.preprocessing import parse_path, get_names, read_json
 JSON_DIR = parse_path(TEST_DIR) + 'json/'
 
 @pytest.mark.parametrize('name', get_names(JSON_DIR, '.json'))
-def test_hovernet_patches_5dim(name):
+def test_hov_prob(name):
     nuc = read_json(os.path.join(JSON_DIR, name + '.json'))
     for inst in nuc:
         inst_info = nuc[inst]
