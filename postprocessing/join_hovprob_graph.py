@@ -69,7 +69,7 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     Makes the join based on id.
     """
     centroids = parse_centroids_probs(hov_json)
-    centroids = np.array(centroids, dtype=int)
+    centroids = np.array(centroids)
     assert len(centroids) > 0, 'Hov json must contain at least one cell.'
     graph = graph.copy()
     if not 'prob1' in graph.columns:
@@ -81,12 +81,8 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     pred_centroids = graph[['X', 'Y']].to_numpy(dtype=int)
     pred_tree = generate_tree(pred_centroids)
     for point_id, point in enumerate(centroids):
-        if point[2] == -1:
-            continue
         closest_id = find_nearest(point[:2], pred_tree)
         closest = graph.loc[closest_id, ['X', 'Y', 'prob1']]
-        if closest[2] == -1:
-            continue
         if point_id == find_nearest(closest[:2], gt_tree):
             graph.loc[closest_id, 'prob1'] = point[2] # 1-1 matchings
     graph.drop(graph[graph['prob1'] == -1].index, inplace=True)
