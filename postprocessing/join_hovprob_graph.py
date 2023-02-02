@@ -20,13 +20,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 from tqdm import tqdm
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 import pandas as pd
 import argparse
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.preprocessing import create_dir, parse_path, get_names, read_json, save_graph
+from utils.nearest import generate_tree, find_nearest
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -43,20 +44,50 @@ parser.add_argument(
 )
 
 
+def parse_centroids_probs(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
+    """
+    Input: Hovernet json nuclei dictionary as given by modified run_infer.py.
+    Output: List of (X,Y,prob1) tuples representing centroids.
+    """
+    centroids_ = []
+    for inst in nuc:
+        inst_info = nuc[inst]
+        inst_centroid = inst_info['centroid']
+        inst_prob1 = inst_info['prob1']
+        inst_type = inst_info['type']
+        if inst_type == 0:
+            print('Found cell with class 0, removing it.')
+        else:
+            centroids_.append((inst_centroid[1], inst_centroid[0], inst_prob1)) 
+    return centroids_
+
+
 def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFrame:
     """
     Extracts type_prob from json and adds it as column prob1.
     Makes the join based on id.
     """
+    centroids = parse_centroids_probs(hov_json)
+    assert len(centroids) > 0, 'Hov json must contain at least one cell.'
     graph = graph.copy()
-    n_cols = len(graph.columns)
     if not 'prob1' in graph.columns:
+        n_cols = len(graph.columns)
         graph.insert(n_cols, 'prob1', [-1] * len(graph))
-    for i in range(len(graph)):
-        idx = graph.loc[i, 'id']
-        cell = hov_json[str(idx)]
-        graph.loc[i, 'prob1'] = cell['prob1']
-    assert graph['prob1'].min() != -1
+    else:
+        graph['prob1'] = -1
+    gt_tree = generate_tree(centroids[:,:2])
+    pred_centroids = graph[['X', 'Y']].to_numpy(dtype=int)
+    pred_tree = generate_tree(pred_centroids)
+    for point_id, point in enumerate(centroids):
+        if point[2] == -1:
+            continue
+        closest_id = find_nearest(point[:2], pred_tree)
+        closest = graph.loc[closest_id, ['X', 'Y', 'prob1']]
+        if closest[2] == -1:
+            continue
+        if point_id == find_nearest(closest[:2], gt_tree):
+            graph.loc[closest_id, 'prob1'] = point[2] # 1-1 matchings
+    graph.drop(graph[graph['prob1'] == -1].index, inplace=True)
     return graph
 
 
