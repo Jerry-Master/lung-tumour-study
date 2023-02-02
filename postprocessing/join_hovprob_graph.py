@@ -22,6 +22,7 @@ Contact information: joseperez2000@hotmail.es
 from tqdm import tqdm
 from typing import Dict, Any, List, Tuple
 import pandas as pd
+import numpy as np
 import argparse
 import os
 import sys
@@ -68,6 +69,7 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     Makes the join based on id.
     """
     centroids = parse_centroids_probs(hov_json)
+    centroids = np.array(centroids, dtype=int)
     assert len(centroids) > 0, 'Hov json must contain at least one cell.'
     graph = graph.copy()
     if not 'prob1' in graph.columns:
