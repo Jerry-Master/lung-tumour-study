@@ -23,6 +23,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import argparse
+from argparse import Namespace
 import os
 import sys
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,6 +53,7 @@ def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
     """
     assert len(centroids) > 0, 'GT must contain at least one cell.'
     graph = graph.copy()
+    graph['prob1'] = graph['class'] - 1
     gt_tree = generate_tree(centroids[:,:2])
     pred_centroids = graph[['X', 'Y']].to_numpy(dtype=int)
     pred_tree = generate_tree(pred_centroids)
@@ -72,19 +74,19 @@ def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
     return graph
 
 
-def main() -> None:
-    names = sorted(get_names(CENTROIDS_DIR, '.centroids.csv'))
+def main(args: Namespace) -> None:
+    graph_dir = parse_path(args.graph_dir)
+    centroids_dir = parse_path(args.centroids_dir)
+    output_dir = parse_path(args.output_dir)
+    create_dir(output_dir)
+    names = sorted(get_names(centroids_dir, '.centroids.csv'))
     for name in tqdm(names):
-        centroids = read_centroids(name, CENTROIDS_DIR)
-        graph = pd.read_csv(os.path.join(GRAPH_DIR, name + '.nodes.csv'))
+        centroids = read_centroids(name, centroids_dir)
+        graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
         graph = merge_labels(graph, centroids)
-        save_graph(graph, os.path.join(OUTPUT_DIR, name + '.nodes.csv'))
+        save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
     return
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    GRAPH_DIR = parse_path(args.graph_dir)
-    CENTROIDS_DIR = parse_path(args.centroids_dir)
-    OUTPUT_DIR = parse_path(args.output_dir)
-    create_dir(OUTPUT_DIR)
-    main()
+    main(args)

@@ -24,6 +24,7 @@ from typing import Dict, Any, List, Tuple
 import pandas as pd
 import numpy as np
 import argparse
+from argparse import Namespace
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -89,20 +90,20 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     return graph
 
 
-def main() -> None:
-    names = get_names(GRAPH_DIR, '.nodes.csv')
+def main(args: Namespace) -> None:
+    json_dir = parse_path(args.json_dir)
+    graph_dir = parse_path(args.graph_dir)
+    output_dir = parse_path(args.output_dir)
+    create_dir(output_dir)
+    names = get_names(graph_dir, '.nodes.csv')
     for name in tqdm(names):
-        graph = pd.read_csv(os.path.join(GRAPH_DIR, name + '.nodes.csv'))
-        hov_json = read_json(os.path.join(JSON_DIR, name + '.json'))
+        graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
+        hov_json = read_json(os.path.join(json_dir, name + '.json'))
         graph = add_probability(graph, hov_json)
-        save_graph(graph, os.path.join(OUTPUT_DIR, name + '.nodes.csv'))
+        save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
     return
 
 
 if __name__=='__main__':
     args = parser.parse_args()
-    JSON_DIR = parse_path(args.json_dir)
-    GRAPH_DIR = parse_path(args.graph_dir)
-    OUTPUT_DIR = parse_path(args.output_dir)
-    create_dir(OUTPUT_DIR)
-    main()
+    main(args)
