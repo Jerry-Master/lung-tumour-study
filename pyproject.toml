@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tumourkit"
+authors = [
+  { name = "Jose Pérez Cano", email = "joseperez2000@hotmail.es" },
+]
+description = "A SDK for tumour study"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: MacOS X",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Typing :: Stubs Only",
+]
+license = { file = "LICENSE" }
+dynamic = ["version", "dependencies"]
+
+[tool.setuptools.packages.find]
+exclude = ["logos"]
+
+[tool.setuptools.dynamic]
+version = { attr = "tumourkit.__version__" }
+dependencies = { file = "requirements.txt" }
