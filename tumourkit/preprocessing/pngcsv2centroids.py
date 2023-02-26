@@ -22,21 +22,8 @@ from typing import List, Tuple
 import argparse
 import pandas as pd
 import numpy as np
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import read_labels, parse_path, create_dir, get_names
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--png-dir', type=str, required=True,
-                    help='Path to png files.')
-parser.add_argument('--csv-dir', type=str, required=True,
-                    help='Path to csv files.')
-parser.add_argument('--output-path', type=str, required=True,
-                    help='Path to save files.')
+from tqdm import tqdm
+from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names
 
 
 def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
@@ -47,6 +34,7 @@ def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
     if len(X) == 0 or len(Y) == 0:
         return -1, -1
     return X.mean(), Y.mean()
+
 
 def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int,int,int]]:
     """
@@ -60,18 +48,29 @@ def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int,int,
         centroids.append((x,y,row.label))
     return centroids
 
-if __name__ == '__main__':
-    args = parser.parse_args()
-    PNG_DIR = parse_path(args.png_dir)
-    CSV_DIR = parse_path(args.csv_dir)
-    OUTPUT_PATH = parse_path(args.output_path)
-    create_dir(OUTPUT_PATH)
 
-    names = get_names(PNG_DIR, '.GT_cells.png')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        img, csv = read_labels(name, PNG_DIR, CSV_DIR)
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--png-dir', type=str, required=True,
+                        help='Path to png files.')
+    parser.add_argument('--csv-dir', type=str, required=True,
+                        help='Path to csv files.')
+    parser.add_argument('--output-path', type=str, required=True,
+                        help='Path to save files.')
+    return parser
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    png_dir = parse_path(args.png_dir)
+    csv_dir = parse_path(args.csv_dir)
+    output_path = parse_path(args.output_path)
+    create_dir(output_path)
+
+    names = get_names(png_dir, '.GT_cells.png')
+    for name in tqdm(names):
+        img, csv = read_labels(name, png_dir, csv_dir)
         centroids = extract_centroids(img, csv)
         df = pd.DataFrame(centroids, columns=['X','Y','class'])
-        df.to_csv(OUTPUT_PATH + name + '.centroids.csv', index=False)
-    print()
+        df.to_csv(output_path + name + '.centroids.csv', index=False)

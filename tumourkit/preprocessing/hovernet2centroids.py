@@ -23,19 +23,9 @@ Contact information: joseperez2000@hotmail.es
 from typing import Dict, Any, List, Tuple
 import pandas as pd
 import argparse
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import create_dir, read_json, parse_path, get_names
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--json-dir', type=str, required=True,
-                    help='Path to json files.')
-parser.add_argument('--output-path', type=str, required=True,
-                    help='Path to save files.')
+import logging
+from tqdm import tqdm
+from ..utils.preprocessing import create_dir, read_json, parse_path, get_names
 
 
 def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
@@ -49,24 +39,31 @@ def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
         inst_centroid = inst_info['centroid']
         inst_type = inst_info['type']
         if inst_type == 0:
-            print('Found cell with class 0, removing it.')
+            logging.warning('Found cell with class 0, removing it.')
         else:
             centroids_.append((inst_centroid[1], inst_centroid[0], inst_type)) 
     return centroids_
 
-def main(args):
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--json-dir', type=str, required=True,
+                        help='Path to json files.')
+    parser.add_argument('--output-path', type=str, required=True,
+                        help='Path to save files.')
+    return parser
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    OUTPUT_PATH = parse_path(args.output_path)
+    JSON_DIR = parse_path(args.json_dir)
     create_dir(OUTPUT_PATH)
     names = get_names(JSON_DIR, '.json')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
+    for name in tqdm(names):
         json_path = JSON_DIR + name + '.json'
         nuc = read_json(json_path)
         centroids = parse_centroids(nuc)
         df = pd.DataFrame(centroids, columns=['X','Y','class'])
         df.to_csv(OUTPUT_PATH + name + '.centroids.csv', index=False)
-
-if __name__ == '__main__':
-    args = parser.parse_args()
-    OUTPUT_PATH = parse_path(args.output_path)
-    JSON_DIR = parse_path(args.json_dir)
-    main(args)

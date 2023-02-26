@@ -24,21 +24,9 @@ import geojson
 from skimage.draw import polygon
 import numpy as np
 import pandas as pd
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, create_dir, get_names, save_pngcsv
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--gson-dir', type=str, required=True, 
-                    help='Path to the geojson files.')
-parser.add_argument('--png-dir', type=str, required=True,
-                    help='Path to save the png files.')  
-parser.add_argument('--csv-dir', type=str, required=True,
-                    help='Path to save the csv files.')      
+from tqdm import tqdm
+from ..utils.preprocessing import parse_path, create_dir, get_names, save_pngcsv
+    
 
 def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
     """
@@ -47,6 +35,7 @@ def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
     with open(path + name + '.geojson', 'r') as f:
         gson = geojson.load(f)
     return gson
+
 
 def geojson2pngcsv(gson: List[Dict[str, Any]]) -> Tuple[np.ndarray, pd.DataFrame]:
     """
@@ -73,19 +62,30 @@ def geojson2pngcsv(gson: List[Dict[str, Any]]) -> Tuple[np.ndarray, pd.DataFrame
         
     return png, csv
 
-if __name__ == '__main__':
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gson-dir', type=str, required=True, 
+                        help='Path to the geojson files.')
+    parser.add_argument('--png-dir', type=str, required=True,
+                        help='Path to save the png files.')  
+    parser.add_argument('--csv-dir', type=str, required=True,
+                        help='Path to save the csv files.')
+    return parser 
+
+
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    GSON_DIR = parse_path(args.gson_dir)
-    PNG_DIR = parse_path(args.png_dir)
-    CSV_DIR = parse_path(args.csv_dir)
+    gson_dir = parse_path(args.gson_dir)
+    png_dir = parse_path(args.png_dir)
+    csv_dir = parse_path(args.csv_dir)
 
-    create_dir(PNG_DIR)
-    create_dir(CSV_DIR)
+    create_dir(png_dir)
+    create_dir(csv_dir)
 
-    names = get_names(GSON_DIR, '.geojson')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        gson = read_gson(name, GSON_DIR)
+    names = get_names(gson_dir, '.geojson')
+    for name in tqdm(names):
+        gson = read_gson(name, gson_dir)
         png, csv = geojson2pngcsv(gson)
-        save_pngcsv(png, csv, PNG_DIR, CSV_DIR, name)
-    print()
+        save_pngcsv(png, csv, png_dir, csv_dir, name)

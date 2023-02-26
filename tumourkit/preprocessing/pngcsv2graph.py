@@ -23,26 +23,13 @@ import argparse
 import pandas as pd
 import numpy as np
 import numpy.ma as ma
-import sys
 import os
 import cv2
 from concurrent.futures import ThreadPoolExecutor
+import logging
+from tqdm import tqdm
+from ..utils.preprocessing import *
 
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import *
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--png-dir', type=str, required=True,
-                    help='Path to png files.')
-parser.add_argument('--csv-dir', type=str, required=True,
-                    help='Path to csv files.')
-parser.add_argument('--orig-dir', type=str, required=True,
-                    help='Path to original images.')
-parser.add_argument('--output-path', type=str, required=True,
-                    help='Path to save files.')
-parser.add_argument('--num-workers', type=int, default=1)
 
 def read_image(name: str, path: str) -> np.array:
     """
@@ -51,6 +38,7 @@ def read_image(name: str, path: str) -> np.array:
     """
     aux = cv2.imread(os.path.join(path, name+'.png'))
     return cv2.cvtColor(aux, cv2.COLOR_BGR2RGB)
+
 
 def get_mask(png: np.ndarray, idx: int) -> np.ndarray:
     """
@@ -61,6 +49,7 @@ def get_mask(png: np.ndarray, idx: int) -> np.ndarray:
     png_aux[png_aux!=idx] = 0
     png_aux[png_aux!=0] = 1
     return png_aux
+
 
 def apply_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, int, int]:
     """
@@ -80,6 +69,7 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, int, int]
         cx, cy = X.mean(), Y.mean()
     return img_aux[y:y+h, x:x+w].copy(), mask[y:y+h, x:x+w].copy(), cx, cy
 
+
 def compute_perimeter(c: Contour) -> float:
     """
     Given contour returns its perimeter.
@@ -88,6 +78,7 @@ def compute_perimeter(c: Contour) -> float:
     diff = np.diff(c, axis=0)
     dists = np.hypot(diff[:,0], diff[:,1])
     return dists.sum()
+
 
 def extract_features(msk_img: np.ndarray, bin_msk: np.ndarray, debug=False) -> Dict[str, np.ndarray]:
     """
@@ -128,6 +119,7 @@ def extract_features(msk_img: np.ndarray, bin_msk: np.ndarray, debug=False) -> D
     feats['blue'] = blue_bins
     return feats
 
+
 def add_node(graph: Dict[str, float], feats: Dict[str, np.ndarray]) -> None:
     """
     [Inplace operation]
@@ -145,6 +137,7 @@ def add_node(graph: Dict[str, float], feats: Dict[str, np.ndarray]) -> None:
             if k not in graph:
                 graph[k] = []
             graph[k].append(v)
+
 
 def create_graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
@@ -175,32 +168,57 @@ def create_graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.Data
     return pd.DataFrame(graph)
 
 
-def main(name: str, k: int, names: List[str])-> None:
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--png-dir', type=str, required=True,
+                        help='Path to png files.')
+    parser.add_argument('--csv-dir', type=str, required=True,
+                        help='Path to csv files.')
+    parser.add_argument('--orig-dir', type=str, required=True,
+                        help='Path to original images.')
+    parser.add_argument('--output-path', type=str, required=True,
+                        help='Path to save files.')
+    parser.add_argument('--num-workers', type=int, default=1)
+    return parser
+
+
+def main_subthread(
+        name: str,
+        png_dir: str,
+        csv_dir: str,
+        orig_dir: str,
+        output_path: str,
+        pbar: tqdm,
+        )-> None:
     """
     Wrapper to use multiprocessing
     """
-    print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-    png, csv = read_labels(name, PNG_DIR, CSV_DIR)
-    img = read_image(name, ORIG_DIR)
     try:
+        png, csv = read_labels(name, png_dir, csv_dir)
+        img = read_image(name, orig_dir)
         graph = create_graph(img, png, csv)
-        save_graph(graph, os.path.join(OUTPUT_PATH, name+'.nodes.csv'))
+        save_graph(graph, os.path.join(output_path, name+'.nodes.csv'))
     except Exception as e:
-        print()
-        print(e)
-        print()
-        print('Failed at:', name)
+        logging.warning(e)
+        logging.warning('Failed at:', name)
+    finally:
+        pbar.update(1)
 
-if __name__ == '__main__':
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    PNG_DIR = parse_path(args.png_dir)
-    CSV_DIR = parse_path(args.csv_dir)
-    ORIG_DIR = parse_path(args.orig_dir)
-    OUTPUT_PATH = parse_path(args.output_path)
-    create_dir(OUTPUT_PATH)
+    png_dir = parse_path(args.png_dir)
+    csv_dir = parse_path(args.csv_dir)
+    orig_dir = parse_path(args.orig_dir)
+    output_path = parse_path(args.output_path)
+    create_dir(output_path)
 
-    names = get_names(PNG_DIR, '.GT_cells.png')
-    with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
-        for k, name in enumerate(names):
-            executor.submit(main, name, k, names)      
-    print()
+    names = get_names(png_dir, '.GT_cells.png')
+    pbar = tqdm(total=len(names))
+    if args.num_workers > 0:
+        with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+            for name in names:
+                executor.submit(main_subthread, name, png_dir, csv_dir, orig_dir, output_path, pbar) 
+    else:
+        for name in names:
+            main_subthread(name, png_dir, csv_dir, orig_dir, output_path, pbar)

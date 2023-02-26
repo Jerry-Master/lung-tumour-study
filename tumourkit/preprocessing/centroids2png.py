@@ -21,20 +21,10 @@ Contact information: joseperez2000@hotmail.es
 from typing import List, Tuple
 import numpy as np
 import cv2
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, create_dir, get_names, read_centroids
+from ..utils.preprocessing import parse_path, create_dir, get_names, read_centroids
 import argparse
+from tqdm import tqdm
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--centroids-path', type=str, required=True,
-                    help='Path to centroid files.')
-parser.add_argument('--output-path', type=str, required=True,
-                    help='Path to save png files with points.')
 
 def centroids2png(centroids: List[Tuple[int,int,int]]) -> np.ndarray:
     """
@@ -45,14 +35,24 @@ def centroids2png(centroids: List[Tuple[int,int,int]]) -> np.ndarray:
         png[x,y] = 255
     return png
 
-if __name__ == '__main__':
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--centroids-path', type=str, required=True,
+                        help='Path to centroid files.')
+    parser.add_argument('--output-path', type=str, required=True,
+                        help='Path to save png files with points.')
+    return parser
+
+
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    CENTROIDS_PATH = parse_path(args.centroids_path)
-    OUTPUT_PATH = parse_path(args.output_path)
-    create_dir(OUTPUT_PATH)
-    names = get_names(CENTROIDS_PATH, '.centroids.csv')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        centroids = read_centroids(name, CENTROIDS_PATH)
+    centroids_path = parse_path(args.centroids_path)
+    output_path = parse_path(args.output_path)
+    create_dir(output_path)
+    names = get_names(centroids_path, '.centroids.csv')
+    for name in tqdm(names):
+        centroids = read_centroids(name, centroids_path)
         png = centroids2png(centroids)
-        cv2.imwrite(OUTPUT_PATH + name + '.points.png', png)
+        cv2.imwrite(output_path + name + '.points.png', png)

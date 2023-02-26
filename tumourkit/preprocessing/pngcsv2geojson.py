@@ -24,24 +24,11 @@ import pandas as pd
 import cv2
 import numpy as np
 import geojson
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import (
+from tqdm import tqdm
+from ..utils.preprocessing import (
     get_names, create_dir, parse_path,
     format_contour, create_geojson, read_labels
 )
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--png-dir', type=str, required=True,
-                    help='Path to png files.')
-parser.add_argument('--csv-dir', type=str, required=True,
-                    help='Path to csv files.')
-parser.add_argument('--gson-dir', type=str, required=True,
-                    help='Path to save files.')
 
 
 def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
@@ -50,6 +37,7 @@ def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
     """
     with open(path + name + '.geojson', 'w') as f:
         geojson.dump(gson, f)
+
 
 def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
     """
@@ -62,6 +50,7 @@ def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
             mask[mask==idx] = 0
     return np.array(mask, dtype=np.uint8)
 
+
 def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int) -> List[Dict[str, Any]]:
     """
     Computes geojson features of contours of a given class.
@@ -70,6 +59,7 @@ def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int) -> List[Dict
     contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
     contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), label) for c in contours])
     return create_geojson(contours)
+
 
 def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame) -> List[Dict[str, Any]]:
     """
@@ -89,7 +79,19 @@ def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame) -> List[Dict[str, Any]]:
     return total_contours
 
 
-if __name__ == '__main__':
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--png-dir', type=str, required=True,
+                        help='Path to png files.')
+    parser.add_argument('--csv-dir', type=str, required=True,
+                        help='Path to csv files.')
+    parser.add_argument('--gson-dir', type=str, required=True,
+                        help='Path to save files.')
+    return parser
+
+
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
     PNG_DIR = parse_path(args.png_dir)
     CSV_DIR = parse_path(args.csv_dir)
@@ -97,11 +99,9 @@ if __name__ == '__main__':
     create_dir(OUTPUT_PATH)
 
     names = get_names(PNG_DIR, '.GT_cells.png')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
+    for name in tqdm(names):
         png, csv = read_labels(name, PNG_DIR, CSV_DIR)
         if png is None or png.max() == 0:
             continue
         gson = pngcsv2geojson(png, csv)
         save_geojson(gson, name, OUTPUT_PATH)
-    print()

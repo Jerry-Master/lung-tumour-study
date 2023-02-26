@@ -21,19 +21,9 @@ Contact information: joseperez2000@hotmail.es
 from typing import Dict, Any, Tuple, List
 import argparse
 import geojson
-import sys
-import os
+from tqdm import tqdm
+from ..utils.preprocessing import parse_path, get_names, create_dir, read_json, create_geojson
 
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import *
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--json-dir', type=str, default='./',
-                    help='Path to json files.')
-parser.add_argument('--gson-dir', type=str, default='./',
-                    help='Path to save files.')
 
 Point = Tuple[float,float]
 Contour = List[Point]
@@ -67,13 +57,22 @@ def save_contours(out_dir: str, name: str, contours: List[Contour]) -> None:
         geojson.dump(contours, f, sort_keys=True, indent=2)
 
 
-if __name__ == '__main__':
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--json-dir', type=str, default='./',
+                        help='Path to json files.')
+    parser.add_argument('--gson-dir', type=str, default='./',
+                        help='Path to save files.')
+    return parser
+
+
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    JSON_DIR = parse_path(args.json_dir)
-    names = get_names(JSON_DIR, '.json')
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        json_path = JSON_DIR + name + '.json'
+    json_dir = parse_path(args.json_dir)
+    names = get_names(json_dir, '.json')
+    for name in tqdm(names):
+        json_path = json_dir + name + '.json'
         nuc = read_json(json_path)
         contours = parse_contours(nuc)
         features = create_geojson(contours)

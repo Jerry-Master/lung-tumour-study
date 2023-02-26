@@ -31,3 +31,12 @@ exclude = ["logos"]
 [tool.setuptools.dynamic]
 version = { attr = "tumourkit.__version__" }
 dependencies = { file = "requirements.txt" }
+
+[project.scripts]
+hovernet2geojson = "tumourkit.preprocessing.hovernet2geojson:main"
+centroids2png = "tumourkit.preprocessing.centroids2png:main"
+hovernet2centroids = "tumourkit.preprocessing.hovernet2centroids:main"
+geojson2pngcsv = "tumourkit.preprocessing.geojson2pngcsv:main"
+pngcsv2centroids = "tumourkit.preprocessing.pngcsv2centroids:main"
+pngcsv2geojson = "tumourkit.preprocessing.pngcsv2geojson:main"
+pngcsv2graph = "tumourkit.preprocessing.pngcsv2graph:main"
