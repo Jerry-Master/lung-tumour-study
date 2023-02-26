@@ -9,4 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added 
 
-- Everything
+- 
+- Created python package for preprocessing, training and deploying ML models related to tumours.
