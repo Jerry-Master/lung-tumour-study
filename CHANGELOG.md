@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Training pipeline
 - Inference pipeline
 
+## [0.1.3] - 2023-02-26
+
+### Fixed
+
+- Changed README.md to a more informative version.
+
 ## [0.1.2] - 2023-02-26
 
 ### Fixed

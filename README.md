@@ -1,5 +1,5 @@
 # lung-tumour-study
-[![Python application](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml/badge.svg)](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml) [![pyversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/py_version.svg)](https://www.python.org/) [![torchversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/torch_version.svg)](https://pytorch.org/) [![dglversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/dgl_version.svg)](https://www.dgl.ai/)
+[![pyversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/py_version.svg)](https://www.python.org/) [![torchversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/torch_version.svg)](https://pytorch.org/) [![dglversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/dgl_version.svg)](https://www.dgl.ai/)
 
 Python package from my Bachelor's thesis. It is dedicated to aid in the study of tumours.
 
