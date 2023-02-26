@@ -27,4 +27,4 @@ With this package you'll be able to easily convert between different data format
 geojson2pngcsv --gson-dir [...] --png-dir [...] --csv-dir [...]
 ```
 
-Substituting the dots by the input and output folder.
+Substituting the dots by the input and output folders respectively.
