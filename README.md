@@ -1,4 +1,4 @@
-# lung-tumour-study
+# TumourKit
 [![pyversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/py_version.svg)](https://www.python.org/) [![torchversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/torch_version.svg)](https://pytorch.org/) [![dglversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/dgl_version.svg)](https://www.dgl.ai/)
 
 Python package from my Bachelor's thesis. It is dedicated to aid in the study of tumours.
