@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Training pipeline
+- Inference pipeline
+
+## [0.1.0] - 2023-02-26
+
 ### Added 
 
-- Created entry points for preprocessing scripts
-- Created python package for preprocessing, training and deploying ML models related to tumours.
+- Entry points for preprocessing scripts.
