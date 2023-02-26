@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Training pipeline
 - Inference pipeline
 
-## [0.1.3] - 2023-02-26
+## [0.1.4] - 2023-02-26
 
 ### Fixed
 
