@@ -21,7 +21,7 @@ pip install tumourkit
 
 ## Main features
 
-With this package you'll be able to easily convert between different data formats, train models and make inference. As an example, if you want to convert GeoJSON data exported from QuPath into the standar PNG / CSV format you can simply type:
+With this package you'll be able to easily convert between different data formats, train models and make inference. As an example, if you want to convert GeoJSON data exported from QuPath into the standard PNG / CSV format you can simply type:
 
 ```shell
 geojson2pngcsv --gson-dir [...] --png-dir [...] --csv-dir [...]
