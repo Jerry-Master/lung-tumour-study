@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Training pipeline
 - Inference pipeline
 
+## [0.1.2] - 2023-02-26
+
+### Fixed
+
+- Badges in PyPI.
+
 ## [0.1.0] - 2023-02-26
 
 ### Added 

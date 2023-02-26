@@ -1,16 +1,30 @@
 # lung-tumour-study
-[![Python application](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml/badge.svg)](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml) [![pyversion](logos/py_version.svg)](https://www.python.org/) [![torchversion](logos/torch_version.svg)](https://pytorch.org/) [![dglversion](logos/dgl_version.svg)](https://www.dgl.ai/)
+[![Python application](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml/badge.svg)](https://github.com/Jerry-Master/lung-tumour-study/actions/workflows/python-app.yml) [![pyversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/py_version.svg)](https://www.python.org/) [![torchversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/torch_version.svg)](https://pytorch.org/) [![dglversion](https://raw.githubusercontent.com/Jerry-Master/badges/main/dgl_version.svg)](https://www.dgl.ai/)
 
-Github repository for my Bachelor's thesis. It is dedicated to study lung tumour through WSI.
+Python package from my Bachelor's thesis. It is dedicated to aid in the study of tumours.
 
-## Dataset (v1)
+## Installation
 
-The dataset consists of a set of labelled WSI tiles of lung cancer. The labels are done at x40 magnification and are done pixel-wise. It is therefore a segmentation and nuclei classification dataset. Right now it has 44 images manually labelled by me, with the help of Hovernet.
+Just do:
 
-## Baseline (Soft & Hovernet)
+```shell
+pip install tumourkit
+```
 
-The initial baseline is set by Hovernet's model trained with the first version of the dataset. I also tried the soft algorithm developed by Digipatics with far worse results.
+It's that simple, dependencies will be automatically installed and several command line scripts will be readily available. It is recommended that you install it inside a virtual environment, for that, type in a shell:
 
-## Improvements (Doing)
+```shell
+python -m venv [ENV_NAME]
+source [ENV_NAME]/bin/activate
+pip install tumourkit
+``` 
 
-Current line of research right now is about applying Machine Learning with Graphs. It has yet to be decided the way to construct the graph and the design space of the models to use.
+## Main features
+
+With this package you'll be able to easily convert between different data formats, train models and make inference. As an example, if you want to convert GeoJSON data exported from QuPath into the standar PNG / CSV format you can simply type:
+
+```shell
+geojson2pngcsv --gson-dir [...] --png-dir [...] --csv-dir [...]
+```
+
+Substituting the dots by the input and output folder.
