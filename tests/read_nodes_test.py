@@ -17,16 +17,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
 import os
 
+from tumourkit.classification.read_nodes import create_node_splits
+from tumourkit.utils.preprocessing import parse_path 
+
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from classification.read_nodes import create_node_splits
-from utils.preprocessing import parse_path 
-
 GRAPHS_DIR = parse_path(TEST_DIR) + 'graphs/'
 
 

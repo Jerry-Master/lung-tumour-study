@@ -17,18 +17,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
 import os
 import json
 
+from tumourkit.postprocessing.rswoosh import rswoosh
+from tumourkit.utils.preprocessing import get_names, parse_path
+from tumourkit.utils.postprocessing import create_comparator, merge_cells
+
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from postprocessing.rswoosh import rswoosh
-from utils.preprocessing import get_names, parse_path
-from utils.postprocessing import create_comparator, merge_cells
-
 RSWOOSH_DIR = parse_path(TEST_DIR) + 'rswoosh/'
 THRESHOLD = 1
 NUM_FRONTIER = 30

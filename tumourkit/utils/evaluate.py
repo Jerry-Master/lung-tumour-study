@@ -28,11 +28,13 @@ Contact information: joseperez2000@hotmail.es
 """
 import pandas as pd
 import numpy as np
-import argparse
-from utils.preprocessing import read_names, read_centroids
-from utils.nearest import generate_tree, find_nearest
 from typing import List, Tuple
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
+
+from .preprocessing import read_names, read_centroids
+from .nearest import generate_tree, find_nearest
+
+import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--names', type=str, required=True,

@@ -17,14 +17,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
-import os
 
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
+from tumourkit.utils.postprocessing import remove_idx
 
-from utils.postprocessing import remove_idx
+
 
 @pytest.mark.parametrize("a,a_idx,out", [
     ([0,0,[[0,0],[1,1],[2,2],[3,3]]], [2], (0,0,[[3,3],[0,0],[1,1]])),

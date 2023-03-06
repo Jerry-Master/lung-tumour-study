@@ -17,17 +17,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
 import os
-import numpy as np
+
+from tumourkit.utils.preprocessing import parse_path
+from tumourkit.utils.postprocessing import get_greatest_connected_component
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path
-from utils.postprocessing import get_greatest_connected_component
-
 RSWOOSH_DIR = parse_path(TEST_DIR) + 'rswoosh/'
 THRESHOLD = 0.0001
 

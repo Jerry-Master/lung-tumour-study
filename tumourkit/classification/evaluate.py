@@ -17,20 +17,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 from typing import Dict, List, Optional
-import sys
 import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, create_dir
 import pandas as pd
 import numpy as np
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
-from calibration_error import calibration_error
 from sklearn.calibration import calibration_curve
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+
+from ..utils.preprocessing import parse_path, create_dir
+from .calibration_error import calibration_error
+
 import argparse
 
 parser = argparse.ArgumentParser()

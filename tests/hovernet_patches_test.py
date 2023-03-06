@@ -17,18 +17,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
 import os
 import shutil
 import numpy as np
 
+from tumourkit.utils.preprocessing import parse_path, get_names
+from tumourkit.segmentation.hovernet.extract_patches import save_npy, to4dim, to5dim, create_dir
+
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, get_names
-from hover_net.extract_patches import save_npy, to4dim, to5dim, create_dir
-
 PNGCSV_DIR = parse_path(TEST_DIR) + 'pngcsv/'
 ORIG_DIR = parse_path(TEST_DIR) + 'tiles/'
 OUT_DIR = parse_path(TEST_DIR) + 'npy_files/'

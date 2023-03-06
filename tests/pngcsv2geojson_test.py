@@ -17,18 +17,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
 import os
 import numpy as np
 
+from tumourkit.preprocessing.geojson2pngcsv import geojson2pngcsv
+from tumourkit.preprocessing.pngcsv2geojson import pngcsv2geojson
+from tumourkit.utils.preprocessing import get_names, parse_path, read_labels
+
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from preprocessing.geojson2pngcsv import geojson2pngcsv
-from preprocessing.pngcsv2geojson import pngcsv2geojson
-from utils.preprocessing import get_names, parse_path, read_labels
-
 PNGCSV_DIR = parse_path(TEST_DIR) + 'pngcsv/'
 THRESHOLD = 0.1
 

@@ -16,13 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import *
+from tumourkit.utils.preprocessing import *
 
 def test_true():
     assert True

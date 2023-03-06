@@ -17,18 +17,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import pytest
-import sys
-import os
 import pandas as pd
-import numpy as np
+import os
+
+from tumourkit.utils.preprocessing import get_names, parse_path
+from tumourkit.utils.evaluate import get_confusion_matrix
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import get_names, parse_path
-from evaluate import get_confusion_matrix
-
 CENTROIDS_DIR = parse_path(TEST_DIR) + 'centroids/'
 
 

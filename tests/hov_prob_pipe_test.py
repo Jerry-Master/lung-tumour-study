@@ -17,21 +17,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import shutil
-import sys
 import os
 from argparse import Namespace
 import pandas as pd
 
+from tumourkit.utils.preprocessing import parse_path, create_dir
+from tumourkit.postprocessing.join_graph_gt import main as pipe1
+from tumourkit.postprocessing.join_hovprob_graph import main as pipe2
+from tumourkit.classification.evaluate import main as eval
+
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(TEST_DIR)
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, create_dir
-from postprocessing.join_graph_gt import main as pipe1
-from postprocessing.join_hovprob_graph import main as pipe2
-sys.path.append(os.path.join(PKG_DIR, 'classification'))
-from classification.evaluate import main as eval
-
 TEST_DIR = parse_path(TEST_DIR)
 JSON_DIR = TEST_DIR + 'json/'
 GRAPHS_DIR = TEST_DIR + 'pipe_graphs/'
