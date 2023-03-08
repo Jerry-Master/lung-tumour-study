@@ -3,7 +3,7 @@ import numpy as np
 from scipy.ndimage import measurements
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.segmentation import watershed
-from misc.utils import get_bounding_box, remove_small_objects
+from ...misc.utils import get_bounding_box, remove_small_objects
 import warnings
 
 
