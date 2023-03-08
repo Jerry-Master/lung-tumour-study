@@ -1,7 +1,7 @@
 import numpy as np
 import torch.utils.data
 from imgaug import augmenters as iaa
-from misc.utils import cropping_center
+from ..misc.utils import cropping_center
 from .augs import (
     add_to_brightness,
     add_to_contrast,

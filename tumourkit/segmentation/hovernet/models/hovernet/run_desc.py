@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 
-from misc.utils import cropping_center
+from ...misc.utils import cropping_center
 from .utils import dice_loss, mse_loss, msge_loss, xentropy_loss
 
 from collections import OrderedDict

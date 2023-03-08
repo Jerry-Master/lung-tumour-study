@@ -13,25 +13,16 @@ import torch
 from tensorboardX import SummaryWriter
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
-from config import Config
-from dataloader.train_loader import FileLoader
-from misc.utils import rm_n_mkdir
-from run_utils.engine import RunEngine
-from run_utils.utils import (
+from .config import Config
+from .dataloader.train_loader import FileLoader
+from .misc.utils import rm_n_mkdir
+from .run_utils.engine import RunEngine
+from .run_utils.utils import (
     check_manual_seed,
     colored,
     convert_pytorch_checkpoint
 )
 import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--gpu', type=str, default='')
-parser.add_argument('--view', type=str)
-parser.add_argument('--save-name', type=str)
-parser.add_argument('--log-dir', type=str, required=True)
-parser.add_argument('--train-dir', type=str, required=True)
-parser.add_argument('--valid-dir', type=str, required=True)
-parser.add_argument('--shape', type=str, required=True, choices=['270', '518'])
 
 
 def worker_init_fn(worker_id):
@@ -43,10 +34,6 @@ def worker_init_fn(worker_id):
 
 class TrainManager(Config):
     """Either used to view the dataset or to initialise the main training loop."""
-
-    def __init__(self, shape: str, log_dir: str, train_dir: str, valid_dir: str):
-        super().__init__(shape, log_dir, train_dir, valid_dir)
-        return
 
 
     def view_dataset(self, save_name, mode="train"):
@@ -250,9 +237,23 @@ class TrainManager(Config):
             prev_save_path = save_path
 
 
-if __name__ == "__main__":
-    args = parser.parse_args()
-    trainer = TrainManager(args.shape, args.log_dir, args.train_dir, args.valid_dir)
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu', type=str, default='')
+    parser.add_argument('--view', type=str)
+    parser.add_argument('--save-name', type=str)
+    parser.add_argument('--log-dir', type=str, required=True)
+    parser.add_argument('--train-dir', type=str, required=True)
+    parser.add_argument('--valid-dir', type=str, required=True)
+    parser.add_argument('--shape', type=str, required=True, choices=['270', '518'])
+    return parser
+
+
+def main_with_args(args):
+    trainer = TrainManager(
+        args.shape, args.log_dir, args.train_dir, args.valid_dir,
+        args.pretrained_path, use_cpu=(args.gpu == '')
+    )
 
     if args.view is not None:
         assert args.view == "train" or args.view == "valid", 'Use "train" or "valid" for --view.'
@@ -261,3 +262,9 @@ if __name__ == "__main__":
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
         trainer.run()
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)
+    

@@ -92,50 +92,20 @@ Contact information: joseperez2000@hotmail.es
 import torch
 import logging
 import os
-import copy
-from misc.utils import log_info
+from .misc.utils import log_info
 from docopt import docopt
+from typing import Dict
+import pdb
 
 #-------------------------------------------------------------------------------------------------------
 
-if __name__ == '__main__':
-    sub_cli_dict = {'tile' : tile_cli, 'wsi' : wsi_cli}
-    args = docopt(__doc__, help=False, options_first=True, 
-                    version='HoVer-Net Pytorch Inference v1.0')
-    sub_cmd = args.pop('<command>')
-    sub_cmd_args = args.pop('<args>')
-
-    # ! TODO: where to save logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='|%(asctime)s.%(msecs)03d| [%(levelname)s] %(message)s',datefmt='%Y-%m-%d|%H:%M:%S',
-        handlers=[
-            logging.FileHandler("debug.log"),
-            logging.StreamHandler()
-        ]
-    )
-
-    if args['--help'] and sub_cmd is not None:
-        if sub_cmd in sub_cli_dict: 
-            print(sub_cli_dict[sub_cmd])
-        else:
-            print(__doc__)
-        exit()
-    if args['--help'] or sub_cmd is None:
-        print(__doc__)
-        exit()
-
-    sub_args = docopt(sub_cli_dict[sub_cmd], argv=sub_cmd_args, help=True)
-    
-    args.pop('--version')
-    gpu_list = args.pop('--gpu')
+def main_with_args(args: Dict, sub_args: Dict, sub_cmd: str) -> None:
+    gpu_list = args['gpu']
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_list
 
     nr_gpus = torch.cuda.device_count()
     log_info('Detect #GPUS: %d' % nr_gpus)
 
-    args = {k.replace('--', '') : v for k, v in args.items()}
-    sub_args = {k.replace('--', '') : v for k, v in sub_args.items()}
     if args['model_path'] == None:
         raise Exception('A model path must be supplied as an argument with --model_path.')
 
@@ -201,10 +171,48 @@ if __name__ == '__main__':
     # ***
     
     if sub_cmd == 'tile':
-        from infer.tile import InferManager
+        from .infer.tile import InferManager
         infer = InferManager(**method_args)
         infer.process_file_list(run_args)
     else:
-        from infer.wsi import InferManager
+        from .infer.wsi import InferManager
         infer = InferManager(**method_args)
         infer.process_wsi_list(run_args)
+
+def main():
+    sub_cli_dict = {'tile' : tile_cli, 'wsi' : wsi_cli}
+    args = docopt(__doc__, help=False, options_first=True, 
+                    version='HoVer-Net Pytorch Inference v1.0')
+    sub_cmd = args.pop('<command>')
+    sub_cmd_args = args.pop('<args>')
+
+    # ! TODO: where to save logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='|%(asctime)s.%(msecs)03d| [%(levelname)s] %(message)s',datefmt='%Y-%m-%d|%H:%M:%S',
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
+
+    if args['--help'] and sub_cmd is not None:
+        if sub_cmd in sub_cli_dict: 
+            print(sub_cli_dict[sub_cmd])
+        else:
+            print(__doc__)
+        exit()
+    if args['--help'] or sub_cmd is None:
+        print(__doc__)
+        exit()
+
+    sub_args = docopt(sub_cli_dict[sub_cmd], argv=sub_cmd_args, help=True)
+    
+    args.pop('--version')
+
+    args = {k.replace('--', '') : v for k, v in args.items()}
+    sub_args = {k.replace('--', '') : v for k, v in sub_args.items()}
+
+    main_with_args(args, sub_args, sub_cmd)
+
+if __name__=='__main__':
+    main()

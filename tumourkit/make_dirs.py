@@ -2,6 +2,7 @@ import os
 import argparse
 import logging
 from typing import Union, Dict, List
+import json
 
 
 def _create_parser():
@@ -61,3 +62,10 @@ def main():
         }
         os.mkdir(args.root_dir)
         create_subfolders(structure, args.root_dir)
+        type_info = {
+            "0" : ["background", [0  ,   0,   0]], 
+            "1" : ["nontumour", [255,   0,   0]], 
+            "2" : ["tumour", [0  , 255,   0]]
+        }
+        with open(os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet'), 'w') as f:
+            json.dump(type_info, f)

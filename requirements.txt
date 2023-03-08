@@ -11,6 +11,7 @@ fonttools==4.38.0
 geojson==2.5.0
 idna==3.4
 imageio==2.24.0
+git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
 iniconfig==2.0.0
 joblib==1.2.0
 kiwisolver==1.4.4
@@ -37,6 +38,8 @@ scikit-image==0.19.3
 scikit-learn==1.2.0
 scipy==1.10.0
 six==1.16.0
+tensorboardX==2.6
+termcolor==2.2.0
 threadpoolctl==3.1.0
 tifffile==2022.10.10
 tomli==2.0.1

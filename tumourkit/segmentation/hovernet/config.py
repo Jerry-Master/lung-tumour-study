@@ -3,7 +3,7 @@ import importlib
 class Config(object):
     """Configuration file."""
 
-    def __init__(self, shape: str, log_dir: str, train_dir: str, valid_dir: str):
+    def __init__(self, shape: str, log_dir: str, train_dir: str, valid_dir: str, pretrained_path: str, use_cpu: bool):
         self.seed = 10
         self.logging = True
         self.debug = False
@@ -42,6 +42,9 @@ class Config(object):
         }
 
         module = importlib.import_module(
-            "models.%s.opt" % model_name
+            ".segmentation.hovernet.models.%s.opt" % model_name, package="tumourkit"
         )
         self.model_config = module.get_config(nr_type, model_mode)
+        self.model_config["phase_list"][0]["run_info"]["net"]["pretrained"] = pretrained_path
+        self.model_config["phase_list"][0]["run_info"]["net"]["use_cpu"] = use_cpu
+        self.model_config["phase_list"][1]["run_info"]["net"]["use_cpu"] = use_cpu

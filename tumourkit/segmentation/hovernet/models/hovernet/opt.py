@@ -1,6 +1,6 @@
 import torch.optim as optim
 
-from run_utils.callbacks.base import (
+from ...run_utils.callbacks.base import (
     AccumulateRawOutput,
     PeriodicSaver,
     ProcessAccumulatedRawOutput,
@@ -10,8 +10,8 @@ from run_utils.callbacks.base import (
     VisualizeOutput,
     TriggerEngine,
 )
-from run_utils.callbacks.logging import LoggingEpochOutput
-from run_utils.engine import Events
+from ...run_utils.callbacks.logging import LoggingEpochOutput
+from ...run_utils.engine import Events
 
 from .targets import gen_targets, prep_sample
 from .net_desc import create_model
@@ -52,7 +52,7 @@ def get_config(nr_type, mode):
                         # path to load, -1 to auto load checkpoint from previous phase,
                         # None to start from scratch
                         # "pretrained": -1,
-                        "pretrained": "/mnt/gpid08/users/jose.perez.cano/checkpoints/4/01/net_epoch=50.tar",
+                        "pretrained": "Useless crap",# "/mnt/gpid08/users/jose.perez.cano/checkpoints/4/01/net_epoch=50.tar",
                         # 'pretrained': None,
                     },
                 },

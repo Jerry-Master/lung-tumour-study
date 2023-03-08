@@ -13,12 +13,12 @@ import psutil
 import scipy.io as sio
 import torch.utils.data as data
 import tqdm
-from dataloader.infer_loader import SerializeFileList
-from misc.utils import (
+from ..dataloader.infer_loader import SerializeFileList
+from ..misc.utils import (
     log_info,
     rm_n_mkdir,
 )
-from misc.viz_utils import visualize_instances_dict
+from ..misc.viz_utils import visualize_instances_dict
 from . import base
 
 
