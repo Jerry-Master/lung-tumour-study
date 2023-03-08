@@ -26,21 +26,8 @@ from typing import Optional, List, Tuple, Set, Callable
 import argparse
 from tqdm import tqdm
 import os
-import sys
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-from utils.preprocessing import parse_path, create_dir, get_names
+from tumourkit.utils.preprocessing import parse_path, create_dir, get_names
 
-
-parser = argparse.ArgumentParser(description='Generates .npy files for HoVer-net from the current data images in .png and .csv.')
-parser.add_argument('--orig-dir', type=str, required=True, help='Directory to read the original png files. Must end with a slash /.')
-parser.add_argument('--png-dir', type=str, required=True, help='Directory to read the label png files. Must end with a slash /.')
-parser.add_argument('--csv-dir', type=str, required=True, help='Directory to read the label csv files. Must end with a slash /.')
-parser.add_argument('--out-dir', type=str, required=True, help='Directory to save the .npy files. Must end with a slash /.')
-parser.add_argument('--save-example', action='store_true', help="Save one sample as images to visualize.")
-parser.add_argument('--use-labels', action='store_true', help="Whether to generate the label image or only segmentation.")
-parser.add_argument('--split', action='store_true', help="Whether to split into train and validation folders.")
-parser.add_argument('--shape', type=str, choices=['270', '518', 'full'], required=True, help='Height and width of the saved arrays. If less than full, patching is applied.')
 
 def to4dim(orig_dir: str, png_dir: str, csv_dir: str, name: str) -> np.ndarray:
     """
@@ -202,7 +189,20 @@ def save_imgs(
     cv2.imwrite(save_dir + name + '.class.png', labels)
 
 
-def main(args):
+def _create_parser():
+    parser = argparse.ArgumentParser(description='Generates .npy files for HoVer-net from the current data images in .png and .csv.')
+    parser.add_argument('--orig-dir', type=str, required=True, help='Directory to read the original png files. Must end with a slash /.')
+    parser.add_argument('--png-dir', type=str, required=True, help='Directory to read the label png files. Must end with a slash /.')
+    parser.add_argument('--csv-dir', type=str, required=True, help='Directory to read the label csv files. Must end with a slash /.')
+    parser.add_argument('--out-dir', type=str, required=True, help='Directory to save the .npy files. Must end with a slash /.')
+    parser.add_argument('--save-example', action='store_true', help="Save one sample as images to visualize.")
+    parser.add_argument('--use-labels', action='store_true', help="Whether to generate the label image or only segmentation.")
+    parser.add_argument('--split', action='store_true', help="Whether to split into train and validation folders.")
+    parser.add_argument('--shape', type=str, choices=['270', '518', 'full'], required=True, help='Height and width of the saved arrays. If less than full, patching is applied.')
+    return parser
+
+
+def main_with_args(args):
     png_dir = parse_path(args.png_dir)
     csv_dir = parse_path(args.csv_dir)
     orig_dir = parse_path(args.orig_dir)
@@ -220,8 +220,8 @@ def main(args):
     else:
         save_npy(img_list, out_dir, to4dim, args.split, orig_dir, png_dir, csv_dir, args.shape)
 
-
-if __name__=='__main__':
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    main(args)
+    main_with_args(args)
 

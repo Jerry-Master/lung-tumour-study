@@ -45,9 +45,7 @@ def _create_parser():
     return parser
 
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
+def main_with_args(args):
     centroids_path = parse_path(args.centroids_path)
     output_path = parse_path(args.output_path)
     create_dir(output_path)
@@ -56,3 +54,9 @@ def main():
         centroids = read_centroids(name, centroids_path)
         png = centroids2png(centroids)
         cv2.imwrite(output_path + name + '.points.png', png)
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)

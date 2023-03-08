@@ -74,9 +74,7 @@ def _create_parser():
     return parser 
 
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
+def main_with_args(args):
     gson_dir = parse_path(args.gson_dir)
     png_dir = parse_path(args.png_dir)
     csv_dir = parse_path(args.csv_dir)
@@ -89,3 +87,8 @@ def main():
         gson = read_gson(name, gson_dir)
         png, csv = geojson2pngcsv(gson)
         save_pngcsv(png, csv, png_dir, csv_dir, name)
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)

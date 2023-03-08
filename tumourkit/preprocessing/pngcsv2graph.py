@@ -204,9 +204,8 @@ def main_subthread(
     finally:
         pbar.update(1)
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
+
+def main_with_args(args):
     png_dir = parse_path(args.png_dir)
     csv_dir = parse_path(args.csv_dir)
     orig_dir = parse_path(args.orig_dir)
@@ -222,3 +221,9 @@ def main():
     else:
         for name in names:
             main_subthread(name, png_dir, csv_dir, orig_dir, output_path, pbar)
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)

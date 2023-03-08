@@ -11,6 +11,9 @@ def _create_parser():
 
 
 def create_subfolders(node: Union[Dict, List], current_folder: str) -> None:
+    """
+    Creates folders and subfolders recursively. The leaf nodes must be lists.
+    """
     if isinstance(node, Dict):
         for key, value in node.items():
             subfolder = os.path.join(current_folder, key)

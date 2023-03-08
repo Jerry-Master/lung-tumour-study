@@ -66,9 +66,7 @@ def _create_parser():
     return parser
 
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
+def main_with_args(args):
     json_dir = parse_path(args.json_dir)
     names = get_names(json_dir, '.json')
     for name in tqdm(names):
@@ -77,3 +75,9 @@ def main():
         contours = parse_contours(nuc)
         features = create_geojson(contours)
         save_contours(parse_path(args.gson_dir), name, features)
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)

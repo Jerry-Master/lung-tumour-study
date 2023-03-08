@@ -90,18 +90,22 @@ def _create_parser():
     return parser
 
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
-    PNG_DIR = parse_path(args.png_dir)
-    CSV_DIR = parse_path(args.csv_dir)
-    OUTPUT_PATH = parse_path(args.gson_dir)
-    create_dir(OUTPUT_PATH)
+def main_with_args(args):
+    png_dir = parse_path(args.png_dir)
+    csv_dir = parse_path(args.csv_dir)
+    output_path = parse_path(args.gson_dir)
+    create_dir(output_path)
 
-    names = get_names(PNG_DIR, '.GT_cells.png')
+    names = get_names(png_dir, '.GT_cells.png')
     for name in tqdm(names):
-        png, csv = read_labels(name, PNG_DIR, CSV_DIR)
+        png, csv = read_labels(name, png_dir, csv_dir)
         if png is None or png.max() == 0:
             continue
         gson = pngcsv2geojson(png, csv)
-        save_geojson(gson, name, OUTPUT_PATH)
+        save_geojson(gson, name, output_path)
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)

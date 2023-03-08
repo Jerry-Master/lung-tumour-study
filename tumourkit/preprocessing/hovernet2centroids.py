@@ -54,16 +54,20 @@ def _create_parser():
     return parser
 
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
-    OUTPUT_PATH = parse_path(args.output_path)
-    JSON_DIR = parse_path(args.json_dir)
-    create_dir(OUTPUT_PATH)
-    names = get_names(JSON_DIR, '.json')
+def main_with_args(args):
+    output_path = parse_path(args.output_path)
+    json_dir = parse_path(args.json_dir)
+    create_dir(output_path)
+    names = get_names(json_dir, '.json')
     for name in tqdm(names):
-        json_path = JSON_DIR + name + '.json'
+        json_path = json_dir + name + '.json'
         nuc = read_json(json_path)
         centroids = parse_centroids(nuc)
         df = pd.DataFrame(centroids, columns=['X','Y','class'])
-        df.to_csv(OUTPUT_PATH + name + '.centroids.csv', index=False)
+        df.to_csv(output_path + name + '.centroids.csv', index=False)
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)

@@ -60,9 +60,7 @@ def _create_parser():
     return parser
 
 
-def main():
-    parser = _create_parser()
-    args = parser.parse_args()
+def main_with_args(args):
     png_dir = parse_path(args.png_dir)
     csv_dir = parse_path(args.csv_dir)
     output_path = parse_path(args.output_path)
@@ -74,3 +72,9 @@ def main():
         centroids = extract_centroids(img, csv)
         df = pd.DataFrame(centroids, columns=['X','Y','class'])
         df.to_csv(output_path + name + '.centroids.csv', index=False)
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)
