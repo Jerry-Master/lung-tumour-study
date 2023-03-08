@@ -31,8 +31,8 @@ import numpy as np
 from typing import List, Tuple
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 
-from .preprocessing import read_names, read_centroids
-from .nearest import generate_tree, find_nearest
+from ..utils.preprocessing import read_names, read_centroids
+from ..utils.nearest import generate_tree, find_nearest
 
 import argparse
 

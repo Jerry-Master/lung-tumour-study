@@ -22,7 +22,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix
 
 from tumourkit.utils.preprocessing import get_names, parse_path
-from tumourkit.utils.evaluate import get_pairs
+from tumourkit.segmentation.evaluate import get_pairs
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 CENTROIDS_DIR = parse_path(TEST_DIR) + 'centroids/'
