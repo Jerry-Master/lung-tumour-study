@@ -67,5 +67,5 @@ def main():
             "1" : ["nontumour", [255,   0,   0]], 
             "2" : ["tumour", [0  , 255,   0]]
         }
-        with open(os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet'), 'w') as f:
+        with open(os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet', 'type_info.json'), 'w') as f:
             json.dump(type_info, f)
