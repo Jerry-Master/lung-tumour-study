@@ -20,33 +20,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 from tqdm import tqdm
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 import pandas as pd
 import numpy as np
 import argparse
 from argparse import Namespace
 import os
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.preprocessing import create_dir, parse_path, get_names, read_json, save_graph
-from utils.nearest import generate_tree, find_nearest
-
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--json-dir', type=str, required=True,
-    help='Path to folder containing HoVer-Net json outputs.'
-)
-parser.add_argument(
-    '--graph-dir', type=str, required=True,
-    help='Path to directory to .nodes.csv containing graph information.'
-)
-parser.add_argument(
-    '--output-dir', type=str, required=True,
-    help='Path where to save new .nodes.csv. If same as --graph-dir, overwrites its content.'
-)
+from ..utils.preprocessing import create_dir, parse_path, get_names, read_json, save_graph
+from ..utils.nearest import generate_tree, find_nearest
+import logging
+from logging import Logger
 
 
-def parse_centroids_probs(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
+def parse_centroids_probs(nuc: Dict[str, Any], logger: Optional[Logger] = None) -> List[Tuple[int,int,int]]:
     """
     Input: Hovernet json nuclei dictionary as given by modified run_infer.py.
     Output: List of (X,Y,prob1) tuples representing centroids.
@@ -58,18 +44,21 @@ def parse_centroids_probs(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
         inst_prob1 = inst_info['prob1']
         inst_type = inst_info['type']
         if inst_type == 0:
-            print('Found cell with class 0, removing it.')
+            if logger is None:
+                logging.warning('Found cell with class 0, removing it.')
+            else:
+                logger.warning('Found cell with class 0, removing it.')
         else:
             centroids_.append((inst_centroid[1], inst_centroid[0], inst_prob1)) 
     return centroids_
 
 
-def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFrame:
+def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any], logger: Optional[Logger] = None) -> pd.DataFrame:
     """
     Extracts type_prob from json and adds it as column prob1.
     Makes the join based on id.
     """
-    centroids = parse_centroids_probs(hov_json)
+    centroids = parse_centroids_probs(hov_json, logger)
     centroids = np.array(centroids)
     assert len(centroids) > 0, 'Hov json must contain at least one cell.'
     graph = graph.copy()
@@ -90,20 +79,41 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any]) -> pd.DataFra
     return graph
 
 
-def main(args: Namespace) -> None:
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--json-dir', type=str, required=True,
+        help='Path to folder containing HoVer-Net json outputs.'
+    )
+    parser.add_argument(
+        '--graph-dir', type=str, required=True,
+        help='Path to directory to .nodes.csv containing graph information.'
+    )
+    parser.add_argument(
+        '--output-dir', type=str, required=True,
+        help='Path where to save new .nodes.csv. If same as --graph-dir, overwrites its content.'
+    )
+    return parser
+
+
+def main_with_args(args: Namespace, logger: Optional[Logger] = None) -> None:
     json_dir = parse_path(args.json_dir)
     graph_dir = parse_path(args.graph_dir)
     output_dir = parse_path(args.output_dir)
     create_dir(output_dir)
     names = get_names(graph_dir, '.nodes.csv')
     for name in tqdm(names):
-        graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
-        hov_json = read_json(os.path.join(json_dir, name + '.json'))
-        graph = add_probability(graph, hov_json)
-        save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
+        try:
+            graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
+            hov_json = read_json(os.path.join(json_dir, name + '.json'))
+            graph = add_probability(graph, hov_json, logger)
+            save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
+        except FileNotFoundError:
+            continue
     return
 
 
-if __name__=='__main__':
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    main(args)
+    main_with_args(args)

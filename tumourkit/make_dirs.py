@@ -38,15 +38,18 @@ def main():
             'data': {
                 'train': {
                     'png': [], 'csv': [], 'gson': [], 'json': [],
-                    'graphs': ['raw', 'preds', 'GT'], 'npy': []
+                    'graphs': ['raw', 'preds', 'GT'], 'npy': [],
+                    'centroids': []
                 },
                 'validation': {
                     'png': [], 'csv': [], 'gson': [], 'json': [],
-                    'graphs': ['raw', 'preds', 'GT'], 'npy': []
+                    'graphs': ['raw', 'preds', 'GT'], 'npy': [],
+                    'centroids': []
                 },
                 'test': {
                     'png': [], 'csv': [], 'gson': [], 'json': [],
-                    'graphs': ['raw', 'preds', 'GT'], 'npy': []
+                    'graphs': ['raw', 'preds', 'GT'], 'npy': [],
+                    'centroids': []
                 },
                 'orig': []
             },

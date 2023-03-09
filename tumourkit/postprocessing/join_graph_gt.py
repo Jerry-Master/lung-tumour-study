@@ -25,25 +25,8 @@ from tqdm import tqdm
 import argparse
 from argparse import Namespace
 import os
-import sys
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-from utils.preprocessing import parse_path, create_dir, get_names, read_centroids, save_graph
-from utils.nearest import generate_tree, find_nearest
-
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--graph-dir', type=str, required=True,
-    help='Path to folder containing prediction .nodes.csv files.'
-)
-parser.add_argument(
-    '--centroids-dir', type=str, required=True,
-    help='Path to folder containing .centroids.csv files.'
-)
-parser.add_argument(
-    '--output-dir', type=str, required=True,
-    help='Path to folder where to save new .nodes.csv. If same as --graph-dir, overwrites files.'
-)
+from ..utils.preprocessing import parse_path, create_dir, get_names, read_centroids, save_graph
+from ..utils.nearest import generate_tree, find_nearest
 
 
 def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
@@ -74,19 +57,41 @@ def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
     return graph
 
 
-def main(args: Namespace) -> None:
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--graph-dir', type=str, required=True,
+        help='Path to folder containing prediction .nodes.csv files.'
+    )
+    parser.add_argument(
+        '--centroids-dir', type=str, required=True,
+        help='Path to folder containing .centroids.csv files.'
+    )
+    parser.add_argument(
+        '--output-dir', type=str, required=True,
+        help='Path to folder where to save new .nodes.csv. If same as --graph-dir, overwrites files.'
+    )
+    return parser
+
+
+def main_with_args(args: Namespace) -> None:
     graph_dir = parse_path(args.graph_dir)
     centroids_dir = parse_path(args.centroids_dir)
     output_dir = parse_path(args.output_dir)
     create_dir(output_dir)
     names = sorted(get_names(centroids_dir, '.centroids.csv'))
     for name in tqdm(names):
-        centroids = read_centroids(name, centroids_dir)
-        graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
-        graph = merge_labels(graph, centroids)
-        save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
+        try:
+            centroids = read_centroids(name, centroids_dir)
+            graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
+            graph = merge_labels(graph, centroids)
+            save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
+        except FileNotFoundError:
+            continue
     return
 
-if __name__ == '__main__':
+
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    main(args)
+    main_with_args(args)

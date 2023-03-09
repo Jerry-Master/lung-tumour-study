@@ -1,17 +1,22 @@
 import argparse
 from argparse import Namespace
-from .preprocessing import geojson2pngcsv
+from .preprocessing import geojson2pngcsv, pngcsv2graph, hovernet2geojson, pngcsv2centroids
 from .segmentation import pngcsv2npy
 import os
 import logging
+from logging import Logger
 from .segmentation import hov_train, hov_infer
+from .utils.preprocessing import get_names
+import shutil
+from .postprocessing import join_graph_gt, join_hovprob_graph
 
 
-def run_preproc_pipe(args: Namespace) -> None:
+def run_preproc_pipe(args: Namespace, logger : Logger) -> None:
     """
     Converts the gson format to the rest of formats.
     """
     for split in ['train', 'validation', 'test']:
+        logger.info(f'Parsing {split} split')
         newargs = Namespace(
             gson_dir = os.path.join(args.root_dir, 'data', split, 'gson'),
             png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
@@ -30,10 +35,11 @@ def run_preproc_pipe(args: Namespace) -> None:
     return
 
 
-def run_hov_pipe(args: Namespace) -> None:
+def run_hov_pipe(args: Namespace, logger : Logger) -> None:
     """
     Trains hovernet and predicts cell contours on json format.
     """
+    logger.info('Starting training.')
     newargs = Namespace(
         gpu = args.gpu, view = None, save_name = None,
         log_dir = os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet'),
@@ -42,7 +48,8 @@ def run_hov_pipe(args: Namespace) -> None:
         pretrained_path = args.pretrained_path,
         shape = '518'
     )
-    # hov_train(newargs)
+    hov_train(newargs)
+    logger.info('Starting inference.')
     newargs = {
         'nr_types': '3',
         'type_info_path': os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet', 'type_info.json'),
@@ -67,14 +74,70 @@ def run_hov_pipe(args: Namespace) -> None:
     return
 
 
-def run_postproc_pipe(args: Namespace) -> None:
+def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
     """
     Converts the json format to the graph format containing GT and preds.
     """
+    logger.info('Moving json files to corresponding folders.')
+    tr_files = set(get_names(os.path.join(args.root_dir, 'data', 'train', 'gson'), '.geojson'))
+    val_files = set(get_names(os.path.join(args.root_dir, 'data', 'validation', 'gson'), '.geojson'))
+    ts_files = set(get_names(os.path.join(args.root_dir, 'data', 'test', 'gson'), '.geojson'))
+    json_files = set(get_names(os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'), '.json'))
+    for folder_name, split_files in zip(['train', 'validation', 'test'], [tr_files, val_files, ts_files]):
+        for file in json_files.intersection(split_files):
+            shutil.copy(
+                os.path.join(args.root_dir, 'data', 'tmp_hov', 'json', file + '.json'),
+                os.path.join(args.root_dir, 'data', folder_name, 'json')
+            )
+    for split in ['train', 'validation', 'test']:
+        logger.info(f'Parsing {split} split')
+        logger.info('   From json to geojson.')
+        newargs = Namespace(
+            json_dir = os.path.join(args.root_dir, 'data', split, 'json'),
+            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov')
+        )
+        hovernet2geojson(newargs)
+        logger.info('   From geojson to pngcsv.')
+        newargs = Namespace(
+            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov'),
+            png_dir = os.path.join(args.root_dir, 'data', split, 'png_hov'),
+            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov')
+        )
+        geojson2pngcsv(newargs)
+        logger.info('   From pngcsv to nodes.csv.')
+        newargs = Namespace(
+            png_dir = os.path.join(args.root_dir, 'data', split, 'png_hov'),
+            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov'),
+            orig_dir = os.path.join(args.root_dir, 'data', 'orig'),
+            output_path = os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
+            num_workers = 0
+        )
+        pngcsv2graph(newargs)
+        logger.info('   Extracting centroids from GT.')
+        newargs = Namespace(
+            png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
+            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
+            output_path = os.path.join(args.root_dir, 'data', split, 'centroids')
+        )
+        pngcsv2centroids(newargs)
+        logger.info('   Adding GT labels to .nodes.csv.')
+        newargs = Namespace(
+            graph_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
+            centroids_dir = os.path.join(args.root_dir, 'data', split, 'centroids'),
+            output_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'GT')
+        )
+        join_graph_gt(newargs)
+        logger.info('   Adding hovernet predictions to .nodes.csv.')
+        newargs = Namespace(
+            json_dir = os.path.join(args.root_dir, 'data', split, 'json'),
+            graph_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'GT'),
+            output_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds')
+        )
+        join_hovprob_graph(newargs, logger)
     return
 
 
-def run_graph_pipe(args: Namespace) -> None:
+def run_graph_pipe(args: Namespace, logger : Logger) -> None:
     """
     Trains the graph models.
     """
@@ -84,7 +147,7 @@ def run_graph_pipe(args: Namespace) -> None:
 def _create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root-dir', type=str, default='./.internals/', help='Root folder to save data and models.')
-    parser.add_argument('--pretrained-path', type=str, help='Path to initial weights.')
+    parser.add_argument('--pretrained-path', type=str, help='Path to initial Hovernet weights.')
     parser.add_argument('--gpu', type=str, default='')
     return parser
 
@@ -102,14 +165,14 @@ def main():
     logger.addHandler(ch)
 
     logger.info('Starting preprocessing pipeline.')
-    # run_preproc_pipe(args)
+    # run_preproc_pipe(args, logger)
     logger.info('Finished preprocessing pipeline.')
     logger.info('Starting Hovernet pipeline.')
-    run_hov_pipe(args)
+    # run_hov_pipe(args, logger)
     logger.info('Finished Hovernet pipeline.')
     logger.info('Starting postprocessing pipeline.')
-    run_postproc_pipe(args)
+    run_postproc_pipe(args, logger)
     logger.info('Finished postprocessing pipeline.')
     logger.info('Starting graph pipeline.')
-    run_graph_pipe(args)
+    run_graph_pipe(args, logger)
     logger.info('Finished graph pipeline.')
