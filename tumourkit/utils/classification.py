@@ -21,13 +21,7 @@ Contact information: joseperez2000@hotmail.es
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, List
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from classification.read_nodes import read_all_nodes
+from ..classification.read_nodes import read_all_nodes
 
 def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """

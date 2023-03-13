@@ -9,6 +9,7 @@ from .segmentation import hov_train, hov_infer
 from .utils.preprocessing import get_names
 import shutil
 from .postprocessing import join_graph_gt, join_hovprob_graph
+from .classification import train_gnn
 
 
 def run_preproc_pipe(args: Namespace, logger : Logger) -> None:
@@ -141,6 +142,24 @@ def run_graph_pipe(args: Namespace, logger : Logger) -> None:
     """
     Trains the graph models.
     """
+    # TODO: Include train_gnn main
+    # Remember: The input node files are in graphs/preds
+    newargs = Namespace(
+        train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir = os.path.join(args.root_dir, 'gnn_logs'),
+        early_stopping_rounds = 10,
+        batch_size = 20,
+        model_name = 'GCN',
+        save_file = os.path.join(args.root_dir, 'gnn_logs', 'gnn_results'),
+        num_confs = 32,
+        save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
+        device = 'cpu',
+        num_workers = 0,
+        checkpoint_iters = -1,
+    )
+    train_gnn(newargs)
     return
 
 
@@ -153,6 +172,8 @@ def _create_parser():
 
 
 def main():
+    # TODO: Run each subpipe independently and measure time and memory requirements.
+
     parser = _create_parser()
     args = parser.parse_args()
 
@@ -171,7 +192,7 @@ def main():
     # run_hov_pipe(args, logger)
     logger.info('Finished Hovernet pipeline.')
     logger.info('Starting postprocessing pipeline.')
-    run_postproc_pipe(args, logger)
+    # run_postproc_pipe(args, logger)
     logger.info('Finished postprocessing pipeline.')
     logger.info('Starting graph pipeline.')
     run_graph_pipe(args, logger)

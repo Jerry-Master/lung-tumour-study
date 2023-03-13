@@ -25,12 +25,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import random
 import os
-import sys
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import *
+from ..utils.preprocessing import *
 
 
 def read_node_matrix(file: str, return_coordinates: Optional[bool] = False) -> Tuple[np.ndarray, np.ndarray]:

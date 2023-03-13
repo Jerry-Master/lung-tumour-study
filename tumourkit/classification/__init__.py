@@ -1,0 +1,1 @@
+from .train_gnn import main_with_args as train_gnn

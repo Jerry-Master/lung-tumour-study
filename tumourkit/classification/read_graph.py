@@ -22,15 +22,10 @@ from itertools import tee
 from typing import Tuple, List, Optional, Callable, Any
 import os
 import numpy as np
-import sys
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import get_names
-from utils.nearest import generate_tree
-from utils.classification import fit_column_normalizer
-from read_nodes import read_node_matrix
+from ..utils.preprocessing import get_names
+from ..utils.nearest import generate_tree
+from ..utils.classification import fit_column_normalizer
+from .read_nodes import read_node_matrix
 import torch
 from torch.utils.data import Dataset
 import dgl

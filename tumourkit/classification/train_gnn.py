@@ -28,50 +28,21 @@ import torch.nn.functional as F
 from torch.optim import Optimizer
 import dgl
 from dgl.dataloading import GraphDataLoader
-from read_graph import GraphDataset
-from models.gcn import GCN
-from models.hgao import HardGAT
-from models.gat import GAT
+from .read_graph import GraphDataset
+from .models.gcn import GCN
+from .models.hgao import HardGAT
+from .models.gat import GAT
 import argparse
 from argparse import Namespace
 from torch.utils.tensorboard import SummaryWriter
 import warnings
-warnings.filterwarnings('ignore')
-import sys
 import os
 from concurrent.futures import ThreadPoolExecutor
 import json
 import pickle
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, create_dir
+from ..utils.preprocessing import parse_path, create_dir
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--node-dir', type=str, required=True,
-                     help='Path to folder containing train and validation folder with .nodes.csv files.')
-parser.add_argument('--log-dir', type=str, required=True,
-                     help='Path to save tensorboard logs.')
-parser.add_argument('--early-stopping-rounds', type=int, required=True,
-                     help='Number of epochs needed to consider convergence when worsening.')
-parser.add_argument('--batch-size', type=int, required=True,
-                     help='Batch size. No default.')
-parser.add_argument('--model-name', type=str, required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'],
-                     help='Which model to use. Options: GCN, ATT, HATT, SAGE, BOOST')
-parser.add_argument('--save-file', type=str, required=True,
-                     help='Name to file where to save the results. Must not contain extension.')
-parser.add_argument('--num-confs', type=int, default=50,
-                     help='Upper bound on the number of configurations to try.')
-parser.add_argument('--save-dir', type=str,
-                     help='Folder to save models weights and confs.')
-parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu',
-                     help='Device to execute. Either cpu or cuda. Default: cpu.')
-parser.add_argument('--num-workers', type=int, default=1, 
-                     help='Number of processors to use. Default: 1.')
-parser.add_argument('--checkpoint-iters', type=int, default=-1, 
-                     help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
+warnings.filterwarnings('ignore')
 
 def evaluate(
         loader: GraphDataLoader,
@@ -159,6 +130,8 @@ def train_one_iter(
             writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
 
 def train(
+        save_dir: str,
+        save_weights: bool,
         tr_loader: GraphDataLoader, 
         val_loader: GraphDataLoader, 
         model: nn.Module,
@@ -181,21 +154,26 @@ def train(
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
         val_f1, val_acc, val_auc = evaluate(val_loader, model, device, writer, epoch, 'validation')
         # Save checkpoint
-        if SAVE_WEIGHTS and check_iters != -1 and epoch % check_iters == 0:
-            save_model(model, conf, normalizers, prefix='last_')
+        if save_weights and check_iters != -1 and epoch % check_iters == 0:
+            save_model(save_dir, model, conf, normalizers, prefix='last_')
         # Early stopping
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
             early_stop_rounds = 0
-            if SAVE_WEIGHTS:
-                save_model(model, conf, normalizers, prefix='best_')
+            if save_weights:
+                save_model(save_dir, model, conf, normalizers, prefix='best_')
         elif early_stop_rounds < n_early:
             early_stop_rounds += 1
         else:
             return
         
 
-def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
+def load_dataset(
+        train_node_dir: str,
+        val_node_dir: str,
+        test_node_dir: str,
+        bsize: int,
+        ) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
     """
     Creates Torch dataloaders for training. 
     Folder structure:
@@ -214,15 +192,15 @@ def load_dataset(node_dir: str, bsize: int) -> Tuple[GraphDataLoader, GraphDataL
        ...
     """
     train_dataset = GraphDataset(
-        node_dir=os.path.join(node_dir, 'train', 'graphs'),
+        node_dir=train_node_dir,
         max_dist=200, max_degree=10, column_normalize=True)
     train_dataloader = GraphDataLoader(train_dataset, batch_size=bsize, shuffle=True)
     val_dataset = GraphDataset(
-        node_dir=os.path.join(node_dir, 'validation', 'graphs'),
+        node_dir=val_node_dir,
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=False)
     test_dataset = GraphDataset(
-        node_dir=os.path.join(node_dir, 'test', 'graphs'),
+        node_dir=test_node_dir,
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
@@ -300,6 +278,7 @@ def name_from_conf(conf: Dict[str, Any]) -> str:
         + str(conf['DROPOUT']) + '_' + str(conf['NORM_TYPE']) 
 
 def save_model(
+        save_dir: str,
         model: nn.Module,
         conf: Dict[str, Any],
         normalizers: Tuple[Normalizer],
@@ -310,10 +289,10 @@ def save_model(
     """
     name = prefix + name_from_conf(conf)
     state_dict = model.state_dict()
-    torch.save(state_dict, SAVE_DIR + 'weights/' + name + '.pth')
-    with open(SAVE_DIR + 'confs/' + name + '.json', 'w') as f:
+    torch.save(state_dict, os.path.join(save_dir, 'weights', name + '.pth'))
+    with open(os.path.join(save_dir, 'confs', name + '.json'), 'w') as f:
         json.dump(conf, f)
-    with open(SAVE_DIR + 'normalizers/' + name + '.pkl', 'wb') as f:
+    with open(os.path.join(save_dir, 'normalizers', name + '.pkl'), 'wb') as f:
         pickle.dump(normalizers, f)
 
 def train_one_conf(
@@ -322,15 +301,18 @@ def train_one_conf(
         train_dataloader: GraphDataLoader,
         val_dataloader: GraphDataLoader,
         test_dataloader: GraphDataLoader,
+        log_dir: str,
+        save_weights: bool,
+        save_dir: str,
         ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
     # Tensorboard logs
-    writer = SummaryWriter(log_dir=os.path.join(LOG_DIR, name_from_conf(conf)))
+    writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
     # Model
     model = load_model(conf)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
     train(
-        train_dataloader, val_dataloader,
+        save_dir, save_weights, train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
         args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers()
     )
@@ -338,37 +320,85 @@ def train_one_conf(
     model = model.cpu()
     return test_f1, test_acc, test_auc, model, conf
 
-def main(args: Namespace):
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train-node-dir', type=str, required=True,
+                        help='Path to folder containing train folder with .nodes.csv files.')
+    parser.add_argument('--validation-node-dir', type=str, required=True,
+                        help='Path to folder containing validation folder with .nodes.csv files.')
+    parser.add_argument('--test-node-dir', type=str, required=True,
+                        help='Path to folder containing test folder with .nodes.csv files.')
+    parser.add_argument('--log-dir', type=str, required=True,
+                        help='Path to save tensorboard logs.')
+    parser.add_argument('--early-stopping-rounds', type=int, required=True,
+                        help='Number of epochs needed to consider convergence when worsening.')
+    parser.add_argument('--batch-size', type=int, required=True,
+                        help='Batch size. No default.')
+    parser.add_argument('--model-name', type=str, required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'],
+                        help='Which model to use. Options: GCN, ATT, HATT, SAGE, BOOST')
+    parser.add_argument('--save-file', type=str, required=True,
+                        help='Name to file where to save the results. Must not contain extension.')
+    parser.add_argument('--num-confs', type=int, default=50,
+                        help='Upper bound on the number of configurations to try.')
+    parser.add_argument('--save-dir', type=str,
+                        help='Folder to save models weights and confs.')
+    parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu',
+                        help='Device to execute. Either cpu or cuda. Default: cpu.')
+    parser.add_argument('--num-workers', type=int, default=1, 
+                        help='Number of processors to use. Default: 1.')
+    parser.add_argument('--checkpoint-iters', type=int, default=-1, 
+                        help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
+    return parser
+
+
+def main_with_args(args: Namespace):
+    log_dir = parse_path(args.log_dir)
+    create_dir(log_dir)
+    save_weights = False
+    if args.save_dir is not None:
+        save_weights = True
+        save_dir = parse_path(args.save_dir)
+        create_dir(save_dir)
+        create_dir(save_dir + 'weights')
+        create_dir(save_dir + 'confs')
+        create_dir(save_dir + 'normalizers')
     # Datasets
-    train_dataloader, val_dataloader, test_dataloader = load_dataset(args.node_dir, args.batch_size)
+    train_dataloader, val_dataloader, test_dataloader = load_dataset(
+        train_node_dir=args.train_node_dir,
+        val_node_dir=args.validation_node_dir,
+        test_node_dir=args.test_node_dir,
+        bsize=args.batch_size,
+    )
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file)
-    with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
-        futures = []
+    if args.num_workers > 0:
+        with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+            futures = []
+            for conf in confs:
+                future = executor.submit(
+                    train_one_conf,
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir
+                )
+                futures.append(future)
+            for future in futures:
+                test_f1, test_acc, test_auc, model, conf = future.result()
+                append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                if save_weights:
+                    save_model(save_dir, model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
+    else:
         for conf in confs:
-            future = executor.submit(
-                train_one_conf,
-                args, conf, train_dataloader, val_dataloader, test_dataloader
+            test_f1, test_acc, test_auc, model, conf = train_one_conf(
+                args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir
             )
-            futures.append(future)
-        for future in futures:
-            test_f1, test_acc, test_auc, model, conf = future.result()
             append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
-            if SAVE_WEIGHTS:
-                save_model(model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
+            if save_weights:
+                save_model(save_dir, model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
 
 
-if __name__=='__main__':   
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    LOG_DIR = parse_path(args.log_dir)
-    create_dir(LOG_DIR)
-    SAVE_WEIGHTS = False
-    if args.save_dir is not None:
-        SAVE_WEIGHTS = True
-        SAVE_DIR = parse_path(args.save_dir)
-        create_dir(SAVE_DIR)
-        create_dir(SAVE_DIR + 'weights')
-        create_dir(SAVE_DIR + 'confs')
-        create_dir(SAVE_DIR + 'normalizers')
     main(args)
+
