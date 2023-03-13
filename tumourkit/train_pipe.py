@@ -142,20 +142,18 @@ def run_graph_pipe(args: Namespace, logger : Logger) -> None:
     """
     Trains the graph models.
     """
-    # TODO: Include train_gnn main
-    # Remember: The input node files are in graphs/preds
     newargs = Namespace(
         train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
         validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
         test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
         log_dir = os.path.join(args.root_dir, 'gnn_logs'),
         early_stopping_rounds = 10,
-        batch_size = 20,
+        batch_size = 10,
         model_name = 'GCN',
         save_file = os.path.join(args.root_dir, 'gnn_logs', 'gnn_results'),
         num_confs = 32,
         save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
-        device = 'cpu',
+        device = 'cpu' if args.gpu == '' else 'gpu',
         num_workers = 0,
         checkpoint_iters = -1,
     )
@@ -186,13 +184,13 @@ def main():
     logger.addHandler(ch)
 
     logger.info('Starting preprocessing pipeline.')
-    # run_preproc_pipe(args, logger)
+    run_preproc_pipe(args, logger)
     logger.info('Finished preprocessing pipeline.')
     logger.info('Starting Hovernet pipeline.')
-    # run_hov_pipe(args, logger)
+    run_hov_pipe(args, logger)
     logger.info('Finished Hovernet pipeline.')
     logger.info('Starting postprocessing pipeline.')
-    # run_postproc_pipe(args, logger)
+    run_postproc_pipe(args, logger)
     logger.info('Finished postprocessing pipeline.')
     logger.info('Starting graph pipeline.')
     run_graph_pipe(args, logger)
