@@ -218,6 +218,7 @@ def viz_step_output(raw_data, nr_types=None):
     `raw_data` will be implicitly provided in the similar format as the 
     return dict from train/valid step, but may have been accumulated across N running step
     """
+    import pdb; pdb.set_trace()
     imgs = raw_data["img"]
     true_np, pred_np = raw_data["np"]
     true_hv, pred_hv = raw_data["hv"]
