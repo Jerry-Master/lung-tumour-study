@@ -184,7 +184,7 @@ def main():
     logger.addHandler(ch)
 
     logger.info('Starting preprocessing pipeline.')
-    run_preproc_pipe(args, logger)
+    # run_preproc_pipe(args, logger)
     logger.info('Finished preprocessing pipeline.')
     logger.info('Starting Hovernet pipeline.')
     run_hov_pipe(args, logger)
