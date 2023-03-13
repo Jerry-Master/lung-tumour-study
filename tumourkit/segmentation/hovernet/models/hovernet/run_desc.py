@@ -7,6 +7,7 @@ from ...misc.utils import cropping_center
 from .utils import dice_loss, mse_loss, msge_loss, xentropy_loss
 
 from collections import OrderedDict
+from typing import Tuple
 
 ####
 def train_step(batch_data, run_info):
@@ -49,7 +50,7 @@ def train_step(batch_data, run_info):
         "np": true_np_onehot,
         "hv": true_hv,
     }
-    import pdb; pdb.set_trace()
+    
     if model.module.nr_types is not None:
         true_tp = batch_data["tp_map"]
         if run_info["net"]["use_cpu"]:
@@ -212,20 +213,25 @@ def infer_step(batch_data, model, use_cpu=False):
     return pred_output.cpu().numpy()
 
 
+def fix_shape(x: Tuple) -> Tuple:
+    if len(x) != 3:
+        return x
+    return (x[0], x[1], x[2], 1)
+
 ####
 def viz_step_output(raw_data, nr_types=None):
     """
     `raw_data` will be implicitly provided in the similar format as the 
     return dict from train/valid step, but may have been accumulated across N running step
     """
-    import pdb; pdb.set_trace()
     imgs = raw_data["img"]
     true_np, pred_np = raw_data["np"]
+    true_np_shape, pred_np_shape = fix_shape(true_np.shape), fix_shape(pred_np.shape) 
     true_hv, pred_hv = raw_data["hv"]
     if nr_types is not None:
         true_tp, pred_tp = raw_data["tp"]
 
-    aligned_shape = [list(imgs.shape), list(true_np.shape), list(pred_np.shape)]
+    aligned_shape = [list(imgs.shape), list(true_np_shape), list(pred_np_shape)]
     # aligned_shape = [list(imgs.shape), list(pred_np.shape)]
     aligned_shape = np.min(np.array(aligned_shape), axis=0)[1:3]
 
