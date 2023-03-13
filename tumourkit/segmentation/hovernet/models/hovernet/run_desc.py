@@ -49,7 +49,7 @@ def train_step(batch_data, run_info):
         "np": true_np_onehot,
         "hv": true_hv,
     }
-
+    import pdb; pdb.set_trace()
     if model.module.nr_types is not None:
         true_tp = batch_data["tp_map"]
         if run_info["net"]["use_cpu"]:
