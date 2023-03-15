@@ -36,17 +36,6 @@ from ..utils.nearest import generate_tree, find_nearest
 
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--names', type=str, required=True,
-                    help='Path to txt file with names.')
-parser.add_argument('--gt-path', type=str, required=True,
-                    help='Path to GT files.')
-parser.add_argument('--pred-path', type=str, required=True,
-                    help='Path to prediction files.')
-parser.add_argument('--save-name', type=str, required=True,
-                    help='Name to save the result, without file type.')
-parser.add_argument('--debug-path', type=str, default=None,
-                    help='Name of file where to save confusion matrices (optional).')
 
 def get_confusion_matrix(
     gt_centroids: List[Tuple[int,int,int]], 
@@ -217,7 +206,23 @@ def save_debug_matrix(
     metrics_df = pd.DataFrame(mat)
     metrics_df.to_csv(save_path + '.csv')
 
-def main(args):
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--names', type=str, required=True,
+                        help='Path to txt file with names.')
+    parser.add_argument('--gt-path', type=str, required=True,
+                        help='Path to GT files.')
+    parser.add_argument('--pred-path', type=str, required=True,
+                        help='Path to prediction files.')
+    parser.add_argument('--save-name', type=str, required=True,
+                        help='Name to save the result, without file type.')
+    parser.add_argument('--debug-path', type=str, default=None,
+                        help='Name of file where to save confusion matrices (optional).')
+    return parser
+
+
+def main_with_args(args):
     names = read_names(args.names)
     metrics = {
         'Name': [], 'F1': [], 'Accuracy': [], 'ROC_AUC': [], 'Perc_err': [],
@@ -279,6 +284,7 @@ def main(args):
     }
     save_csv(global_metrics, args.save_name + '_all')
 
-if __name__ == '__main__':
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
     main(args)

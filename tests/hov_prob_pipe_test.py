@@ -22,9 +22,9 @@ from argparse import Namespace
 import pandas as pd
 
 from tumourkit.utils.preprocessing import parse_path, create_dir
-from tumourkit.postprocessing.join_graph_gt import main as pipe1
-from tumourkit.postprocessing.join_hovprob_graph import main as pipe2
-from tumourkit.classification.evaluate import main as eval
+from tumourkit.postprocessing import join_graph_gt
+from tumourkit.postprocessing import join_hovprob_graph
+from tumourkit import eval_class
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DIR = parse_path(TEST_DIR)
@@ -40,19 +40,19 @@ def test_hov_prob_pipe():
     args.graph_dir = GRAPHS_DIR
     args.centroids_dir = CENTROIDS_DIR
     args.output_dir = TMP_DIR
-    pipe1(args)
+    join_graph_gt(args)
     args.node_dir = TMP_DIR
     args.save_file = TEST_DIR + 'tmp'
     args.by_img = False
     args.draw = False
-    eval(args)
+    eval_class(args)
     args.json_dir = JSON_DIR
     args.graph_dir = TMP_DIR
     args.output_dir = TMP_DIR
-    pipe2(args)
+    join_hovprob_graph(args)
     args.node_dir = TMP_DIR
     args.save_file = TEST_DIR + 'tmp2'
-    eval(args)
+    eval_class(args)
     res1 = pd.read_csv(TEST_DIR + 'tmp.csv')
     res2 = pd.read_csv(TEST_DIR + 'tmp2.csv')
     assert (abs(res1['Accuracy'] - res2['Accuracy']) < 0.01)[0]

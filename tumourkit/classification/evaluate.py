@@ -30,19 +30,6 @@ from .calibration_error import calibration_error
 
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--node-dir', type=str, required=True,
-                     help='Folder with .nodes.csv prediction files.')
-parser.add_argument('--save-file', type=str, required=True,
-                     help='Name to file where to save the results. Must not contain extension.')
-parser.add_argument('--by-img', action='store_true',
-                     help='Whether to evaluate images separately or totally.')
-parser.add_argument('--draw', action='store_true',
-                     help='Whether to draw reliability diagrams.')
-parser.add_argument('--draw-dir', type=str, 
-                     help='Folder to save reliability diagram on by-img mode.')
-parser.add_argument('--name', type=str, default='Method', 
-                     help='The name of the model used. Default: Method.')
 
 def check_imbalance(labels: np.ndarray) -> bool:
     """
@@ -145,7 +132,25 @@ def join_dictionaries(dict1: Dict[str, List[float]], dict2: Dict[str, float]) ->
             dict1[key] = []
         dict1[key].append(dict2[key])
 
-def main(args):
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--node-dir', type=str, required=True,
+                        help='Folder with .nodes.csv prediction files.')
+    parser.add_argument('--save-file', type=str, required=True,
+                        help='Name to file where to save the results. Must not contain extension.')
+    parser.add_argument('--by-img', action='store_true',
+                        help='Whether to evaluate images separately or totally.')
+    parser.add_argument('--draw', action='store_true',
+                        help='Whether to draw reliability diagrams.')
+    parser.add_argument('--draw-dir', type=str, 
+                        help='Folder to save reliability diagram on by-img mode.')
+    parser.add_argument('--name', type=str, default='Method', 
+                        help='The name of the model used. Default: Method.')
+    return parser
+
+
+def main_with_args(args):
     node_files = os.listdir(args.node_dir)
     node_paths = [parse_path(args.node_dir) + x for x in node_files]
     metrics = {}
@@ -175,6 +180,8 @@ def main(args):
         join_dictionaries(metrics, aux_metrics)
     save_metrics(metrics, args.save_file)
 
-if __name__=='__main__':
+
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    main(args)
+    main_with_args(args)
