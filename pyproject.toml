@@ -11,15 +11,20 @@ description = "A SDK for tumour study"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
-    "Development Status :: 1 - Planning",
-    "Environment :: MacOS X",
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: GPU :: NVIDIA CUDA :: 11.7",
+    "Environment :: Console",
     "Intended Audience :: Healthcare Industry",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Natural Language :: English",
-    "Operating System :: MacOS :: MacOS X",
-    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Typing :: Stubs Only",
 ]
 license = { file = "LICENSE" }
