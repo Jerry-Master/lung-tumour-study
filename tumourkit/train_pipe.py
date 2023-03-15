@@ -153,7 +153,7 @@ def run_graph_pipe(args: Namespace, logger : Logger) -> None:
         save_file = os.path.join(args.root_dir, 'gnn_logs', 'gnn_results'),
         num_confs = 32,
         save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
-        device = 'cpu' if args.gpu == '' else 'gpu',
+        device = 'cpu' if args.gpu == '' else 'cuda',
         num_workers = 0,
         checkpoint_iters = -1,
     )
@@ -187,10 +187,10 @@ def main():
     # run_preproc_pipe(args, logger)
     logger.info('Finished preprocessing pipeline.')
     logger.info('Starting Hovernet pipeline.')
-    run_hov_pipe(args, logger)
+    # run_hov_pipe(args, logger)
     logger.info('Finished Hovernet pipeline.')
     logger.info('Starting postprocessing pipeline.')
-    run_postproc_pipe(args, logger)
+    # run_postproc_pipe(args, logger)
     logger.info('Finished postprocessing pipeline.')
     logger.info('Starting graph pipeline.')
     run_graph_pipe(args, logger)
