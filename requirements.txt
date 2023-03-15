@@ -10,7 +10,6 @@ fonttools==4.38.0
 geojson==2.5.0
 idna==3.4
 imageio==2.24.0
-imgaug @ git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
 iniconfig==2.0.0
 joblib==1.2.0
 kiwisolver==1.4.4

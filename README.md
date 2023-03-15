@@ -8,6 +8,7 @@ Python package from my Bachelor's thesis. It is dedicated to aid in the study of
 Just do:
 
 ```shell
+pip install git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
 pip install tumourkit
 ```
 
@@ -16,10 +17,13 @@ It's that simple, dependencies will be automatically installed and several comma
 ```shell
 python3.10 -m venv [ENV_NAME]
 source [ENV_NAME]/bin/activate
+pip install git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
 pip install tumourkit
 ```
 
 PyTorch and Deep Graph Library are not included as dependencies since they change rapidly and require extra links. To install PyTorch and Deep Graph Library please go to their official installation pages. 
+
+Also, don't mind the imgaug package being installed manually, that is to avoid deprecation with newer versions of numpy.
 
 ### Known errors
 
