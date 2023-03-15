@@ -110,7 +110,7 @@ def get_config(nr_type, mode):
                     ],
                     Events.EPOCH_COMPLETED: [
                         TrackLr(),
-                        PeriodicSaver(),
+                        PeriodicSaver(per_n_epoch=5),
                         VisualizeOutput(viz_step_output),
                         LoggingEpochOutput(),
                         TriggerEngine("valid"),
