@@ -19,18 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 from typing import Dict, Tuple, Any
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import parse_path, create_dir
+from ..utils.preprocessing import parse_path, create_dir
 import torch
 from torch import nn
 import torch.nn.functional as F
-from train_gnn import load_model
-from read_graph import GraphDataset
+from .train_gnn import load_model
+from .read_graph import GraphDataset
 import dgl
 from dgl.dataloading import GraphDataLoader
 import json
@@ -38,18 +32,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--node-dir', type=str, required=True,
-                     help='Folder containing .nodes.csv')
-parser.add_argument('--output-dir', type=str, required=True,
-                     help='Folder to save .nodes.csv containing probabilities.')
-parser.add_argument('--weights', type=str, required=True,
-                     help='Path to model weights.')  
-parser.add_argument('--conf', type=str, required=True,
-                     help='Configuration file for the model.')
-parser.add_argument('--normalizers', type=str, required=True,
-                     help='Path to normalizer objects for the model.')                     
+                  
 
 def load_saved_model(weights_path: str, conf_path: str) -> nn.Module:
     """
@@ -71,7 +54,7 @@ def load_normalizer(norm_path: str) -> Tuple[Any]:
         normalizers = pickle.load(f)
     return normalizers
 
-def evaluate_model(model: nn.Module, loader: GraphDataLoader, device: str) -> Dict[str,np.ndarray]:
+def run_inference(model: nn.Module, loader: GraphDataLoader, device: str) -> Dict[str, np.ndarray]:
     """
     Computes probabilities for all the nodes.
     """
@@ -88,31 +71,47 @@ def evaluate_model(model: nn.Module, loader: GraphDataLoader, device: str) -> Di
         probs[name[0]] = prob
     return probs
 
-def save_probs(probs: Dict[str, np.ndarray]) -> None:
+def save_probs(probs: Dict[str, np.ndarray], node_dir: str, output_dir: str) -> None:
     """
     Saves probabilities in .nodes.csv files.
     It appends a column to original .nodes.csv file.
     """
     for name, prob in probs.items():
-        orig = pd.read_csv(NODE_DIR + name)
+        orig = pd.read_csv(node_dir + name)
         orig['prob1'] = prob
-        orig.to_csv(OUTPUT_DIR + name, index=False)
+        orig.to_csv(output_dir + name, index=False)
 
 
-def main(args):
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--node-dir', type=str, required=True,
+                        help='Folder containing .nodes.csv')
+    parser.add_argument('--output-dir', type=str, required=True,
+                        help='Folder to save .nodes.csv containing probabilities.')
+    parser.add_argument('--weights', type=str, required=True,
+                        help='Path to model weights.')  
+    parser.add_argument('--conf', type=str, required=True,
+                        help='Configuration file for the model.')
+    parser.add_argument('--normalizers', type=str, required=True,
+                        help='Path to normalizer objects for the model.')   
+    return parser
+
+
+def main_with_args(args):
+    node_dir = parse_path(args.node_dir)
+    output_dir = parse_path(args.output_dir)
+    create_dir(output_dir)
     normalizers = load_normalizer(args.normalizers)
     eval_dataset = GraphDataset(
-        node_dir=NODE_DIR, return_names=True,
+        node_dir=node_dir, return_names=True,
         max_dist=200, max_degree=10, normalizers=normalizers)
     eval_dataloader = GraphDataLoader(eval_dataset, batch_size=1, shuffle=False)
     model = load_saved_model(args.weights, args.conf)
     model.eval()
-    probs = evaluate_model(model, eval_dataloader, 'cpu')
-    save_probs(probs)
+    probs = run_inference(model, eval_dataloader, 'cpu')
+    save_probs(probs, node_dir, output_dir)
 
-if __name__=='__main__':
+def main():
+    parser = _create_parser()
     args = parser.parse_args()
-    NODE_DIR = parse_path(args.node_dir)
-    OUTPUT_DIR = parse_path(args.output_dir)
-    create_dir(args.output_dir)
     main(args)
