@@ -25,7 +25,7 @@ import pandas as pd
 import argparse
 import logging
 from tqdm import tqdm
-from ..utils.preprocessing import create_dir, read_json, parse_path, get_names
+from ..utils.preprocessing import create_dir, read_json, parse_path, get_names, save_centroids
 
 
 def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
@@ -63,8 +63,7 @@ def main_with_args(args):
         json_path = json_dir + name + '.json'
         nuc = read_json(json_path)
         centroids = parse_centroids(nuc)
-        df = pd.DataFrame(centroids, columns=['X','Y','class'])
-        df.to_csv(output_path + name + '.centroids.csv', index=False)
+        save_centroids(centroids, output_path, name)
 
 
 def main():

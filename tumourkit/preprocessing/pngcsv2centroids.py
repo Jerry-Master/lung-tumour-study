@@ -23,7 +23,7 @@ import argparse
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names
+from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names, save_centroids
 
 
 def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
@@ -70,8 +70,7 @@ def main_with_args(args):
     for name in tqdm(names):
         img, csv = read_labels(name, png_dir, csv_dir)
         centroids = extract_centroids(img, csv)
-        df = pd.DataFrame(centroids, columns=['X','Y','class'])
-        df.to_csv(output_path + name + '.centroids.csv', index=False)
+        save_centroids(centroids, output_path, name)
 
 
 def main():

@@ -66,19 +66,18 @@ def read_names(file_path: str) -> List[str]:
         files = [line.strip() for line in lines]
     return files
 
-def read_labels(name: str, png_dir: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
+
+def read_png(name: str, png_dir: str) -> np.ndarray:
     """
-    Input: name of file and paths to their location in png and csv format.
-           Files should end in .GT_cells.png and .class.csv respectively.
-    Output: png and csv of that file.
+    Input: name of png file without extension and folder where it is.
+           Extension should be .GT_cells.png.
+    Output: numpy array containing the image.
     """
     try:
-        img = cv2.imread(png_dir + name + '.GT_cells.png', -1)
-        csv = pd.read_csv(csv_dir + name + '.class.csv', header=None)
-        csv.columns = ['id', 'label']
-        return img, csv
+        img = cv2.imread(os.path.join(png_dir, name + '.GT_cells.png'), -1)
+        return img
     except:
-        return None, None
+        return None
 
 
 def read_csv(name: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
@@ -88,11 +87,25 @@ def read_csv(name: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
     Output: csv of that file.
     """
     try:
-        csv = pd.read_csv(csv_dir + name + '.class.csv', header=None)
+        csv = pd.read_csv(os.path.join(csv_dir, name + '.class.csv'), header=None)
         csv.columns = ['id', 'label']
         return csv
     except:
         return None
+    
+
+def read_labels(name: str, png_dir: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
+    """
+    Input: name of file and paths to their location in png and csv format.
+           Files should end in .GT_cells.png and .class.csv respectively.
+    Output: png and csv of that file.
+    """
+    try:
+        img = read_png(name, png_dir)
+        csv = read_csv(name, csv_dir)
+        return img, csv
+    except:
+        return None, None
 
 
 def read_json(json_path: str) -> Dict[str, Any]:
@@ -107,11 +120,24 @@ def read_json(json_path: str) -> Dict[str, Any]:
 
 def read_centroids(name: str, path: str) -> np.ndarray:
     """
-    Format of the csv should be columns: X, Y, class
+    Format of the csv should be columns: X, Y, class.
+    Centroids with class -1 are dropped.
+    Coordinates are converted to integers.
     """
     centroid_csv = pd.read_csv(path + name + '.centroids.csv')
     centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
     return centroid_csv.to_numpy(dtype=int)
+
+
+def read_graph(name: str, graph_dir: str) -> pd.DataFrame:
+    """
+    Input: name of file and path to the folder containing it in graph format.
+           File should end in .nodes.csv.
+    Output: graph nodes of that file.
+    """
+    df = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
+    return df
+
 
 Point = Tuple[float,float]
 Contour = List[Point]
@@ -150,13 +176,37 @@ def create_geojson(contours: List[Tuple[int,int]]) -> List[Dict[str, Any]]:
         features.append(feat)
     return features
 
+
+def save_png(png: np.ndarray, png_path: str, name: str) -> None:
+    """
+    Save png into png_path with given name plus '.GT_cells.png'.
+    """
+    png = np.array(png, dtype=np.uint16)
+    cv2.imwrite(os.path.join(png_path, name + '.GT_cells.png'), png)
+
+
+def save_csv(csv: pd.DataFrame, csv_path: str, name: str) -> None:
+    """
+    Save csv into csv_path with given name plus '.class.csv'.
+    """
+    csv.to_csv(os.path.join(csv_path, name + '.class.csv'), index=False, header=False)
+
+
 def save_pngcsv(png: np.ndarray, csv: pd.DataFrame, png_path: str, csv_path: str, name: str) -> None:
     """
     Save png, csv pair in the folders png_path and csv_path with the given name.
     """
-    png = np.array(png, dtype=np.uint16)
-    cv2.imwrite(png_path + name + '.GT_cells.png', png)
-    csv.to_csv(csv_path + name + '.class.csv', index=False, header=False)
+    save_png(png, png_path, name)
+    save_csv(csv, csv_path, name)
+
+
+def save_centroids(centroids: np.ndarray, centroids_dir: str, name: str) -> None:
+    """
+    Save centroids into centroids_dir with given name plus '.centroids.csv'
+    """
+    df = pd.DataFrame(centroids, columns=['X','Y','class'])
+    df.to_csv(os.path.join(centroids_dir, name + '.centroids.csv'), index=False)
+
 
 def save_graph(graph: pd.DataFrame, path: str) -> None:
     """
