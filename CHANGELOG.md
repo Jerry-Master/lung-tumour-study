@@ -9,8 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Inference pipeline
 - Research pipeline
+
+## [0.3.0] - 2023-03-20
+
+### Added
+
+- Inference pipeline
 
 ## [0.2.1] - 2023-03-15
 
