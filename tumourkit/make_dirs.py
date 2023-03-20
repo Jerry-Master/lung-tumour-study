@@ -8,6 +8,7 @@ import json
 def _create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root-dir', type=str, default='./.internals/', help='Root folder to save data and models.')
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes (up to 7) to consider in the classification problem.')
     return parser
 
 
@@ -66,9 +67,22 @@ def main():
         os.mkdir(args.root_dir)
         create_subfolders(structure, args.root_dir)
         type_info = {
-            "0" : ["background", [0  ,   0,   0]], 
-            "1" : ["nontumour", [255,   0,   0]], 
-            "2" : ["tumour", [0  , 255,   0]]
+            "0" : ["background", [0, 0, 0]], 
+            "1" : ["nontumour", [255, 0, 0]], 
+            "2" : ["tumour", [0, 255, 0]]
         }
+        if args.num_classes != 2:
+            colors = [
+                [0, 0, 0],
+                [255, 0, 0],
+                [0, 255, 0],
+                [0, 0, 255],
+                [255, 255, 0],
+                [255, 0, 255],
+                [0, 255, 255],
+                [255, 255, 255]
+            ][:args.num_classes+1]
+            type_info = {str(k): ["Class" + str(k), v] for k, v in enumerate(colors)}
+            type_info['0'] = ["background", [0, 0, 0]]
         with open(os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet', 'type_info.json'), 'w') as f:
             json.dump(type_info, f)

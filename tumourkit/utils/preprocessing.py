@@ -26,7 +26,7 @@ import cv2
 import pandas as pd
 import numpy as np
 import json
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 
 
 def parse_path(path: str) -> str:
@@ -151,7 +151,7 @@ def format_contour(contour: Contour) -> Contour:
     new_contour.append(new_contour[0])
     return new_contour
 
-def create_geojson(contours: List[Tuple[int,int]]) -> List[Dict[str, Any]]:
+def create_geojson(contours: List[Tuple[int,int]], num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
     """
     Input: List of pairs (contour, label).
         Contour is a list of points starting and finishing in the same point.
@@ -160,6 +160,9 @@ def create_geojson(contours: List[Tuple[int,int]]) -> List[Dict[str, Any]]:
     """
     label_dict = ["background", "non-tumour", "tumour", "segmented"]
     colour_dict = [-9408287, -9408287, -9408287, -9408287]
+    if num_classes != 2:
+        label_dict = ["background"] + ["Class" + str(i) for i in range(1, num_classes+1)]
+    colour_dict = [-9408287] * (num_classes + 1)
     features = []
     for contour, label in contours:
         assert(label > 0)

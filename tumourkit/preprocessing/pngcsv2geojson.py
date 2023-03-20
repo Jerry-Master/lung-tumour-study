@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import argparse
 import pandas as pd
 import cv2
@@ -50,17 +50,17 @@ def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
     return np.array(mask, dtype=np.uint8)
 
 
-def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int) -> List[Dict[str, Any]]:
+def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int, num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
     """
     Computes geojson features of contours of a given class.
     """
     mask = create_mask(png, csv, label)
     contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
     contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), label) for c in contours])
-    return create_geojson(contours)
+    return create_geojson(contours, num_classes)
 
 
-def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame) -> List[Dict[str, Any]]:
+def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame, num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
     """
     Computes geojson as list of features representing contours.
     Contours are approximated by method cv2.CHAIN_APPROX_SIMPLE.
@@ -73,7 +73,7 @@ def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame) -> List[Dict[str, Any]]:
         mask = mask.astype(np.uint8)
         contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
         contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), cell_label) for c in contours])
-        total_contours.extend(create_geojson(contours))
+        total_contours.extend(create_geojson(contours, num_classes))
         del mask
     return total_contours
 
@@ -86,6 +86,7 @@ def _create_parser():
                         help='Path to csv files.')
     parser.add_argument('--gson-dir', type=str, required=True,
                         help='Path to save files.')
+    parser.add_argument('--num-classes', type=int, default=2)
     return parser
 
 
@@ -100,7 +101,7 @@ def main_with_args(args):
         png, csv = read_labels(name, png_dir, csv_dir)
         if png is None or png.max() == 0:
             continue
-        gson = pngcsv2geojson(png, csv)
+        gson = pngcsv2geojson(png, csv, args.num_classes)
         save_geojson(gson, name, output_path)
 
 
