@@ -21,7 +21,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from tumourkit.preprocessing.pngcsv2graph import create_graph
+from tumourkit.preprocessing.pngcsv2graph import pngcsv2graph
 from tumourkit.utils.preprocessing import get_names, parse_path, read_labels
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +34,7 @@ def test_indices(name):
     png, csv = read_labels(name, PNGCSV_DIR, PNGCSV_DIR)
     false_img = np.ones((*png.shape, 3)) * png.reshape((*png.shape, 1))
     false_img = false_img.astype(np.uint8)
-    graph = create_graph(false_img, png, csv)
+    graph = pngcsv2graph(false_img, png, csv)
     graph.set_index('id', inplace=True)
     graph.sort_index(inplace=True)
     csv.columns = ['id', 'class']

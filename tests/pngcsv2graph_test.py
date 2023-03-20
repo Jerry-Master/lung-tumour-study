@@ -20,7 +20,7 @@ import pytest
 import os
 import numpy as np
 
-from tumourkit.preprocessing.pngcsv2graph import create_graph
+from tumourkit.preprocessing.pngcsv2graph import pngcsv2graph
 from tumourkit.utils.preprocessing import get_names, parse_path, read_labels, read_centroids
 from tumourkit.utils.nearest import generate_tree, find_nearest_dist_idx
 
@@ -30,11 +30,11 @@ THRESHOLD = 10
 
 
 @pytest.mark.parametrize("name", get_names(PNGCSV_DIR, '.GT_cells.png')[-5:])
-def test_graph_centroids(name):
+def test_pngcsv2graph(name):
     png, csv = read_labels(name, PNGCSV_DIR, PNGCSV_DIR)
     false_img = np.ones((*png.shape, 3)) * png.reshape((*png.shape, 1))
     false_img = false_img.astype(np.uint8)
-    graph = create_graph(false_img, png, csv)
+    graph = pngcsv2graph(false_img, png, csv)
     graph.set_index('id', inplace=True)
     graph.sort_index(inplace=True)
 

@@ -28,7 +28,7 @@ import cv2
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from tqdm import tqdm
-from ..utils.preprocessing import *
+from ..utils.preprocessing import read_png, Contour, format_contour, save_graph, parse_path, create_dir, get_names
 
 
 def read_image(name: str, path: str) -> np.array:
@@ -139,9 +139,9 @@ def add_node(graph: Dict[str, float], feats: Dict[str, np.ndarray]) -> None:
             graph[k].append(v)
 
 
-def pngcsv2graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
+def png2graph(img: np.ndarray, png: np.ndarray) -> pd.DataFrame:
     """
-    Given original image and pngcsv labels, 
+    Given original image and png label (segmentation), 
     returns nodes with extracted attributes in a DataFrame.
     Current attributes are:
         - X, Y of centroid
@@ -152,7 +152,9 @@ def pngcsv2graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.Data
         - Histogram (5 bins)
     """
     graph = {}
-    for idx, cls in csv.itertuples(index=False, name=None):
+    for idx in np.unique(png):
+        if idx == 0:
+            continue
         mask = get_mask(png, idx)
         msk_img, msk, X, Y  = apply_mask(img, mask)
         try:
@@ -160,7 +162,6 @@ def pngcsv2graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.Data
         except:
             feats = extract_features(msk_img, msk, debug=True)
         if len(feats) > 0:
-            feats['class'] = cls
             feats['id'] = idx
             feats['X'] = X
             feats['Y'] = Y
@@ -172,8 +173,6 @@ def _create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--png-dir', type=str, required=True,
                         help='Path to png files.')
-    parser.add_argument('--csv-dir', type=str, required=True,
-                        help='Path to csv files.')
     parser.add_argument('--orig-dir', type=str, required=True,
                         help='Path to original images.')
     parser.add_argument('--output-path', type=str, required=True,
@@ -185,7 +184,6 @@ def _create_parser():
 def main_subthread(
         name: str,
         png_dir: str,
-        csv_dir: str,
         orig_dir: str,
         output_path: str,
         pbar: tqdm,
@@ -194,9 +192,9 @@ def main_subthread(
     Wrapper to use multiprocessing
     """
     try:
-        png, csv = read_labels(name, png_dir, csv_dir)
+        png = read_png(name, png_dir)
         img = read_image(name, orig_dir)
-        graph = pngcsv2graph(img, png, csv)
+        graph = png2graph(img, png)
         save_graph(graph, os.path.join(output_path, name+'.nodes.csv'))
     except Exception as e:
         logging.warning(e)
@@ -207,7 +205,6 @@ def main_subthread(
 
 def main_with_args(args):
     png_dir = parse_path(args.png_dir)
-    csv_dir = parse_path(args.csv_dir)
     orig_dir = parse_path(args.orig_dir)
     output_path = parse_path(args.output_path)
     create_dir(output_path)
@@ -217,10 +214,10 @@ def main_with_args(args):
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             for name in names:
-                executor.submit(main_subthread, name, png_dir, csv_dir, orig_dir, output_path, pbar) 
+                executor.submit(main_subthread, name, png_dir, orig_dir, output_path, pbar) 
     else:
         for name in names:
-            main_subthread(name, png_dir, csv_dir, orig_dir, output_path, pbar)
+            main_subthread(name, png_dir, orig_dir, output_path, pbar)
 
 
 def main():
