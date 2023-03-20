@@ -149,5 +149,5 @@ def main():
         set_best_configuration(args, logger)
     # run_hovernet(args, logger)
     # run_posthov(args, logger)
-    run_graphs(args, logger)
+    # run_graphs(args, logger)
     run_postgraphs(args, logger)

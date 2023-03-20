@@ -80,9 +80,9 @@ def main_with_args(args: Namespace) -> None:
     png_dir = parse_path(args.png_dir)
     csv_dir = parse_path(args.csv_dir)
     create_dir(csv_dir)
-    names = sorted(get_names(centroids_dir, '.centroids.csv'))
-    names_check = sorted(get_names(png_dir, '.GT_cells.png'))
-    assert names == names_check, 'Centroids folder and png folder do not contain same names.'
+    names_centroids = sorted(get_names(centroids_dir, '.centroids.csv'))
+    names_png = sorted(get_names(png_dir, '.GT_cells.png'))
+    names = list(set(names_png).intersection(set(names_centroids)))
     for name in names:
         centroids_file = read_centroids(name, centroids_dir)
         png_file = read_png(name, png_dir)
