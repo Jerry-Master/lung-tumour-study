@@ -44,7 +44,6 @@ def extract_centroids(img: np.ndarray) -> List[Tuple[int,int]]:
         with the cell.
     """
     centroids = []
-    print(len(np.unique(img)), np.unique(img).max())
     for idx in np.unique(img):
         if idx != 0:
             x, y = get_centroid_by_id(img, idx)
