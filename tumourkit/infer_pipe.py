@@ -99,17 +99,20 @@ def run_graphs(args: Namespace, logger: Logger) -> None:
 
 def run_postgraphs(args: Namespace, logger: Logger) -> None:
     logger.info('Parsing gnn output.')
+    logger.info('   Converting .nodes.csv to .centroids.csv.')
     newargs = Namespace(
         graph_dir = os.path.join(args.output_dir, 'gnn_preds'),
         centroids_dir = os.path.join(args.output_dir, 'centroids'),
     )
     graph2centroids(newargs)
+    logger.info('   Converting .centroids.csv and .GT_cells.png to .class.csv.')
     newargs = Namespace(
         centroids_dir = os.path.join(args.output_dir, 'centroids'),
         png_dir = os.path.join(args.output_dir, 'png_hov'),
         csv_dir = os.path.join(args.output_dir, 'csv_gnn'),
     )
     centroidspng2csv(newargs)
+    logger.info('   Converting png/csv to geojson.')
     newargs = Namespace(
         png_dir = os.path.join(args.output_dir, 'png_hov'),
         csv_dir = os.path.join(args.output_dir, 'csv_gnn'),
