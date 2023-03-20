@@ -21,7 +21,8 @@ def run_preproc_pipe(args: Namespace, logger : Logger) -> None:
         newargs = Namespace(
             gson_dir = os.path.join(args.root_dir, 'data', split, 'gson'),
             png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv')
+            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
+            num_classes = args.num_classes,
         )
         geojson2pngcsv(newargs)
         newargs = Namespace(

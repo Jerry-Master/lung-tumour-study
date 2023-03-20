@@ -88,7 +88,7 @@ def main_with_args(args):
     names = get_names(gson_dir, '.geojson')
     for name in tqdm(names):
         gson = read_gson(name, gson_dir)
-        png, csv = geojson2pngcsv(gson)
+        png, csv = geojson2pngcsv(gson, args.num_classes)
         save_pngcsv(png, csv, png_dir, csv_dir, name)
 
 def main():
