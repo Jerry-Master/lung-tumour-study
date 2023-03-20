@@ -69,7 +69,7 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
         png_dir = os.path.join(args.output_dir, 'png_hov'),
         orig_dir = args.input_dir,
         output_path = os.path.join(args.output_dir, 'graphs', 'raw'),
-        num_workers = 0
+        num_workers = args.num_workers
     )
     png2graph(newargs)
     logger.info('   Adding hovernet predictions to .nodes.csv.')
@@ -128,6 +128,7 @@ def _create_parser():
     parser.add_argument('--input-dir', type=str, help='Folder containing patches to process.', required=True)
     parser.add_argument('--output-dir', type=str, help='Folder where to save results. Additional subfolder will be created.', required=True)
     parser.add_argument('--gpu', type=str, default='0')
+    parser.add_argument('--num-workers', type=int, default=0)
     parser.add_argument('--best-num-layers', type=str, help='Optimal number of layers when training GNNs.')
     parser.add_argument('--best-dropout', type=str, help='Optimal dropout rate when training GNNs')
     parser.add_argument('--best-norm-type', type=str, help='Optimal type of normalization layers when training GNNs')
