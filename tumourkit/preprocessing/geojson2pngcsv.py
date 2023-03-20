@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Optional
 import argparse
 import geojson
 from skimage.draw import polygon
@@ -37,7 +37,7 @@ def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
     return gson
 
 
-def geojson2pngcsv(gson: List[Dict[str, Any]]) -> Tuple[np.ndarray, pd.DataFrame]:
+def geojson2pngcsv(gson: List[Dict[str, Any]], num_classes: Optional[int] = 2) -> Tuple[np.ndarray, pd.DataFrame]:
     """
     Computes png <-> csv labels from geojson. 
     Width and height are assumed to be 1024.
@@ -45,6 +45,8 @@ def geojson2pngcsv(gson: List[Dict[str, Any]]) -> Tuple[np.ndarray, pd.DataFrame
     png = np.zeros((1024,1024), dtype=np.uint16)
     csv = pd.DataFrame([], columns=['id', 'label'])
     label_parser = {'tumour': 2, 'non-tumour': 1}
+    if num_classes != 2:
+        label_parser = {"Class"+str(k): k for k in range(1, num_classes+1)}
     for k, feature in enumerate(gson):
         # Draw filled contour
         contour = feature['geometry']['coordinates'][0]
@@ -71,6 +73,7 @@ def _create_parser():
                         help='Path to save the png files.')  
     parser.add_argument('--csv-dir', type=str, required=True,
                         help='Path to save the csv files.')
+    parser.add_argument('--num-classes', type=int, default=2)
     return parser 
 
 
