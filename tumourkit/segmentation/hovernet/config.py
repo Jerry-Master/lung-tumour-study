@@ -1,9 +1,10 @@
 import importlib
+from typing import Optional
 
 class Config(object):
     """Configuration file."""
 
-    def __init__(self, shape: str, log_dir: str, train_dir: str, valid_dir: str, pretrained_path: str, use_cpu: bool):
+    def __init__(self, shape: str, log_dir: str, train_dir: str, valid_dir: str, pretrained_path: str, use_cpu: bool, num_classes: Optional[int] = 2):
         self.seed = 10
         self.logging = True
         self.debug = False
@@ -14,7 +15,7 @@ class Config(object):
         if model_mode not in ["original", "fast"]:
             raise Exception("Must use either `original` or `fast` as model mode")
 
-        nr_type = 3 # number of nuclear types (including background)
+        nr_type = num_classes + 1 # number of nuclear types (including background)
 
         # whether to predict the nuclear type, availability depending on dataset!
         self.type_classification = True

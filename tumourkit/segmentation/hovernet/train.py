@@ -249,13 +249,14 @@ def _create_parser():
     parser.add_argument('--train-dir', type=str, required=True)
     parser.add_argument('--valid-dir', type=str, required=True)
     parser.add_argument('--shape', type=str, required=True, choices=['270', '518'])
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 
 def main_with_args(args):
     trainer = TrainManager(
         args.shape, args.log_dir, args.train_dir, args.valid_dir,
-        args.pretrained_path, use_cpu=(args.gpu == '')
+        args.pretrained_path, use_cpu=(args.gpu == ''), num_classes=args.num_classes
     )
 
     if args.view is not None:

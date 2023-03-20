@@ -25,7 +25,7 @@ def set_best_configuration(args: Namespace, logger: Logger) -> None:
 def run_hovernet(args: Namespace, logger: Logger) -> None:
     logger.info('Starting hovernet inference.')
     newargs = {
-        'nr_types': '3',
+        'nr_types': str(args.num_classes + 1),
         'type_info_path': os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet', 'type_info.json'),
         'gpu': args.gpu,
         'nr_inference_workers': '0',
@@ -133,6 +133,7 @@ def _create_parser():
     parser.add_argument('--best-dropout', type=str, help='Optimal dropout rate when training GNNs')
     parser.add_argument('--best-norm-type', type=str, help='Optimal type of normalization layers when training GNNs')
     parser.add_argument('--best-arch', type=str, help='Best architecture (convolutional, attention, ...) when training GNNs', required=True)
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 

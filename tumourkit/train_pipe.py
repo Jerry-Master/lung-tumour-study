@@ -47,7 +47,8 @@ def run_hov_pipe(args: Namespace, logger : Logger) -> None:
         train_dir = os.path.join(args.root_dir, 'data', 'train', 'npy'),
         valid_dir = os.path.join(args.root_dir, 'data', 'validation', 'npy'),
         pretrained_path = args.pretrained_path,
-        shape = '518'
+        shape = '518',
+        num_classes = args.num_classes,
     )
     hov_train(newargs)
     logger.info('Starting inference.')
@@ -166,6 +167,7 @@ def _create_parser():
     parser.add_argument('--root-dir', type=str, default='./.internals/', help='Root folder to save data and models.')
     parser.add_argument('--pretrained-path', type=str, help='Path to initial Hovernet weights.')
     parser.add_argument('--gpu', type=str, default='')
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 
