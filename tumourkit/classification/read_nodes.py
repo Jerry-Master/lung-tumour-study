@@ -28,21 +28,30 @@ import os
 from ..utils.preprocessing import *
 
 
-def read_node_matrix(file: str, return_coordinates: Optional[bool] = False) -> Tuple[np.ndarray, np.ndarray]:
+def read_node_matrix(file: str, return_coordinates: Optional[bool] = False, return_class: Optional[bool] = True) -> Tuple[np.ndarray, np.ndarray]:
     """
     Read csv and creates X and y matrices.
     Centroids coordinates are removed.
     Labels are subtracted 1 to be in 0-1 range.
     """
     df = pd.read_csv(file)
-    y = df['class'].to_numpy() - 1
-    X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
-    if not return_coordinates:
-        return X, y
+    if return_class:
+        y = df['class'].to_numpy() - 1
+        X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
+        if not return_coordinates:
+            return X, y
+        else:
+            xx = df['X'].to_numpy()
+            yy = df['Y'].to_numpy()
+            return X, y, xx, yy
     else:
-        xx = df['X'].to_numpy()
-        yy = df['Y'].to_numpy()
-        return X, y, xx, yy
+        X = df.drop(['id', 'X', 'Y'], axis=1).to_numpy()
+        if not return_coordinates:
+            return X, None
+        else:
+            xx = df['X'].to_numpy()
+            yy = df['Y'].to_numpy()
+            return X, None, xx, yy
 
 def read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
     """

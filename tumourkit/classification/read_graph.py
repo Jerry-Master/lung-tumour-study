@@ -46,7 +46,8 @@ class GraphDataset(Dataset):
         column_normalize: Optional[bool] = False,
         row_normalize: Optional[bool] = False,
         normalizers: Optional[Tuple[Any]] = None,
-        return_names: Optional[bool] = False):
+        return_names: Optional[bool] = False,
+        is_inference: Optional[bool] = False):
         """
         node_dir: Path to .nodes.csv files.
         max_dist: Maximum distance to consider two nodes as neighbours.
@@ -71,10 +72,11 @@ class GraphDataset(Dataset):
         self.normalizers = normalizers
         self.initialize_normalizers()
         self.return_names = return_names
+        self.is_inference = is_inference
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
-        X, y, xx, yy = read_node_matrix(os.path.join(self.node_dir, file_name), return_coordinates=True)
+        X, y, xx, yy = read_node_matrix(os.path.join(self.node_dir, file_name), return_coordinates=True, return_class=not self.is_inference)
         if self.column_normalize:
             X = self.col_sc.transform(X)
         if self.row_normalize:
@@ -87,7 +89,8 @@ class GraphDataset(Dataset):
         source, dest, dists = GraphDataset.create_edges(xx, yy, self.max_degree, self.max_dist)
         g = dgl.graph((source, dest), num_nodes=len(X))
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
-        g.ndata['y'] = torch.tensor(y, dtype=torch.long)
+        if not self.is_inference:
+            g.ndata['y'] = torch.tensor(y, dtype=torch.long)
         g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1,1))
         if self.return_names:
             return g, file_name

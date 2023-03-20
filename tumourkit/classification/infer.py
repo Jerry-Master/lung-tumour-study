@@ -103,7 +103,7 @@ def main_with_args(args):
     create_dir(output_dir)
     normalizers = load_normalizer(args.normalizers)
     eval_dataset = GraphDataset(
-        node_dir=node_dir, return_names=True,
+        node_dir=node_dir, return_names=True, is_inference=True,
         max_dist=200, max_degree=10, normalizers=normalizers)
     eval_dataloader = GraphDataLoader(eval_dataset, batch_size=1, shuffle=False)
     model = load_saved_model(args.weights, args.conf)
