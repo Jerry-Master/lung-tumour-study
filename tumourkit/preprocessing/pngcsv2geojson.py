@@ -29,7 +29,7 @@ from ..utils.preprocessing import (
     get_names, create_dir, parse_path,
     format_contour, create_geojson, read_labels
 )
-
+import pdb
 
 def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
     """
@@ -66,6 +66,7 @@ def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame) -> List[Dict[str, Any]]:
     Computes geojson as list of features representing contours.
     Contours are approximated by method cv2.CHAIN_APPROX_SIMPLE.
     """
+    pdb.set_trace()
     total_contours = []
     for _, (idx, cell_label) in csv.iterrows():
         mask = png.copy()
@@ -91,6 +92,7 @@ def _create_parser():
 
 
 def main_with_args(args):
+    pdb.set_trace()
     png_dir = parse_path(args.png_dir)
     csv_dir = parse_path(args.csv_dir)
     output_path = parse_path(args.gson_dir)
