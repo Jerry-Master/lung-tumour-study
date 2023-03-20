@@ -4,7 +4,7 @@ import logging
 from logging import Logger
 from .segmentation import hov_infer
 import os
-from .preprocessing import geojson2pngcsv, pngcsv2graph, hovernet2geojson
+from .preprocessing import geojson2pngcsv, png2graph, hovernet2geojson
 from .postprocessing import join_hovprob_graph
 from .utils.preprocessing import create_dir
 from .classification import infer_gnn
@@ -55,12 +55,11 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
     create_dir(os.path.join(args.output_dir, 'graphs'))
     newargs = Namespace(
         png_dir = os.path.join(args.output_dir, 'png_hov'),
-        csv_dir = os.path.join(args.output_dir, 'csv_hov'),
         orig_dir = args.input_dir,
         output_path = os.path.join(args.output_dir, 'graphs', 'raw'),
         num_workers = 0
     )
-    pngcsv2graph(newargs)
+    png2graph(newargs)
     logger.info('   Adding hovernet predictions to .nodes.csv.')
     newargs = Namespace(
         json_dir = os.path.join(args.output_dir, 'tmp_hov', 'json'),

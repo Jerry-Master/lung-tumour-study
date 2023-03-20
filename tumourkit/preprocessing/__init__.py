@@ -6,4 +6,5 @@ from .pngcsv2centroids import main_with_args as pngcsv2centroids
 from .pngcsv2geojson import main_with_args as pngcsv2geojson
 from .pngcsv2graph import main_with_args as pngcsv2graph
 from .graph2centroids import main_with_args as graph2centroids
-from .centroidspng2csv import main_with_args as centroidspng2csv    
+from .centroidspng2csv import main_with_args as centroidspng2csv
+from .png2graph import main_with_args as png2graph
