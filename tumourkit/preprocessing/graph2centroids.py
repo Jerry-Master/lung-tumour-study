@@ -32,7 +32,9 @@ def graph2centroids(graph_file: pd.DataFrame) -> np.ndarray:
     """
     if 'class' in graph_file.columns:
         return graph_file[['X', 'Y', 'class']].to_numpy(dtype=int)
-    return graph_file[['X', 'Y', 'prob1']].to_numpy(dtype=int)
+    res = graph_file[['X', 'Y', 'prob1']].to_numpy()
+    res[:, 2] = (res[:, 2] > 0.5) * 1 + 1
+    return np.array(res, dtype=int)
 
 
 def _create_parser():
