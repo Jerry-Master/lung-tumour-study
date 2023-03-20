@@ -29,7 +29,9 @@ def graph2centroids(graph_file: pd.DataFrame) -> np.ndarray:
     """
     Extracts X, Y and class attributes from graphs nodes.
     """
-    return graph_file[['X', 'Y', 'class']].to_numpy(dtype=int)
+    if 'class' in graph_file.columns:
+        return graph_file[['X', 'Y', 'class']].to_numpy(dtype=int)
+    return graph_file[['X', 'Y', 'prob1']].to_numpy(dtype=int)
 
 
 def _create_parser():
