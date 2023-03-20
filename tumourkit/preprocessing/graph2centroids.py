@@ -23,6 +23,7 @@ from argparse import Namespace
 from ..utils.preprocessing import get_names, create_dir, parse_path, save_centroids, read_graph
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 
 def graph2centroids(graph_file: pd.DataFrame) -> np.ndarray:
@@ -46,7 +47,7 @@ def main_with_args(args: Namespace) -> None:
     centroids_dir = parse_path(args.centroids_dir)
     create_dir(centroids_dir)
     names = get_names(graph_dir, '.nodes.csv')
-    for name in names:
+    for name in tqdm(names):
         graph_file = read_graph(name, graph_dir)
         centroids_file = graph2centroids(graph_file)
         save_centroids(centroids_file, centroids_dir, name)

@@ -25,6 +25,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Tuple
 from ..utils.nearest import generate_tree, find_nearest
+from tqdm import tqdm
 
 
 def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
@@ -83,7 +84,7 @@ def main_with_args(args: Namespace) -> None:
     names_centroids = sorted(get_names(centroids_dir, '.centroids.csv'))
     names_png = sorted(get_names(png_dir, '.GT_cells.png'))
     names = list(set(names_png).intersection(set(names_centroids)))
-    for name in names:
+    for name in tqdm(names):
         centroids_file = read_centroids(name, centroids_dir)
         png_file = read_png(name, png_dir)
         csv_file = centroidspng2csv(centroids_file, png_file)
