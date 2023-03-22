@@ -104,7 +104,8 @@ def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
         newargs = Namespace(
             gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov'),
             png_dir = os.path.join(args.root_dir, 'data', split, 'png_hov'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov')
+            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov'),
+            num_classes = args.num_classes,
         )
         geojson2pngcsv(newargs)
         logger.info('   From pngcsv to nodes.csv.')

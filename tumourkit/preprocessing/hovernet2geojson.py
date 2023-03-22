@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Optional
 import argparse
 import geojson
 from tqdm import tqdm
@@ -27,7 +27,7 @@ from ..utils.preprocessing import parse_path, get_names, create_dir, read_json, 
 
 Point = Tuple[float,float]
 Contour = List[Point]
-def parse_contours(nuc: Dict[str, Any]) -> List[Contour]:
+def parse_contours(nuc: Dict[str, Any], num_classes: Optional[int] = 2) -> List[Contour]:
     """
     Input: hovernet json dictionary with nuclei information.
     Output: list of contours of cells as list of points.
@@ -37,7 +37,7 @@ def parse_contours(nuc: Dict[str, Any]) -> List[Contour]:
     for inst in nuc:
         inst_info = nuc[inst]
         inst_type = inst_info['type']
-        if inst_type == 1 or inst_type == 2:
+        if inst_type >= 1 and inst_type <= num_classes:
             inst_contour = inst_info['contour']
             inst_contour.append(inst_contour[0])
             contours_.append((inst_contour, inst_type)) 
@@ -63,6 +63,7 @@ def _create_parser():
                         help='Path to json files.')
     parser.add_argument('--gson-dir', type=str, default='./',
                         help='Path to save files.')
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 
@@ -72,8 +73,8 @@ def main_with_args(args):
     for name in tqdm(names):
         json_path = json_dir + name + '.json'
         nuc = read_json(json_path)
-        contours = parse_contours(nuc)
-        features = create_geojson(contours)
+        contours = parse_contours(nuc, args.num_classes)
+        features = create_geojson(contours, args.num_classes)
         save_contours(parse_path(args.gson_dir), name, features)
 
 
