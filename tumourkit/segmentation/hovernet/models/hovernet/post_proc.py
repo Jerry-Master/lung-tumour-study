@@ -150,6 +150,9 @@ def process(pred_map, nr_types=None, return_centroids=False):
                 "prob1": None, # Added probability of positive
                 "type": None,
             }
+            if nr_types is not None and int(nr_types) > 3:
+                for k in range(1, int(nr_types)):
+                    inst_info_dict["prob" + str(k)] = None # Initialized probabilities of all classes
 
     if nr_types is not None:
         #### * Get class of each instance id, stored at index id-1
@@ -182,6 +185,17 @@ def process(pred_map, nr_types=None, return_centroids=False):
             else:
                 prob1 = type_dict[2] / (type_dict[1] + type_dict[2])
             inst_info_dict[inst_id]["prob1"] = float(prob1)
+            # Multi-class probabilities
+            if int(nr_types) > 3:
+                total_sum = np.sum(list(type_dict.values()))
+                if 0 in type_dict:
+                    total_sum -= type_dict[0]
+                for k in range(1, int(nr_types)):
+                    if not k in type_dict:
+                        type_count = 0
+                    else:
+                        type_count = type_dict[k]
+                    inst_info_dict[inst_id]["prob" + str(k)] = float(type_count / total_sum)
 
     # print('here')
     # ! WARNING: ID MAY NOT BE CONTIGUOUS
