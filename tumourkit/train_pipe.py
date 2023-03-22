@@ -115,7 +115,7 @@ def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
             csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov'),
             orig_dir = os.path.join(args.root_dir, 'data', 'orig'),
             output_path = os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
-            num_workers = 0
+            num_workers = args.num_workers
         )
         pngcsv2graph(newargs)
         logger.info('   Extracting centroids from GT.')
@@ -158,7 +158,7 @@ def run_graph_pipe(args: Namespace, logger : Logger) -> None:
         num_confs = 32,
         save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
         device = 'cpu' if args.gpu == '' else 'cuda',
-        num_workers = 0,
+        num_workers = args.num_workers,
         checkpoint_iters = -1,
     )
     train_gnn(newargs)
@@ -169,7 +169,8 @@ def _create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root-dir', type=str, default='./.internals/', help='Root folder to save data and models.')
     parser.add_argument('--pretrained-path', type=str, help='Path to initial Hovernet weights.')
-    parser.add_argument('--gpu', type=str, default='')
+    parser.add_argument('--gpu', type=str, default='0')
+    parser.add_argument('--num-workers', type=int, default=0)
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
