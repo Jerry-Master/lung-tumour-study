@@ -54,7 +54,7 @@ def run_hov_pipe(args: Namespace, logger : Logger) -> None:
     hov_train(newargs)
     logger.info('Starting inference.')
     newargs = {
-        'nr_types': '3',
+        'nr_types': str(args.num_classes + 1),
         'type_info_path': os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet', 'type_info.json'),
         'gpu': args.gpu,
         'nr_inference_workers': '0',
