@@ -110,6 +110,7 @@ def _create_parser():
         '--output-dir', type=str, required=True,
         help='Path where to save new .nodes.csv. If same as --graph-dir, overwrites its content.'
     )
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 
@@ -123,7 +124,7 @@ def main_with_args(args: Namespace, logger: Optional[Logger] = None) -> None:
         try:
             graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
             hov_json = read_json(os.path.join(json_dir, name + '.json'))
-            graph = add_probability(graph, hov_json, logger)
+            graph = add_probability(graph, hov_json, logger, args.num_classes)
             save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
         except FileNotFoundError:
             continue

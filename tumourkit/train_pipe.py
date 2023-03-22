@@ -136,7 +136,8 @@ def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
         newargs = Namespace(
             json_dir = os.path.join(args.root_dir, 'data', split, 'json'),
             graph_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'GT'),
-            output_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds')
+            output_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds'),
+            num_classes = args.num_classes,
         )
         join_hovprob_graph(newargs, logger)
     return
