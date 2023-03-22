@@ -152,7 +152,7 @@ def process(pred_map, nr_types=None, return_centroids=False):
             }
             if nr_types is not None and int(nr_types) > 3:
                 for k in range(1, int(nr_types)):
-                    inst_info_dict["prob" + str(k)] = None # Initialized probabilities of all classes
+                    inst_info_dict[inst_id]["prob" + str(k)] = None # Initialized probabilities of all classes
 
     if nr_types is not None:
         #### * Get class of each instance id, stored at index id-1
