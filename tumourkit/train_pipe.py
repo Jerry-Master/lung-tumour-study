@@ -97,7 +97,8 @@ def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
         logger.info('   From json to geojson.')
         newargs = Namespace(
             json_dir = os.path.join(args.root_dir, 'data', split, 'json'),
-            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov')
+            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov'),
+            num_classes = args.num_classes
         )
         hovernet2geojson(newargs)
         logger.info('   From geojson to pngcsv.')
