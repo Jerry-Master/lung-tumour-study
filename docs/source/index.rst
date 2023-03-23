@@ -10,9 +10,10 @@ Welcome to tumourkit's documentation!
    :maxdepth: 3
    :hidden:
 
+   Home page <self>
    installation
    usage
-   api
+   API reference <_autosummary/tumourkit>
 
 .. note::
 
