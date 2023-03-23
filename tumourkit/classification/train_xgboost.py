@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import argparse
-from read_nodes import create_node_splits
+from .read_nodes import create_node_splits
 from xgboost import XGBClassifier
 import os
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score

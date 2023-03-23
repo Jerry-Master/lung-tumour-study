@@ -20,7 +20,6 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
     The calibration error is only appropriate for binary categorical outcomes.
     Which label is considered to be the positive label is controlled via the
     parameter pos_label, which defaults to 1.
-    Read more in the :ref:`User Guide <calibration>`.
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)

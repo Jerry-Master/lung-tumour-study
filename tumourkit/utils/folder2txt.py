@@ -32,7 +32,7 @@ Contact information: joseperez2000@hotmail.es
 import argparse
 import os
 import re
-from utils.preprocessing import parse_path, create_dir
+from .preprocessing import parse_path, create_dir
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', type=str,

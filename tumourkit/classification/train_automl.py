@@ -20,21 +20,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import argparse
-from read_nodes import create_node_splits
+from .read_nodes import create_node_splits
 import os
-import sys
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 import autosklearn
 from autosklearn.classification import AutoSklearnClassifier
 import numpy as np
 import pickle
 from datetime import datetime
-
-FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-PKG_DIR = os.path.dirname(FILE_DIR)
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import create_dir, parse_path
+from ..utils.preprocessing import create_dir, parse_path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--graph-dir', type=str, required=True,
