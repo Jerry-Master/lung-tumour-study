@@ -20,42 +20,34 @@ Contact information: joseperez2000@hotmail.es
 """
 import argparse
 from argparse import Namespace
-from ..utils.preprocessing import get_names, parse_path, create_dir, read_png, save_csv, read_centroids
+from ..utils.preprocessing import get_names, parse_path, create_dir, read_png, save_csv, read_centroids, extract_centroids
 import pandas as pd
 import numpy as np
-from typing import List, Tuple
 from ..utils.nearest import generate_tree, find_nearest
 from tqdm import tqdm
 
 
-def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
-    """
-    img contains a different id value per component at each pixel
-    """
-    X, Y = np.where(img == idx)
-    if len(X) == 0 or len(Y) == 0:
-        return -1, -1
-    return X.mean(), Y.mean()
-
-
-def extract_centroids(img: np.ndarray) -> List[Tuple[int,int]]:
-    """
-    Output format: list of (x,y,idx) tuples, where idx is the index associated
-        with the cell.
-    """
-    centroids = []
-    for idx in np.unique(img):
-        if idx != 0:
-            x, y = get_centroid_by_id(img, idx)
-            if x == -1:
-                continue
-            centroids.append((x,y, idx))
-    return centroids
-
-
 def centroidspng2csv(centroids_file: np.ndarray, png_file: np.ndarray) -> pd.DataFrame:
     """
-    For each cell in png_file it finds the nearest centroid and associates its class to it.
+    Converts a PNG file with cell labels and a CSV file with cell centroids into a CSV file
+    associating each cell label with the closest centroid. 
+
+    :param centroids_file: A NumPy array with three columns, representing the X and Y coordinates
+                           and class of each centroid.
+    :type centroids_file: np.ndarray
+    :param png_file: A NumPy array with the same dimensions as the corresponding image file,
+                     where each pixel is labeled with an integer representing the cell it belongs to.
+    :type png_file: np.ndarray
+    :return: A Pandas DataFrame with two columns: the first represents the cell ID from the PNG file,
+             and the second represents the class of the closest centroid from the CSV file.
+    :rtype: pd.DataFrame
+
+    This function first generates a k-d tree from the centroids in the `centroids_file` array.
+    For each centroid in the `png_file` array, the function finds the closest centroid in the
+    `centroids_file` array using the k-d tree. It then associates the cell label from the PNG file
+    with the class of the closest centroid in a list.
+    Finally, the function returns a Pandas DataFrame containing the list of cell IDs and centroid
+    classes.
     """
     centroids_tree = generate_tree(centroids_file)
     png_centroids = extract_centroids(png_file)

@@ -29,9 +29,17 @@ Point = Tuple[float,float]
 Contour = List[Point]
 def parse_contours(nuc: Dict[str, Any], num_classes: Optional[int] = 2) -> List[Contour]:
     """
-    Input: hovernet json dictionary with nuclei information.
-    Output: list of contours of cells as list of points.
-            Each contour has the same point at position 0 and -1.
+    Parses contours of cells from the given HoverNet JSON dictionary.
+
+    :param nuc: A dictionary containing HoverNet nuclei information.
+    :type nuc: Dict[str, Any]
+    :param num_classes: The number of classes (default 2).
+    :type num_classes: Optional[int]
+    :return: A list of contours of cells as list of points. Each contour has the same point at position 0 and -1.
+    :rtype: List[Contour]
+
+    Each contour has the same point at position 0 and -1.
+    If a cell has no class information, it is assumed to belong to the "segmented" class (class 3).
     """
     contours_ = []
     for inst in nuc:
@@ -50,7 +58,14 @@ def parse_contours(nuc: Dict[str, Any], num_classes: Optional[int] = 2) -> List[
 
 def save_contours(out_dir: str, name: str, contours: List[Contour]) -> None:
     """
-    Saves geojson in a file. It doesn't change the format.
+    Save geojson in a file with given name in out_dir.
+    
+    :param out_dir: The directory where the file will be saved.
+    :type out_dir: str
+    :param name: The name of the file.
+    :type name: str
+    :param contours: The list of contours in the GeoJSON format.
+    :type contours: List[Contour]
     """
     create_dir(parse_path(out_dir))
     with open(out_dir + name + '.geojson', 'w') as f:

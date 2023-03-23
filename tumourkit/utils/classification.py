@@ -25,7 +25,19 @@ from ..classification.read_nodes import read_all_nodes
 
 def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Normalizes using the mean and deviation of the trainining dataset.
+    Normalizes the input data using the mean and standard deviation of the training dataset.
+
+    :param X_train: The input training data with shape (n_samples, n_features).
+    :type X_train: numpy.ndarray
+    :param X_val: The input validation data with shape (n_samples, n_features).
+    :type X_val: numpy.ndarray
+    :param X_test: The input test data with shape (n_samples, n_features).
+    :type X_test: numpy.ndarray
+    :return: A tuple containing three numpy.ndarrays:
+             - The normalized X_train with shape (n_samples, n_features).
+             - The normalized X_val with shape (n_samples, n_features).
+             - The normalized X_test with shape (n_samples, n_features).
+    :rtype: tuple(numpy.ndarray, numpy.ndarray, numpy.ndarray)
     """
     sc = StandardScaler()
     sc.fit(X_train)
@@ -33,9 +45,14 @@ def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tup
 
 def fit_column_normalizer(node_dir: str, names: List[str]) -> StandardScaler:
     """
-    Computes mean and standard deviation of features for later normalization.
-    node_dir: Path to .nodes.csv files.
-    names: Names of files to include. Must not have file extensions.
+    Fits a StandardScaler object to the input data and returns it.
+
+    :param node_dir: The directory containing node data files.
+    :type node_dir: str
+    :param names: A list of node names to read from the node directory.
+    :type names: List[str]
+    :return: A StandardScaler object fitted to the input data.
+    :rtype: StandardScaler
     """
     X, y = read_all_nodes(node_dir, [x+'.nodes.csv' for x in names])
     sc = StandardScaler()

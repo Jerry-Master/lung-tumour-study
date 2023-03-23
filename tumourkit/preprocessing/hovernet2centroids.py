@@ -30,8 +30,15 @@ from ..utils.preprocessing import create_dir, read_json, parse_path, get_names, 
 
 def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
     """
-    Input: Hovernet json nuclei dictionary as given by read_json.
-    Output: List of (X,Y,class) tuples representing centroids.
+    Extracts centroids from a HoverNet JSON dictionary and returns them as a list of (X,Y,class) tuples.
+
+    :param nuc: The HoverNet JSON dictionary containing nuclei information.
+    :type nuc: Dict[str, Any]
+    :return: A list of (X,Y,class) tuples representing centroids.
+    :rtype: List[Tuple[int,int,int]]
+
+    The class value is extracted from the 'type' attribute of the instance
+    in the dictionary. If the class value is 0, the function removes the instance and issues a warning.
     """
     centroids_ = []
     for inst in nuc:

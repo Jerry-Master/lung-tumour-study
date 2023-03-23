@@ -30,7 +30,14 @@ from ..utils.preprocessing import parse_path, create_dir, get_names, save_pngcsv
 
 def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
     """
-    Reads gson at path + name.
+    Reads the GeoJSON file at the specified path with the given name.
+
+    :param name: The base name of the file (without extension).
+    :type name: str
+    :param path: The path to the directory containing the file.
+    :type path: str
+    :return: The contents of the GeoJSON file as a list of dictionaries.
+    :rtype: List[Dict[str, Any]]
     """
     with open(path + name + '.geojson', 'r') as f:
         gson = geojson.load(f)
@@ -39,8 +46,19 @@ def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
 
 def geojson2pngcsv(gson: List[Dict[str, Any]], num_classes: Optional[int] = 2) -> Tuple[np.ndarray, pd.DataFrame]:
     """
-    Computes png <-> csv labels from geojson. 
-    Width and height are assumed to be 1024.
+    Computes PNG and CSV labels from GeoJSON.
+
+    :param gson: A list of GeoJSON features.
+    :type gson: List[Dict[str, Any]]
+    :param num_classes: The number of classes to use in the output CSV. If not provided, it defaults to 2 (tumour and non-tumour).
+    :type num_classes: Optional[int]
+    :return: A tuple containing the PNG image array and the Pandas DataFrame of the CSV file.
+    :rtype: Tuple[np.ndarray, pd.DataFrame]
+    
+    This function takes a list of GeoJSON features and generates PNG and CSV labels from them.
+    The width and height of the PNG image are assumed to be 1024.
+    The function expects the GeoJSON to have specific format, with the geometry stored as a list of coordinates.
+    If a feature has a label that is not "tumour" or "non-tumour", the label will be replaced with "ClassN", where N is the class number.
     """
     png = np.zeros((1024,1024), dtype=np.uint16)
     csv = pd.DataFrame([], columns=['id', 'label'])

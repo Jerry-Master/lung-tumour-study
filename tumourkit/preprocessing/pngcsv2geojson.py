@@ -32,7 +32,15 @@ from ..utils.preprocessing import (
 
 def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
     """
-    Save geojson to file path + name.
+    Save a list of geojson features to a file with the given name at the
+    specified path.
+
+    :param gson: A list of geojson features to save.
+    :type gson: List[Dict[str, Any]]
+    :param name: The name of the file to save.
+    :type name: str
+    :param path: The path to save the file at.
+    :type path: str
     """
     with open(path + name + '.geojson', 'w') as f:
         geojson.dump(gson, f)
@@ -40,8 +48,16 @@ def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
 
 def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
     """
-    Returns the image with only the pixels of the class given in label.
-    The pixel values are truncated to uint8.
+    Returns an image with only the pixels of the class given in the label.
+    
+    :param png: Segmentation mask with indices as pixel values.
+    :type png: np.ndarray
+    :param csv: DataFrame containing the class labels for each cell in the image.
+    :type csv: pd.DataFrame
+    :param label: Class label to extract from the image.
+    :type label: int
+    :return: Binary mask where pixels of the specified class have value 1 and all others have value 0.
+    :rtype: np.ndarray
     """
     mask = png.copy()
     for i, (idx, cell_label) in csv.iterrows():
@@ -53,6 +69,17 @@ def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
 def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int, num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
     """
     Computes geojson features of contours of a given class.
+
+    :param png: Segmentation mask with indices as pixel values.
+    :type png: np.ndarray
+    :param csv: DataFrame with the classes of the cells in the image.
+    :type csv: pd.DataFrame
+    :param label: The label of the class of cells to extract features for.
+    :type label: int
+    :param num_classes: The number of classes in the segmentation mask, defaults to 2.
+    :type num_classes: Optional[int], optional
+    :return: A list of dictionaries with the geojson features of the contours of the specified class of cells.
+    :rtype: List[Dict[str, Any]]
     """
     mask = create_mask(png, csv, label)
     contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
@@ -62,8 +89,16 @@ def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int, num_classes:
 
 def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame, num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
     """
-    Computes geojson as list of features representing contours.
-    Contours are approximated by method cv2.CHAIN_APPROX_SIMPLE.
+    Computes the GeoJSON representation of contours in the given PNG image based on the provided CSV labels.
+
+    :param png: A NumPy array representing the PNG image.
+    :type png: np.ndarray
+    :param csv: A Pandas DataFrame with the CSV labels of each cell.
+    :type csv: pd.DataFrame
+    :param num_classes: The number of classes. Default is 2.
+    :type num_classes: Optional[int]
+    :return: A list of features representing contours.
+    :rtype: List[Dict[str, Any]]
     """
     total_contours = []
     for _, (idx, cell_label) in csv.iterrows():

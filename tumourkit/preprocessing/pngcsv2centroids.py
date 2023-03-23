@@ -18,35 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import List, Tuple
 import argparse
-import pandas as pd
-import numpy as np
 from tqdm import tqdm
-from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names, save_centroids
-
-
-def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
-    """
-    img contains a different id value per component at each pixel
-    """
-    X, Y = np.where(img == idx)
-    if len(X) == 0 or len(Y) == 0:
-        return -1, -1
-    return X.mean(), Y.mean()
-
-
-def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int,int,int]]:
-    """
-    Output format: list of (x,y,class) tuples
-    """
-    centroids = []
-    for _, row in csv.iterrows():
-        x, y = get_centroid_by_id(img, row.id)
-        if x == -1:
-            continue
-        centroids.append((x,y,row.label))
-    return centroids
+from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names, save_centroids, extract_centroids
 
 
 def _create_parser():

@@ -28,7 +28,12 @@ from tqdm import tqdm
 
 def centroids2png(centroids: List[Tuple[int,int,int]]) -> np.ndarray:
     """
-    Generates blank image with pixel value 255 at centroids coordinates.
+    Generates a blank image with pixel value 255 at the coordinates of each centroid.
+
+    :param centroids: A list of centroids represented as (X, Y, class) tuples.
+    :type centroids: List[Tuple[int,int,int]]
+    :return: A NumPy array representing the generated image.
+    :rtype: np.ndarray
     """
     png = np.zeros((1024,1024))
     for x,y,cls in centroids:

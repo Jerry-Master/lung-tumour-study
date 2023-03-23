@@ -24,15 +24,26 @@ from typing import List, Tuple, Optional
 
 def generate_tree(centroids: List[Tuple[int,int,int]]) -> KDTree:
     """
-    Input format: list of (x,y,class) tuples.
+    Returns a KDTree object from a list of (x, y, class) tuples.
+
+    :param centroids: A list of (x, y, class) tuples representing the centroids.
+    :type centroids: list[tuple(int, int, int)]
+    :return: A KDTree object created from the x and y coordinates of the centroids.
+    :rtype: KDTree
     """
     centroids_ = np.array(list(map(lambda x: (x[0], x[1]), centroids)))
     return KDTree(centroids_)
 
 def find_nearest(a: Tuple[int,int,int], B: KDTree) -> int:
     """
-    a: (x,y,class) tuple.
-    B: KDTree to search for nearest point.
+    Finds the index of the nearest point in a KDTree to a given (x, y, class) tuple.
+
+    :param a: The (x, y, class) tuple to search for the nearest point.
+    :type a: tuple(int, int, int)
+    :param B: The KDTree to search for the nearest point.
+    :type B: KDTree
+    :return: The index of the nearest point in the KDTree to the given tuple.
+    :rtype: int
     """
     x, y = a[0], a[1]
     dist, idx = B.query([x,y], k=1)
@@ -40,8 +51,14 @@ def find_nearest(a: Tuple[int,int,int], B: KDTree) -> int:
 
 def find_nearest_dist_idx(a: Tuple[int,int,int], B: KDTree) -> Tuple[float, int]:
     """
-    a: (x,y,class) tuple.
-    B: KDTree to search for nearest point.
+    Finds the distance and index of the nearest point in a KDTree to a given (x, y, class) tuple.
+
+    :param a: The (x, y, class) tuple to search for the nearest point.
+    :type a: tuple(int, int, int)
+    :param B: The KDTree to search for the nearest point.
+    :type B: KDTree
+    :return: A tuple containing the distance and index of the nearest point in the KDTree to the given tuple.
+    :rtype: tuple(float, int)
     """
     x, y = a[0], a[1]
     dist, idx = B.query([x,y], k=1)
@@ -54,11 +71,20 @@ Cell = Tuple[int, int, Contour] # id, class
 def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int,
     threshold: Optional[float] = np.inf) -> List[float]:
     """
-    Given two sets of points, 
-    returns the N closests pairs distances.
+    Returns the N closest pairs distances between two sets of points.
 
-    Prunes the search for distandes greater than threshold.
-    Complexity: O((n+m)log(m)), being m = max(|a|,|b|) and n = min(|a|,|b|)
+    :param a: The first set of points as a list of (x, y) tuples.
+    :type a: Contour
+    :param b: The second set of points as a list of (x, y) tuples.
+    :type b: Contour
+    :param N: The number of closest pairs to return.
+    :type N: int
+    :param threshold: An optional threshold to prune the search for distances greater than the threshold.
+    :type threshold: float, optional
+    :return: A list of the N closest pairs distances between the two sets of points.
+    :rtype: List[float]
+
+    The function has a complexity of O((n+m)log(m)), where m is the maximum of the lengths of the two sets of points and n is the minimum.
     """
     if len(a) > len(b):
         tree = KDTree(a)
@@ -77,11 +103,20 @@ def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int,
 def get_N_closest_pairs_idx(a: Contour, b: Contour, N: int,
     threshold: Optional[float] = np.inf) -> Tuple[List[int],List[int]]:
     """
-    Given two sets of points, 
-    returns the N closests pairs indices. 
+    Returns the indices of the N closest pairs of points between two sets of points.
 
-    Prunes the search for distandes greater than threshold.
-    Complexity: O((n+m)log(m)), being m = max(|a|,|b|) and n = min(|a|,|b|)
+    :param a: The first set of points as a list of (x, y) tuples.
+    :type a: Contour
+    :param b: The second set of points as a list of (x, y) tuples.
+    :type b: Contour
+    :param N: The number of closest pairs to return.
+    :type N: int
+    :param threshold: An optional threshold to prune the search for distances greater than the threshold.
+    :type threshold: float, optional
+    :return: A tuple containing two lists of indices, one for each set of points, of the N closest pairs of points between the two sets.
+    :rtype: Tuple(List[int], List[int])
+
+    The function has a complexity of O((n+m)log(m)), where m is the maximum of the lengths of the two sets of points and n is the minimum.
     """
     is_a_tree = len(a) > len(b)
     if is_a_tree:

@@ -49,6 +49,7 @@ def test_hov_prob_pipe():
     args.json_dir = JSON_DIR
     args.graph_dir = TMP_DIR
     args.output_dir = TMP_DIR
+    args.num_classes = 2
     join_hovprob_graph(args)
     args.node_dir = TMP_DIR
     args.save_file = TEST_DIR + 'tmp2'

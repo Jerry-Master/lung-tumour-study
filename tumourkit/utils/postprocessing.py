@@ -20,14 +20,7 @@ Contact information: joseperez2000@hotmail.es
 """
 
 from typing import Callable, Tuple, List
-from scipy.spatial import KDTree
-import sys
-import os
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.nearest import get_N_closest_pairs_dists, get_N_closest_pairs_idx
+from .nearest import get_N_closest_pairs_dists, get_N_closest_pairs_idx
 
 Point = Tuple[float,float]
 Contour = List[Point]
@@ -35,9 +28,19 @@ Cell = Tuple[int, int, Contour] # id, class
 
 def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,Contour], bool]:
     """
-    Returns comparator between two contours.
-    Two contours are equal if their num_frontier closest pairs 
-    are at a distance lower than threshold.
+    Returns a comparator function between two contours.
+
+    :param threshold: The maximum distance allowed between the num_frontier closest pairs of points to consider two contours equal.
+    :type threshold: float
+    :param num_frontier: The number of closest pairs of points to consider when comparing contours.
+    :type num_frontier: int
+    :return: A function that takes two contours as input and returns True if the two contours are equal, False otherwise.
+    :rtype: Callable
+
+    This function returns a comparator function between two contours.
+    The comparator function takes two contours as input and returns True if the two contours are equal and False otherwise.
+    Two contours are considered equal if their num_frontier closest pairs of points are at a distance lower than the specified threshold.
+    The function returns the comparator function as a callable object.
     """
     def is_equal(a: Contour, b: Contour) -> bool:
         """
@@ -53,10 +56,21 @@ def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,
 
 def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int,int]:
     """
-    Given a list of indices, returns the left and right value of the 
-    greatest connected component.
-    Two indices are considered connected if the differ in one unit.
-    0 and max_idx are considered connected.
+    Given a list of indices, returns the left and right value of the greatest connected component.
+
+    :param idx: A list of indices.
+    :type idx: list[int]
+    :param max_idx: The maximum index value.
+    :type max_idx: int
+    :return: A tuple containing the left and right values of the greatest connected component.
+    :rtype: tuple(int, int)
+
+    This function takes a list of indices as input and returns the left and right values of the greatest connected component.
+    Two indices are considered connected if they differ by one unit.
+    The function loops over the indices, keeping track of the left and right indices of the current component.
+    When a gap between indices is found, the function checks if the current component is greater than the previous greatest component and updates the left and right indices if it is.
+    If the list of indices is circular (i.e., the first and last indices are connected), the function handles this case separately.
+    The function returns a tuple containing the left and right values of the greatest connected component.
     """
     idx.sort()
     l_final, l_aux, r_final, r_aux = 0, 0, 0, 0
@@ -88,8 +102,19 @@ def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int,
 
 def remove_idx(a: Cell, a_idx: List[int]) -> Cell:
     """
-    Removes all the indices in a's contour such that they are included
-    in a_idx greatest connected component.
+    Removes all the indices in a's contour that are included in a_idx's greatest connected component.
+
+    :param a: The cell containing the contour to modify.
+    :type a: Cell
+    :param a_idx: A list of indices.
+    :type a_idx: list[int]
+    :return: The modified cell containing the contour with the specified indices removed.
+    :rtype: Cell
+
+    This function takes a cell `a` and a list of indices `a_idx` as input and removes from the contour in `a` all indices that are included in the greatest connected component of `a_idx`.
+    The function calls the `get_greatest_connected_component()` function to determine the left and right indices of the greatest connected component.
+    The function then creates a new list of indices that includes all the indices in the contour of `a` that are not in the greatest connected component of `a_idx`.
+    The function returns a new cell containing the original cell's first two elements and the modified list of indices as the third element.
     """
     left, right = get_greatest_connected_component(a_idx, len(a[2])-1)
     res = []
@@ -101,14 +126,23 @@ def remove_idx(a: Cell, a_idx: List[int]) -> Cell:
     return (a[0], a[1], res)
 
 def check_order(a: Cell, b: Cell) -> Cell:
-    """NOT IMPLEMENTED"""
-    # Checks if joining a and b creates a cross in the middle.
+    """
+    THIS FUNCTION IS NOT IMPLEMENTED YET.
+
+    This function is intended to check whether joining two cells `a` and `b` creates a cross in the middle.
+    """
     return True
 
 def join(a: Cell, b: Cell) -> Cell:
     """
-    Appends all the points in b's contour to a's contour.
-    Returns a new cell but it possibly modifies the input cells.
+    Joins two cells by appending all the points in `b`'s contour to `a`'s contour.
+
+    :param a: The first cell to join.
+    :type a: Cell
+    :param b: The second cell to join.
+    :type b: Cell
+    :return: A new cell containing the joined contours.
+    :rtype: Cell
     """
     good_order = check_order(a, b)
     if not good_order:
@@ -118,8 +152,14 @@ def join(a: Cell, b: Cell) -> Cell:
 
 def merge_cells(a: Cell, b: Cell) -> Cell:
     """
-    Joins two cells by removing their 30 closest pairs
-    and connecting the endpoints.
+    Merges two cells by removing their 30 closest pairs and connecting the endpoints.
+
+    :param a: The first cell to merge.
+    :type a: Cell
+    :param b: The second cell to merge.
+    :type b: Cell
+    :return: A new cell containing the merged contours.
+    :rtype: Cell
     """
     a_idx, b_idx = get_N_closest_pairs_idx(a[2], b[2], 30)
     a = remove_idx(a, a_idx)

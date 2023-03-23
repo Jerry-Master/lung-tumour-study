@@ -29,6 +29,15 @@ from tqdm import tqdm
 def graph2centroids(graph_file: pd.DataFrame) -> np.ndarray:
     """
     Extracts X, Y and class attributes from graphs nodes.
+
+    :param graph_file: The Pandas DataFrame containing the graph nodes.
+    :type graph_file: pd.DataFrame
+    :return: A NumPy array containing the X, Y and class attributes from the graph nodes.
+    :rtype: np.ndarray
+
+    If the graph file has a 'class' column, the function returns the 'X', 'Y' and 'class' columns as a NumPy array with integer data type.
+    Otherwise, the function assumes that the graph file has a 'prob1' column, which contains the probability of a node belonging to a particular class.
+    In this case, the function sets the class attribute to 1 if the probability is greater than 0.5, and to 2 otherwise.
     """
     if 'class' in graph_file.columns:
         return graph_file[['X', 'Y', 'class']].to_numpy(dtype=int)

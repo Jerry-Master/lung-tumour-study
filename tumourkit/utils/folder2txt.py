@@ -29,6 +29,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
+from typing import List
 import argparse
 import os
 import re
@@ -46,7 +47,12 @@ parser.add_argument('--out-dir', type=str,
 
 def remove_coordinates(name: str) -> str:
     """
-    Removes the pattern (number, number).npy from the name.
+    Removes the (number, number) pattern and '.npy' extension from the input string.
+
+    :param name: The input string with a (number, number) pattern and '.npy' extension.
+    :type name: str
+    :return: The input string with the (number, number) pattern and '.npy' extension removed.
+    :rtype: str
     """
     regex = '\([0-9]{1,3},[0-9]{1,3}\)'
     parenthesis = re.findall(regex, name)
@@ -54,9 +60,14 @@ def remove_coordinates(name: str) -> str:
     npy_len = len('.npy')
     return name[:-(par_len + npy_len)]
 
-def read_files(path: str) -> list[str]:
+def read_files(path: str) -> List[str]:
     """
-    Returns a list of names at path without the (x,y).npy at the end.
+    Returns a list of file names without the (number, number).npy pattern at the end.
+
+    :param path: The path to the directory containing the files.
+    :type path: str
+    :return: A list of file names without the (number, number).npy pattern at the end.
+    :rtype: List[str]
     """
     files = os.listdir(path)
     file_list = []
@@ -65,9 +76,17 @@ def read_files(path: str) -> list[str]:
     file_list = list(set(file_list))
     return file_list
 
-def save_txt(file_list: list[str], path: str, name: str) -> None:
+def save_txt(file_list: List[str], path: str, name: str) -> None:
     """
-    Saves list of files in a txt, one name per line.
+    Saves a list of file names to a text file with one name per line.
+
+    :param file_list: The list of file names to save.
+    :type file_list: list[str]
+    :param path: The path to the directory where the text file will be saved.
+    :type path: str
+    :param name: The name of the text file to be saved.
+    :type name: str
+    :return: None
     """
     with open(path + name, 'a') as f:
         for file_name in file_list:

@@ -18,138 +18,37 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import Dict, Tuple, List
 import argparse
 import pandas as pd
 import numpy as np
-import numpy.ma as ma
 import os
-import cv2
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from tqdm import tqdm
-from ..utils.preprocessing import read_png, Contour, format_contour, save_graph, parse_path, create_dir, get_names
+from ..utils.preprocessing import read_png, save_graph, parse_path, create_dir, get_names, get_mask, apply_mask, add_node, extract_features, read_image
 
 
-def read_image(name: str, path: str) -> np.array:
-    """
-    Given name image (without extension) and folder path,
-    returns array with pixel values (RGB).
-    """
-    aux = cv2.imread(os.path.join(path, name+'.png'))
-    return cv2.cvtColor(aux, cv2.COLOR_BGR2RGB)
 
-
-def get_mask(png: np.ndarray, idx: int) -> np.ndarray:
-    """
-    Given segmentation mask with indices as pixel values, 
-    returns the mask corresponding to the given index.
-    """
-    png_aux = png.copy()
-    png_aux[png_aux!=idx] = 0
-    png_aux[png_aux!=0] = 1
-    return png_aux
-
-
-def apply_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, int, int]:
-    """
-    Given RGB image and binary mask, 
-    returns the masked image.
-    For efficiency only the bounded box of the mask is returned,
-    together with the center of the box.
-    Coordinates are indices of array.
-    """
-    img_aux = img.copy()
-    img_aux = img_aux * mask.reshape(*mask.shape, 1)
-    x,y,w,h = cv2.boundingRect((mask * 255).astype(np.uint8))
-    X, Y = np.where(mask == 1)
-    if len(X) == 0 or len(Y) == 0:
-        cx, cy = -1, -1
-    else:
-        cx, cy = X.mean(), Y.mean()
-    return img_aux[y:y+h, x:x+w].copy(), mask[y:y+h, x:x+w].copy(), cx, cy
-
-
-def compute_perimeter(c: Contour) -> float:
-    """
-    Given contour returns its perimeter.
-    Prerequisites: First and last point must be the same.
-    """
-    diff = np.diff(c, axis=0)
-    dists = np.hypot(diff[:,0], diff[:,1])
-    return dists.sum()
-
-
-def extract_features(msk_img: np.ndarray, bin_msk: np.ndarray, debug=False) -> Dict[str, np.ndarray]:
-    """
-    Given RGB bounding box of a cell and the mask of the cell,
-    returns a dictionary with different extracted features.
-    """
-    if len(msk_img) == 0 or msk_img.max() == 0:
-        return {}
-    gray_msk = cv2.cvtColor(msk_img, cv2.COLOR_RGB2GRAY)
-    # bin_msk = (gray_msk > 0) * 1
-    feats = {}
-    feats['area'] = bin_msk.sum()
-
-    if debug: import pdb; pdb.set_trace()
-    contours, _ = cv2.findContours(
-        (bin_msk * 255).astype(np.uint8), 
-        mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE
-    )
-    contour = format_contour(contours[0])
-    feats['perimeter'] = compute_perimeter(contour)
-    
-    gray_msk = ma.masked_array(
-        gray_msk, mask=1-bin_msk
-    )
-    feats['std'] = gray_msk.std()
-
-    msk_img = ma.masked_array(
-        msk_img, mask=1-np.repeat(bin_msk.reshape((*bin_msk.shape,1)), 3, axis=2)
-    )
-    red = msk_img[:,:,0].compressed()
-    red_bins, _ = np.histogram(red, bins=5, density=True)
-    feats['red'] = red_bins
-    green = msk_img[:,:,1].compressed()
-    green_bins, _ = np.histogram(green, bins=5, density=True)
-    feats['green'] = green_bins
-    blue = msk_img[:,:,2].compressed()
-    blue_bins, _ = np.histogram(blue, bins=5, density=True)
-    feats['blue'] = blue_bins
-    return feats
-
-
-def add_node(graph: Dict[str, float], feats: Dict[str, np.ndarray]) -> None:
-    """
-    [Inplace operation]
-    Given a dictionary with vectorial features,
-    converts them into one column per dimension
-    and add them into the global dictionary.
-    """
-    for k, v in feats.items():
-        if hasattr(v, '__len__'):
-            for i, coord in enumerate(v):
-                if k + str(i) not in graph:
-                    graph[k + str(i)] = []
-                graph[k + str(i)].append(coord)
-        else:
-            if k not in graph:
-                graph[k] = []
-            graph[k].append(v)
 
 
 def png2graph(img: np.ndarray, png: np.ndarray) -> pd.DataFrame:
     """
-    Given original image and png label (segmentation), 
-    returns nodes with extracted attributes in a DataFrame.
-    Current attributes are:
-        - X, Y of centroid
-        - Area
-        - Perimeter
-        - Variance
-        - Regularity (not yet)
-        - Histogram (5 bins)
+    Given an original image and a segmentation mask in PNG format, this function extracts the nodes and their attributes
+    and returns them in a pandas DataFrame. The following attributes are computed for each node:
+    
+    * X: The X-coordinate of the centroid.
+    * Y: The Y-coordinate of the centroid.
+    * Area: The area of the cell.
+    * Perimeter: The perimeter of the cell.
+    * Variance: The variance of the grayscale values inside the cell.
+    * Histogram: The normalized histogram of the grayscale values inside the cell (5 bins).
+    
+    :param img: The original image as a numpy array.
+    :type img: np.ndarray
+    :param png: The segmentation mask in PNG format as a numpy array.
+    :type png: np.ndarray
+    :return: A pandas DataFrame containing the extracted nodes and their attributes.
+    :rtype: pd.DataFrame
     """
     graph = {}
     for idx in np.unique(png):
@@ -189,7 +88,18 @@ def main_subthread(
         pbar: tqdm,
         )-> None:
     """
-    Wrapper to use multiprocessing
+    A wrapper function to use multiprocessing.
+
+    :param name: The name of the image file (without extension).
+    :type name: str
+    :param png_dir: The directory path containing PNG segmentation masks.
+    :type png_dir: str
+    :param orig_dir: The directory path containing original RGB images.
+    :type orig_dir: str
+    :param output_path: The directory path to save output files.
+    :type output_path: str
+    :param pbar: A progress bar object to track the progress of the computation.
+    :type pbar: tqdm.tqdm
     """
     try:
         png = read_png(name, png_dir)
