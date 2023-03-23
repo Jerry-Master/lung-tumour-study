@@ -15,6 +15,11 @@ Welcome to tumourkit's documentation!
    usage
    API reference <_autosummary/tumourkit>
 
+This project is created with the idea of helping researchers accelerate their work. 
+It was born from a need to automate many repetitive tasks that were being done every day like converting from 
+one data format to another, or performing hyperparameter tuning of a model. This library is supposed 
+to simplify that process into three commands which are explained in :doc:`usage`.
+
 .. note::
 
    This project is under active development.

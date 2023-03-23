@@ -134,4 +134,4 @@ In order to convert from any format to any format, several commands are provided
 The last two commands are needed to convert from the graph format back to the PNG / CSV format. Each of them has specific parameters. 
 To get an explanation of what parameters are needed run the commands with the :code:`-h` or :code:`--help` flags.
 
-In case you want a more in depth explanation of the code that is being executed under the hood, please refer to the :doc:`api`.
+In case you want a more in depth explanation of the code that is being executed under the hood, please refer to the :doc:`API reference <_autosummary/tumourkit>`.
