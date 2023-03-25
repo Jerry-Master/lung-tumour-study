@@ -15,7 +15,10 @@ def set_best_configuration(args: Namespace, logger: Logger) -> None:
     logger.info('Configuration not provided, using best configuration from training based on F1 score.')
     save_file = os.path.join(args.root_dir, 'gnn_logs', 'gnn_results.csv')
     gnn_results = pd.read_csv(save_file)
-    best_conf = gnn_results.sort_values(by='F1 Score', ascending=False).iloc[0]
+    if args.num_classes == 2:
+        best_conf = gnn_results.sort_values(by='F1 Score', ascending=False).iloc[0]
+    else:
+        best_conf = gnn_results.sort_values(by='Weighted F1', ascending=False).iloc[0]
     args.best_num_layers = str(best_conf['NUM_LAYERS'])
     args.best_dropout = str(best_conf['DROPOUT'])
     args.best_norm_type = str(best_conf['NORM_TYPE'])
@@ -53,14 +56,16 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
     logger.info('   From json to geojson.')
     newargs = Namespace(
         json_dir = os.path.join(args.output_dir, 'tmp_hov', 'json'),
-        gson_dir = os.path.join(args.output_dir, 'gson_hov')
+        gson_dir = os.path.join(args.output_dir, 'gson_hov'),
+        num_classes = args.num_classes
     )
     hovernet2geojson(newargs)
     logger.info('   From geojson to pngcsv.')
     newargs = Namespace(
         gson_dir = os.path.join(args.output_dir, 'gson_hov'),
         png_dir = os.path.join(args.output_dir, 'png_hov'),
-        csv_dir = os.path.join(args.output_dir, 'csv_hov')
+        csv_dir = os.path.join(args.output_dir, 'csv_hov'),
+        num_classes = args.num_classes
     )
     geojson2pngcsv(newargs)
     logger.info('   From pngcsv to nodes.csv.')
@@ -76,7 +81,8 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
     newargs = Namespace(
         json_dir = os.path.join(args.output_dir, 'tmp_hov', 'json'),
         graph_dir = os.path.join(args.output_dir, 'graphs', 'raw'),
-        output_dir = os.path.join(args.output_dir, 'graphs', 'hovpreds')
+        output_dir = os.path.join(args.output_dir, 'graphs', 'hovpreds'),
+        num_classes = args.num_classes
     )
     join_hovprob_graph(newargs, logger)
     return
@@ -92,6 +98,7 @@ def run_graphs(args: Namespace, logger: Logger) -> None:
         weights = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'weights', model_name + '.pth'),
         conf = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs', model_name + '.json'),
         normalizers = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'normalizers', model_name + '.pkl'),
+        num_classes = args.num_classes
     )
     infer_gnn(newargs)
     return
@@ -117,6 +124,7 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
         png_dir = os.path.join(args.output_dir, 'png_hov'),
         csv_dir = os.path.join(args.output_dir, 'csv_gnn'),
         gson_dir = os.path.join(args.output_dir, 'gson_gnn'),
+        num_classes = args.num_classes
     )
     pngcsv2geojson(newargs)
     return

@@ -20,7 +20,30 @@ Contact information: joseperez2000@hotmail.es
 """
 import argparse
 from tqdm import tqdm
-from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names, save_centroids, extract_centroids
+from ..utils.preprocessing import read_labels, parse_path, create_dir, get_names, save_centroids, get_centroid_by_id
+import numpy as np
+import pandas as pd
+from typing import List, Tuple
+
+
+def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int,int,int]]:
+    """
+    Extracts the centroids of cells from a labeled image. The third coordinate is the class.
+
+    :param img: A 2D NumPy array representing the labeled image. Each unique non-zero value represents a different cell.
+    :type img: np.ndarray
+    :param csv: A pandas DataFrame representing the labels. Just two colums, one for id and another for the class.
+    :type csv: pd.DataFrame
+    :return: A list of tuples containing the x and y coordinates of the centroid, and the cell class.
+    :rtype: List[Tuple[int,int,int]]
+    """
+    centroids = []
+    for _, row in csv.iterrows():
+        x, y = get_centroid_by_id(img, row.id)
+        if x == -1:
+            continue
+        centroids.append((x, y, row.label))
+    return centroids
 
 
 def _create_parser():

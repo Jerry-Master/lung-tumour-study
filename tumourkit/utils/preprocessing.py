@@ -394,25 +394,6 @@ def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
     return X.mean(), Y.mean()
 
 
-def extract_centroids(img: np.ndarray) -> List[Tuple[int,int]]:
-    """
-    Extracts the centroids of cells from a labeled image.
-
-    :param img: A 2D NumPy array representing the labeled image. Each unique non-zero value represents a different cell.
-    :type img: np.ndarray
-    :return: A list of tuples containing the x and y coordinates of the centroid, and the cell index.
-    :rtype: List[Tuple[int,int,int]]
-    """
-    centroids = []
-    for idx in np.unique(img):
-        if idx != 0:
-            x, y = get_centroid_by_id(img, idx)
-            if x == -1:
-                continue
-            centroids.append((x,y, idx))
-    return centroids
-
-
 def get_mask(png: np.ndarray, idx: int) -> np.ndarray:
     """
     Given segmentation mask with indices as pixel values,

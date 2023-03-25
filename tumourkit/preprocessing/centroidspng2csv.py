@@ -18,13 +18,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
+from typing import List, Tuple
 import argparse
 from argparse import Namespace
-from ..utils.preprocessing import get_names, parse_path, create_dir, read_png, save_csv, read_centroids, extract_centroids
+from ..utils.preprocessing import get_names, parse_path, create_dir, read_png, save_csv, read_centroids, get_centroid_by_id
 import pandas as pd
 import numpy as np
 from ..utils.nearest import generate_tree, find_nearest
 from tqdm import tqdm
+
+def extract_centroids(img: np.ndarray) -> List[Tuple[int, int, int]]:
+    """
+    Extracts the centroids of cells from a labeled image. The third coordinates is the index.
+
+    :param img: A 2D NumPy array representing the labeled image. Each unique non-zero value represents a different cell.
+    :type img: np.ndarray
+    :return: A list of tuples containing the x and y coordinates of the centroid, and the cell index.
+    :rtype: List[Tuple[int,int,int]]
+    """
+    centroids = []
+    for idx in np.unique(img):
+        if idx != 0:
+            x, y = get_centroid_by_id(img, idx)
+            if x == -1:
+                continue
+            centroids.append((x, y, idx))
+    return centroids
 
 
 def centroidspng2csv(centroids_file: np.ndarray, png_file: np.ndarray) -> pd.DataFrame:
