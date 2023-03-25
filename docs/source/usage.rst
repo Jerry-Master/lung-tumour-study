@@ -61,7 +61,7 @@ Here it is responsible for creating the correct :code:`type_info.json` which con
 
 Once you have created that structure, you must move all your original tiles to :code:`data/orig` and the geojson files to :code:`data/gson`. 
 That is enough for the pipeline to proceed. If your labels don't come from QuPath and don't have a geojson format, you will need to convert whatever format you have to the geojson format first. 
-For more details on how to do so, go to ...
+For more details on how to do so, go to :ref:`the last section <preproc_utils>`.
 
 .. _run_training:
 
