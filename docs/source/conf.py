@@ -5,11 +5,12 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import tumourkit as tt
 
 project = 'tumourkit'
 copyright = '2023, Jose Pérez Cano'
 author = 'Jose Pérez Cano'
-release = '0.3.0'
+release = tt.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
