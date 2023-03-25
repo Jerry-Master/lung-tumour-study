@@ -50,7 +50,8 @@ def evaluate(
         device: str,
         writer: Optional[SummaryWriter] = None,
         epoch: Optional[int] = None,
-        log_suffix: Optional[str] = None
+        log_suffix: Optional[str] = None,
+        num_classes: Optional[str] = 2,
         ) -> Tuple[float, float, float]:
     """
     Evaluates model in loader.
@@ -70,21 +71,34 @@ def evaluate(
         logits = model(g, features)
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
         preds = np.vstack((preds, pred))
-        prob = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1].reshape(-1,1)
-        probs = np.vstack((probs, prob))
+        if num_classes == 2:
+            prob = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1].reshape(-1,1)
+            probs = np.vstack((probs, prob))
         label = g.ndata['y'].detach().cpu().numpy().reshape(-1,1)
         labels = np.vstack((labels, label))
     # Compute metrics on validation  
-    f1 = f1_score(labels, preds)  
-    acc = accuracy_score(labels, preds)
-    auc = roc_auc_score(labels, probs)
-    # Tensorboard
-    if writer is not None:
-        assert(log_suffix is not None and epoch is not None)
-        writer.add_scalar('Accuracy/' + log_suffix, acc, epoch)
-        writer.add_scalar('F1/' + log_suffix, f1, epoch)
-        writer.add_scalar('ROC_AUC/' + log_suffix, auc, epoch)
-    return f1, acc, auc
+    if num_classes == 2:
+        f1 = f1_score(labels, preds)  
+        acc = accuracy_score(labels, preds)
+        auc = roc_auc_score(labels, probs)
+        # Tensorboard
+        if writer is not None:
+            assert(log_suffix is not None and epoch is not None)
+            writer.add_scalar('Accuracy/' + log_suffix, acc, epoch)
+            writer.add_scalar('F1/' + log_suffix, f1, epoch)
+            writer.add_scalar('ROC_AUC/' + log_suffix, auc, epoch)
+        return f1, acc, auc
+    else:
+        micro = f1_score(labels, pred, average='micro')
+        macro = f1_score(labels, pred, average='macro')
+        weighted = f1_score(labels, pred, average='weighted')
+        # Tensorboard
+        if writer is not None:
+            writer.add_scalar('Accuracy/' + log_suffix, micro, epoch)
+            writer.add_scalar('Macro F1/' + log_suffix, macro, epoch)
+            writer.add_scalar('Weighted F1/' + log_suffix, weighted, epoch)
+        return micro, macro, weighted
+    
 
 def train_one_iter(
         tr_loader: GraphDataLoader,
@@ -92,7 +106,8 @@ def train_one_iter(
         device: str,
         optimizer: Optimizer,
         epoch: int,
-        writer: SummaryWriter
+        writer: SummaryWriter,
+        num_classes: int,
         ) -> None:
     """
     Trains for one iteration, as the name says.
@@ -116,18 +131,27 @@ def train_one_iter(
         # Compute metrics on training
         pred = logits.argmax(1).detach().cpu().numpy()
         labels = labels.detach().cpu().numpy()
-        train_acc = accuracy_score(labels, pred)
-        train_f1 = f1_score(labels, pred)
-        probs = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1]
-        train_auc = None
-        if len(np.unique(labels)) > 1:
-            train_auc = roc_auc_score(labels, probs)
-        
-        # Tensorboard
-        writer.add_scalar('Accuracy/train', train_acc, step+len(tr_loader)*epoch)
-        writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
-        if train_auc is not None:
-            writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
+        if num_classes == 2:
+            train_acc = accuracy_score(labels, pred)
+            train_f1 = f1_score(labels, pred)
+            probs = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1]
+            train_auc = None
+            if len(np.unique(labels)) > 1:
+                train_auc = roc_auc_score(labels, probs)
+            
+            # Tensorboard
+            writer.add_scalar('Accuracy/train', train_acc, step+len(tr_loader)*epoch)
+            writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
+            if train_auc is not None:
+                writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
+        else:
+            train_micro = f1_score(labels, pred, average='micro')
+            train_macro = f1_score(labels, pred, average='macro')
+            train_weighted = f1_score(labels, pred, average='weighted')
+            # Tensorboard
+            writer.add_scalar('Accuracy/train', train_micro, step+len(tr_loader)*epoch)
+            writer.add_scalar('Macro F1/train', train_macro, step+len(tr_loader)*epoch)
+            writer.add_scalar('Weighted F1/train', train_weighted, step+len(tr_loader)*epoch)
 
 def train(
         save_dir: str,
@@ -141,18 +165,23 @@ def train(
         device: Optional[str] = 'cpu',
         check_iters: Optional[int] = -1,
         conf: Optional[Dict[str,Any]] = None,
-        normalizers: Optional[Tuple[Normalizer]] = None
+        normalizers: Optional[Tuple[Normalizer]] = None,
+        num_classes: Optional[int] = 2,
         ) -> None:
     """
-    Train the model with early stopping on F1 score or until 1000 iterations.
+    Train the model with early stopping on F1 score (weighted) or until 1000 iterations.
     """
     model = model.to(device)
     n_epochs = 1000
     best_val_f1 = 0
     early_stop_rounds = 0
     for epoch in range(n_epochs):
-        train_one_iter(tr_loader, model, device, optimizer, epoch, writer)
-        val_f1, val_acc, val_auc = evaluate(val_loader, model, device, writer, epoch, 'validation')
+        train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes)
+        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes)
+        if num_classes == 2:
+            val_f1, val_acc, val_auc = val_metrics
+        else:
+            val_micro, val_macro, val_f1 = val_metrics
         # Save checkpoint
         if save_weights and check_iters != -1 and epoch % check_iters == 0:
             save_model(save_dir, model, conf, normalizers, prefix='last_')
@@ -233,13 +262,12 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
             confs.append(conf)
     return confs
 
-def load_model(conf: Dict[str,Any]) -> nn.Module:
+def load_model(conf: Dict[str,Any], num_classes: int) -> nn.Module:
     """
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
     """
-    num_feats = 19
-    num_classes = 2
+    num_feats = 18 + (1 if num_classes == 2 else num_classes)
     hidden_feats = 100
     if conf['MODEL_NAME'] == 'GCN':
         return GCN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
@@ -252,13 +280,17 @@ def load_model(conf: Dict[str,Any]) -> nn.Module:
         return HardGAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
     assert False, 'Model not implemented.'
 
-def create_results_file(filename: str) -> None:
+def create_results_file(filename: str, num_classes: int) -> None:
     """
     Creates header of .csv result file to append results.
     filename must not contain extension.
     """
-    with open(filename + '.csv', 'w') as f:
-        print('F1 Score,Accuracy,ROC AUC,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
+    if num_classes == 2:
+        with open(filename + '.csv', 'w') as f:
+            print('F1 Score,Accuracy,ROC AUC,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
+    else:
+        with open(filename + '.csv', 'w') as f:
+            print('Micro F1,Macro F1,Weighted F1,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
 
 def append_results(
     filename: str, f1: float, acc: float, auc: float, num_layers: int, dropout: float, bn_type: str
@@ -304,6 +336,7 @@ def train_one_conf(
         log_dir: str,
         save_weights: bool,
         save_dir: str,
+        num_classes: int,
         ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
@@ -314,11 +347,17 @@ def train_one_conf(
     train(
         save_dir, save_weights, train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
-        args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers()
+        args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers(),
+        num_classess=num_classes
     )
-    test_f1, test_acc, test_auc = evaluate(test_dataloader, model, args.device)
+    test_metrics = evaluate(test_dataloader, model, args.device, num_classes=num_classes)
     model = model.cpu()
-    return test_f1, test_acc, test_auc, model, conf
+    if num_classes == 2:
+        test_f1, test_acc, test_auc = test_metrics
+        return test_f1, test_acc, test_auc, model, conf
+    else:
+        test_micro, test_macro, test_weighted = test_metrics
+        return test_micro, test_macro, test_weighted, model, conf
 
 
 def _create_parser():
@@ -349,6 +388,7 @@ def _create_parser():
                         help='Number of processors to use. Default: 1.')
     parser.add_argument('--checkpoint-iters', type=int, default=-1, 
                         help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 
@@ -372,27 +412,37 @@ def main_with_args(args: Namespace):
     )
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)
-    create_results_file(args.save_file)
+    create_results_file(args.save_file, args.num_classes)
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             futures = []
             for conf in confs:
                 future = executor.submit(
                     train_one_conf,
-                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes
                 )
                 futures.append(future)
             for future in futures:
-                test_f1, test_acc, test_auc, model, conf = future.result()
-                append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                if args.num_classes == 2:
+                    test_f1, test_acc, test_auc, model, conf = future.result()
+                    append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                else:
+                    test_micro, test_macro, test_weighted, model, conf = future.result()
+                    append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
                 if save_weights:
                     save_model(save_dir, model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
     else:
         for conf in confs:
-            test_f1, test_acc, test_auc, model, conf = train_one_conf(
-                args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir
-            )
-            append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+            if args.num_classes == 2:
+                test_f1, test_acc, test_auc, model, conf = train_one_conf(
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes
+                )
+                append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+            else:
+                test_micro, test_macro, test_weighted, model, conf = train_one_conf(
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes
+                )
+                append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
             if save_weights:
                 save_model(save_dir, model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
 
