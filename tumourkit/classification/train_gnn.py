@@ -89,9 +89,9 @@ def evaluate(
             writer.add_scalar('ROC_AUC/' + log_suffix, auc, epoch)
         return f1, acc, auc
     else:
-        micro = f1_score(labels, pred, average='micro')
-        macro = f1_score(labels, pred, average='macro')
-        weighted = f1_score(labels, pred, average='weighted')
+        micro = f1_score(labels, preds, average='micro')
+        macro = f1_score(labels, preds, average='macro')
+        weighted = f1_score(labels, preds, average='weighted')
         # Tensorboard
         if writer is not None:
             writer.add_scalar('Accuracy/' + log_suffix, micro, epoch)
@@ -341,14 +341,14 @@ def train_one_conf(
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
     # Model
-    model = load_model(conf)
+    model = load_model(conf, num_classes)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
     train(
         save_dir, save_weights, train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
         args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers(),
-        num_classess=num_classes
+        num_classes=num_classes
     )
     test_metrics = evaluate(test_dataloader, model, args.device, num_classes=num_classes)
     model = model.cpu()
