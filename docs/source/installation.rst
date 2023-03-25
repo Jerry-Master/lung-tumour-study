@@ -1,30 +1,33 @@
 Installation
 ============
 
-First of all, create a new python environment and activate it. This library has been tested for python 3.8, 3.9, 3.10. We will use python 3.10 as an example, but you can use the other two.
+First of all, create a new python environment and activate it. This library has been tested for python 3.8, 3.9, 3.10.
 
 .. code-block:: console
 
-   $ python3.10 -m venv .venv
+   $ python -m venv .venv
    $ source .venv/bin/activate
 
 Now, install the tumourkit library.
 
 .. code-block:: console
     
-   (.venv) $ pip install tumourkit
+   $ pip install tumourkit
 
 Before you can start using the library, there are some external libraries not uploaded to pypi that need to be taken into account. The first is imgaug:
 
 .. code-block:: console
     
-   (.venv) $ pip install git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
+   $ pip install git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
 
 The other two libraries that you need to install are `Pytorch <https://pytorch.org/>`_ and `Deep Graph Library <https://www.dgl.ai/>`_. Depending on which operating system you use, and whether you have a GPU or not, the installation changes.
 To install them, follow the instructions on their official page.
 
 Known errors
 ------------
+
+Mixed CPU - GPU installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you try to use the GPU version of Deep Graph Library but have installed the CPU you will receive the following error.
 
@@ -34,6 +37,9 @@ If you try to use the GPU version of Deep Graph Library but have installed the C
 
 
 Just install the GPU build and you will be fine.
+
+Missing CUDA libraries
+^^^^^^^^^^^^^^^^^^^^^^
 
 If you come accross something like
 
