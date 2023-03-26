@@ -8,7 +8,7 @@ Entry points
 
 Once you have installed the library several commands will be made available in the shell. The most important ones are:
 
-* :code:`make_dirs`: It will create an internal directory structure were all the magic is going to happen. More info :ref:`below <make_dirs>`.
+* :code:`make_dirs`: It will create an internal directory structure where all the magic is going to happen. More info :ref:`below <make_dirs>`.
 * :code:`run_training`: It will train the segmentation and classification models sequentially. More info :ref:`below <run_training>`.
 * :code:`run_inference`: It will execute the pipeline on previously unseen images. More info :ref:`below <run_inference>`.
 
