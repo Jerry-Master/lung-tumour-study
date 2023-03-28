@@ -44,7 +44,7 @@ def check_equal(a: pd.DataFrame, b: pd.DataFrame) -> bool:
 @pytest.mark.parametrize("name", get_names(GRAPH_DIR, '.nodes.csv'))
 def test_graph2centroids(name):
     graph_file = read_graph(name, GRAPH_DIR)
-    centroids_file = graph2centroids(graph_file)
+    centroids_file = graph2centroids(graph_file, num_classes=2)
     ref_centroids_file = read_centroids(name, CENTROIDS_DIR)
     if not check_equal(centroids_file, ref_centroids_file):
         assert False, name
