@@ -17,16 +17,15 @@ def run_preprocessing(args: Namespace, logger : Logger) -> None:
     Converts the gson format to the rest of formats.
     """
     logger.info('Extracting Hovernet centroids from training output.')
-    for split in ['train', 'validation', 'test']:
-        if not os.path.isdir(os.path.join(args.root_dir, 'data', split, 'tmp_hov', 'json')):
+    if not os.path.isdir(os.path.join(args.root_dir, 'data', 'tmp_hov', 'json')):
             raise HovernetNotFoundError('Please, train again or extract hovernet outputs.')
-        logger.info(f'    Parsing {split} split')
-        newargs = Namespace(
-            json_dir = os.path.join(args.root_dir, 'data', split, 'tmp_hov', 'json'),
-            output_path = os.path.join(args.root_dir, 'data', split, 'centroids_hov'),
-        )
-        hovernet2centroids(newargs)
-        split_names = get_names(os.path.join(args.root_dir, 'data', split, 'tmp_hov', 'json'), '.json')
+    newargs = Namespace(
+        json_dir = os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'),
+        output_path = os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
+    )
+    hovernet2centroids(newargs)
+    for split in ['train', 'validation', 'test']:
+        split_names = get_names(os.path.join(args.root_dir, 'data', split, 'gson'), '.geojson')
         with open(os.path.join(args.root_dir, 'data', split, 'names.txt'), 'w') as f:
             for name in split_names:
                 print(name, file=f)
