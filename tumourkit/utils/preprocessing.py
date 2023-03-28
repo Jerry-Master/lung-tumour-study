@@ -191,7 +191,7 @@ def read_centroids(name: str, path: str) -> np.ndarray:
     The function expects the CSV file to have specific column names: 'X', 'Y', and 'class'.
     Centroids with class -1 are dropped and the coordinates are converted to integers.
     """
-    centroid_csv = pd.read_csv(path + name + '.centroids.csv')
+    centroid_csv = pd.read_csv(os.path.join(path, name + '.centroids.csv'))
     centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
     return centroid_csv.to_numpy(dtype=int)
 
