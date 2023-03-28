@@ -110,6 +110,7 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
     newargs = Namespace(
         graph_dir = os.path.join(args.output_dir, 'gnn_preds'),
         centroids_dir = os.path.join(args.output_dir, 'centroids'),
+        num_classes = args.num_classes,
     )
     graph2centroids(newargs)
     logger.info('   Converting .centroids.csv and .GT_cells.png to .class.csv.')
@@ -132,7 +133,7 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
 
 def _create_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root-dir', type=str, help='Internal data and weights directory.', default='./internals/')
+    parser.add_argument('--root-dir', type=str, help='Internal data and weights directory.', default='./.internals/')
     parser.add_argument('--input-dir', type=str, help='Folder containing patches to process.', required=True)
     parser.add_argument('--output-dir', type=str, help='Folder where to save results. Additional subfolder will be created.', required=True)
     parser.add_argument('--gpu', type=str, default='0')

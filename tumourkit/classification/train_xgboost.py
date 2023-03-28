@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import argparse
+from argparse import Namespace
 from .read_nodes import create_node_splits
 from xgboost import XGBClassifier
 import os
@@ -33,19 +34,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--graph-dir', type=str, required=True,
-                     help='Folder containing .graph.csv files.')
-parser.add_argument('--val-size', type=float, default=0.2,
-                     help='Validation size used for early stopping. Default: 0.2')
-parser.add_argument('--seed', type=int, default=None,
-                     help='Seed for random split. Default: None')
-parser.add_argument('--num-workers', type=int, default=1, 
-                     help='Number of processors to use. Default: 1.')
-parser.add_argument('--cv-folds', type=int, default=10, 
-                     help='Number of CV folds. Default: 10.')
-parser.add_argument('--save-name', type=str, required=True,
-                    help='Name to save the result, without file type.')
+
 
 
 def train(
@@ -108,36 +97,32 @@ def cross_validate(args, conf, skf, X, y):
     return tmp
 
 def create_confs():
-    confs = [
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 8,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.05,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 4,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0},
-        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0},
-        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 8,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 100,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5},
-        {'n_estimators': 500,'learning_rate': 0.005,'max_depth': 16,'colsample_bytree': 0.5}
-    ]
+    confs = [{'n_estimators': n, 'learning_rate': l, 'max_depth': d, 'colsample_bytree': c}
+            for n in [100, 500] 
+            for l in [0.05, 0.005] 
+            for d in [4, 8, 16] 
+            for c in [0, 0.5]]
     return confs
 
-if __name__=='__main__':
-    args = parser.parse_args()
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--graph-dir', type=str, required=True,
+                        help='Folder containing .graph.csv files.')
+    parser.add_argument('--val-size', type=float, default=0.2,
+                        help='Validation size used for early stopping. Default: 0.2')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='Seed for random split. Default: None')
+    parser.add_argument('--num-workers', type=int, default=1, 
+                        help='Number of processors to use. Default: 1.')
+    parser.add_argument('--cv-folds', type=int, default=10, 
+                        help='Number of CV folds. Default: 10.')
+    parser.add_argument('--save-name', type=str, required=True,
+                        help='Name to save the result, without file type.')
+    return parser
+
+
+def main_with_args(args: Namespace):
     GRAPH_DIR = args.graph_dir
 
     X_train, X_val, X_test, y_train, y_val, y_test = \
@@ -169,5 +154,17 @@ if __name__=='__main__':
             tmp = future.result()
             metrics = pd.concat((metrics, tmp))
             save(metrics, args.save_name + '.csv')
+    for k, conf in enumerate(confs):
+        print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
+        tmp = cross_validate(args, conf, skf, X, y)
+        metrics = pd.concat((metrics, tmp))
+        save(metrics, args.save_name + '.csv')
     save(metrics, args.save_name + '.csv')
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    main_with_args(args)
+    
     
