@@ -47,7 +47,7 @@ def graph2centroids(graph_file: pd.DataFrame, num_classes: int) -> np.ndarray:
     else:
         res = graph_file[['X', 'Y', 'prob1']].to_numpy()
         prob_cols = graph_file[['prob' + str(k) for k in range(1, num_classes + 1)]].to_numpy()
-        class_col = np.argmax(prob_cols, axis=0).reshape((-1,1)) + 1
+        class_col = np.argmax(prob_cols, axis=1) + 1
         res[:, 2] = class_col
     return np.array(res, dtype=int)
 

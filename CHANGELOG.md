@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Research pipeline.
 
+## [0.4.1] - 2023-03-28
+
+- Fixed multiclass inference bug.
+
 ## [0.4.0] - 2023-03-25
 
 - Added multiclass support.
