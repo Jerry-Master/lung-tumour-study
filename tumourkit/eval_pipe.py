@@ -41,7 +41,7 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
             names = os.path.join(args.root_dir, 'data', split, 'names.txt'),
             gt_path = os.path.join(args.root_dir, 'data', split, 'centroids'),
             pred_path = os.path.join(args.root_dir, 'data', split, 'centroids_hov'),
-            save_name = args.save_name,
+            save_name = args.save_name + '_' + split,
             debug_path = None,
         )
         eval_segment(newargs)
