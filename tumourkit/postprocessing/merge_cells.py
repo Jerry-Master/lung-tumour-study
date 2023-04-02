@@ -19,28 +19,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
+import os
 from typing import Callable, Dict, Tuple
 import numpy as np
 import pandas as pd
 import skimage
-import os
-import sys
-
-PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PKG_DIR)
-
-from utils.preprocessing import (
+from ..utils.preprocessing import (
     parse_path, create_dir, get_names, save_pngcsv, read_labels
 )
 import argparse
+from tqdm import tqdm
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--png-dir', type=str, required=True,
-                    help='Path to png files.')
-parser.add_argument('--csv-dir', type=str, required=True,
-                    help='Path to csv files.')
-parser.add_argument('--output-path', type=str, required=True,
-                    help='Path to save files.')
 
 MAX_CELLS = 1500
 
@@ -121,24 +110,36 @@ def remove_lost_ids(png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     csv.reset_index(inplace=True)
     return csv
 
-if __name__=='__main__':
-    args = parser.parse_args()
-    PNG_DIR = parse_path(args.png_dir)
-    CSV_DIR = parse_path(args.csv_dir)
-    OUTPUT_PATH = parse_path(args.output_path)
-    PNG_OUT_PATH = OUTPUT_PATH + '/postPNG/'
-    CSV_OUT_PATH = OUTPUT_PATH + '/postCSV/'
-    create_dir(OUTPUT_PATH)
-    create_dir(PNG_OUT_PATH)
-    create_dir(CSV_OUT_PATH)
 
-    names = get_names(PNG_DIR, '.GT_cells.png')
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--png-dir', type=str, required=True,
+                        help='Path to png files.')
+    parser.add_argument('--csv-dir', type=str, required=True,
+                        help='Path to csv files.')
+    parser.add_argument('--output-path', type=str, required=True,
+                        help='Path to save files.')
+    return parser
+
+
+def main():
+    parser = _create_parser()
+    args = parser.parse_args()
+    png_dir = parse_path(args.png_dir)
+    csv_dir = parse_path(args.csv_dir)
+    output_path = parse_path(args.output_path)
+    png_out_path = os.path.join(output_path, 'postPNG')
+    csv_out_path = os.path.join(output_path, 'postCSV')
+    create_dir(output_path)
+    create_dir(png_out_path)
+    create_dir(csv_out_path)
+
+    names = get_names(png_dir, '.GT_cells.png')
     vec_mapping, inv_diff_mapping = create_id_map()
-    for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
-        png, csv = read_labels(name, PNG_DIR, CSV_DIR)
+    for k, name in tqdm(enumerate(names)):
+        png, csv = read_labels(name, png_dir, csv_dir)
         if png is None or csv is None: continue
         assert(np.max(csv.id) < MAX_CELLS), "Exceeded maximum number of cells."
         png = merge_cells(png, vec_mapping, inv_diff_mapping)
         csv = remove_lost_ids(png, csv)
-        save_pngcsv(png, csv, PNG_OUT_PATH, CSV_OUT_PATH, name)
+        save_pngcsv(png, csv, png_out_path, csv_out_path, name)
