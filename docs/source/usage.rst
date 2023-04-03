@@ -14,7 +14,7 @@ Once you have installed the library several commands will be made available in t
 
 They all require some parameters to be specified. You can get the parameter names and a brief description by calling the commands together with the flag :code:`-h` or :code:`--help`.
 
-There are more commands available, for a comprehensive list look in the :ref:`section at the end <preproc_utils>`.
+There are more commands available, for a comprehensive list look in the :ref:`corresponding section <preproc_utils>`.
 
 .. _make_dirs:
 
@@ -80,6 +80,9 @@ of the original `repository <https://github.com/vqdang/hover_net>`_. Right now, 
 
 The other parameters are computational parameters. They indicate in which gpu id to execute the models and how many threads to use in the parts which are parallelized, mainly preprocessing and postprocessing functions.
 
+During training, hovernet logs are saved in :code:`root-dir/weights/segmentation/hovernet/` and graph neural network logs in :code:`root-dir/gnn_logs/`. 
+For a detailed explanation of what you can find and how to visualize them, go to :ref:`the relevant section <logs>`.
+
 .. _run_inference:
 
 run_inference
@@ -98,6 +101,8 @@ The remaining parameter :code:`--best-arch` indicates which graph architecture h
 has more parameters. The rest of the parameters make reference to hyperparameters of the graph neural network. However, you can simply choose the combination 
 that was best in validation and test while training by not specifying them. Also, if you specify a combination of hyperparameters that was not used during 
 training, it will not work.
+
+If you find that hovernet is breaking cells into parts, we provide an algorithm to solve that. For more information go to :ref:`the relevant section <merge_cells>`.
 
 .. _preproc_utils:
 
@@ -136,6 +141,8 @@ To get an explanation of what parameters are needed run the commands with the :c
 
 In case you want a more in depth explanation of the code that is being executed under the hood, please refer to the :doc:`API reference <_autosummary/tumourkit>`.
 
+.. _merge_cells:
+
 Merge cells
 ^^^^^^^^^^^
 
@@ -160,3 +167,60 @@ To apply this algorithm to a set of labels call it with this command.
 
 The two first arguments indicate the input in PNG / CSV format, and the last one is the folder to save the result. 
 Two subfolders will be created under it called postPNG and postCSV containing the new PNG / CSV files.
+
+.. _logs:
+
+Tensorboard logs
+----------------
+
+Examples
+^^^^^^^^
+
+During the two hovernet phases, images are being shown after every epoch containing the output of each branch. 
+You can see such an example below.
+
+.. image:: imgs/Hov_imgs.png
+  :width: 600
+  :alt: Hovernet images.
+
+In the scalar tab there are several metrics being reported as well. 
+
+.. image:: imgs/hov_loss.png
+  :width: 600
+  :alt: Hovernet loss functions.
+
+Once Hovernet has finished training and the graph methods have started, you will be able to see something like this.
+
+.. image:: imgs/gcn_global.png
+  :width: 600
+  :alt: tensorboard global view.
+
+Where three different metrics are shown. Depending on whether the problem is binary or multiclass you will observe different metrics. 
+In this part of the pipeline different configurations are being tried, as you can see, the performance varies wildly depending on the hyperparameters.
+
+.. image:: imgs/gcn_val_loss.png
+  :width: 600
+  :alt: GCN validation loss.
+
+Instructions
+^^^^^^^^^^^^
+
+In order to obtain the visualizations from the previous section you will have to run a tensorboard session. 
+Tensorboard is listed as one of the dependencies of this library, so you don't need to install anything else, just run the appropiate command.
+
+.. code-block:: console
+
+    $ tensorboard --logdir [...]
+
+This will host a page in :code:`localhost:6006` containing all the relevant logs. Just open a browser and you will be able to see them. 
+The hovernet logs are located in  :code:`root-dir/weights/segmentation/hovernet/` and the graph neural network logs in :code:`root-dir/gnn_logs/`.
+
+If you are running the tensorboard session on a headless server that is accessed by ssh, you will need to redirect ports to view the page.
+To do so, run in your local machine (not the server) this command
+
+.. code-block:: console
+
+    $ ssh -L  6006:localhost:6006 -Nf [HOST ADDRESS] &
+
+where the host address is the direction you use to access the server by ssh. 
+If you want to change the port it is redirected to, change the first 6006 to whatever you find convenient.
