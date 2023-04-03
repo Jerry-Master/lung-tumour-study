@@ -72,7 +72,7 @@ Now that everything is set up, you can begin training the models. The correspond
 
 .. code-block:: console
    
-   (.venv) $ run_training --root-dir [...] --pretrained-path [...] --num-classes 2 --gpu 0 --num-workers 10
+   $ run_training --root-dir [...] --pretrained-path [...] --num-classes 2 --gpu 0 --num-workers 10
 
 Here you need to specify two main parameters: :code:`--root-dir` and :code:`--pretrained-path`. The first one is the root folder specified on the previous section. 
 The second is the path to the weights you want your hovernet model to start with. The original hovernet models can be found in the `drive <https://drive.google.com/drive/folders/17IBOqdImvZ7Phe0ZdC5U1vwPFJFkttWp>`_ 
@@ -89,7 +89,7 @@ After you have trained your models, you may want to predict new labels for previ
 
 .. code-block:: console
    
-   (.venv) $ run_inference --root-dir [...] --input-dir [...] --output-dir [...] --best-arch [...] --num-classes 2 --gpu 0 --num-workers 10
+   $ run_inference --root-dir [...] --input-dir [...] --output-dir [...] --best-arch [...] --num-classes 2 --gpu 0 --num-workers 10
 
 The parameters :code:`--input-dir`, :code:`--output-dir` indicate where the input images are, and where to save the results. If the indicated folder does not exists, it is created. 
 Be careful, whatever is in the folder will be overwritten.
@@ -135,3 +135,28 @@ The last two commands are needed to convert from the graph format back to the PN
 To get an explanation of what parameters are needed run the commands with the :code:`-h` or :code:`--help` flags.
 
 In case you want a more in depth explanation of the code that is being executed under the hood, please refer to the :doc:`API reference <_autosummary/tumourkit>`.
+
+Merge cells
+^^^^^^^^^^^
+
+The segmentations produced by Hovernet tend to split cells in half sometimes. This library provides an algorithm to merge broken cells.
+If we have a situation like in the image below.
+
+.. image:: imgs/morph1.png
+  :width: 400
+  :alt: Cells computed by hovernet.
+
+The algorithm would merge the parts like this.
+
+.. image:: imgs/morph2.png
+  :width: 400
+  :alt: Aftermath of applying the algorithm.
+
+To apply this algorithm to a set of labels call it with this command.
+
+.. code-block:: console
+   
+   $ merge_cells --png-dir [...] --csv-dir [...] --output-path [...]
+
+The two first arguments indicate the input in PNG / CSV format, and the last one is the folder to save the result. 
+Two subfolders will be created under it called postPNG and postCSV containing the new PNG / CSV files.
