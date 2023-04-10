@@ -2,14 +2,11 @@ import argparse
 from argparse import Namespace
 import logging
 from logging import Logger
-from tumourkit import eval_segment
+from . import eval_segment
 import os
-from .preprocessing import hovernet2centroids
+from .preprocessing import hovernet2centroids, geojson2pngcsv, pngcsv2centroids
 from .utils.preprocessing import get_names
-
-
-class HovernetNotFoundError(Exception):
-    pass
+from .utils.pipes import HovernetNotFoundError, check_void
 
 
 def run_preprocessing(args: Namespace, logger : Logger) -> None:
@@ -18,17 +15,36 @@ def run_preprocessing(args: Namespace, logger : Logger) -> None:
     """
     logger.info('Extracting Hovernet centroids from training output.')
     if not os.path.isdir(os.path.join(args.root_dir, 'data', 'tmp_hov', 'json')):
-            raise HovernetNotFoundError('Please, train again or extract hovernet outputs.')
+        raise HovernetNotFoundError('Please, train again or extract hovernet outputs.')
     newargs = Namespace(
         json_dir = os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'),
         output_path = os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
     )
     hovernet2centroids(newargs)
     for split in ['train', 'validation', 'test']:
-        split_names = get_names(os.path.join(args.root_dir, 'data', split, 'gson'), '.geojson')
-        with open(os.path.join(args.root_dir, 'data', split, 'names.txt'), 'w') as f:
-            for name in split_names:
-                print(name, file=f)
+        if check_void(os.path.join(args.root_dir, 'data', split, 'names.txt')):
+            logger.info(f'Preprocessing split {split}.')
+            split_names = get_names(os.path.join(args.root_dir, 'data', split, 'gson'), '.geojson')
+            with open(os.path.join(args.root_dir, 'data', split, 'names.txt'), 'w') as f:
+                for name in split_names:
+                    print(name, file=f)
+        if check_void(os.path.join(args.root_dir, 'data', split, 'png')) or check_void(os.path.join(args.root_dir, 'data', split, 'csv')):
+            logger.info('   From geojson to pngcsv.')
+            newargs = Namespace(
+                gson_dir = os.path.join(args.root_dir, 'data', split, 'gson'),
+                png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
+                csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
+                num_classes = args.num_classes,
+            )
+            geojson2pngcsv(newargs)
+        if check_void(os.path.join(args.root_dir, 'data', split, 'centroids')):
+            logger.info('   Extracting centroids from GT.')
+            newargs = Namespace(
+                png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
+                csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
+                output_path = os.path.join(args.root_dir, 'data', split, 'centroids')
+            )
+            pngcsv2centroids(newargs)
     return
 
 
