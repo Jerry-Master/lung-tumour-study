@@ -204,8 +204,8 @@ def main_with_args(args: Namespace, logger: Logger):
                 future = executor.submit(cross_validate, args, conf, skf, X, y)
                 futures.append(future)
             for k, future in enumerate(futures):
-                logger.info('Configuration {:2}/{:2}'.format(k + 1, len(confs)))
                 tmp = future.result()
+                logger.info('Configuration {:2}/{:2}'.format(k + 1, len(confs)))
                 metrics = pd.concat((metrics, tmp))
                 save(metrics, args.save_name + '.csv')
     else:
