@@ -203,8 +203,6 @@ def run_xgb(args: Namespace, logger: Logger) -> None:
     )
     train_xgb(newargs, logger)
 
-    raise NotImplementedError
-
 
 def run_void(args: Namespace, logger: Logger) -> None:
     raise NotImplementedError

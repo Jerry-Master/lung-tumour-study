@@ -190,24 +190,24 @@ def main_with_args(args: Namespace, logger: Logger):
         )
     confs = create_confs()
     logger.info('Training various XGBoost configurations')
-    # if args.num_workers > 0:
-    #     with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
-    #         futures = []
-    #         for conf in confs:
-    #             future = executor.submit(cross_validate, args, conf, skf, X, y)
-    #             futures.append(future)
-    #         for k, future in enumerate(futures):
-    #             tmp = future.result()
-    #             logger.info('Configuration {:2}/{:2}'.format(k + 1, len(confs)))
-    #             metrics = pd.concat((metrics, tmp))
-    #             save(metrics, args.save_name + '.csv')
-    # else:
-    #     for k, conf in enumerate(confs):
-    #         logger.info('Configuration {:2}/{:2}'.format(k + 1, len(confs)))
-    #         tmp = cross_validate(args, conf, skf, X, y)
-    #         metrics = pd.concat((metrics, tmp))
-    #         save(metrics, args.save_name + '.csv')
-    # save(metrics, args.save_name + '.csv')
+    if args.num_workers > 0:
+        with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+            futures = []
+            for conf in confs:
+                future = executor.submit(cross_validate, args, conf, skf, X, y)
+                futures.append(future)
+            for k, future in enumerate(futures):
+                tmp = future.result()
+                logger.info('Configuration {:2}/{:2}'.format(k + 1, len(confs)))
+                metrics = pd.concat((metrics, tmp))
+                save(metrics, args.save_name + '.csv')
+    else:
+        for k, conf in enumerate(confs):
+            logger.info('Configuration {:2}/{:2}'.format(k + 1, len(confs)))
+            tmp = cross_validate(args, conf, skf, X, y)
+            metrics = pd.concat((metrics, tmp))
+            save(metrics, args.save_name + '.csv')
+    save(metrics, args.save_name + '.csv')
     metrics = pd.read_csv(args.save_name + '.csv')
     logger.info('Selecting best XGBoost configuration.')
     if args.num_classes == 2:
