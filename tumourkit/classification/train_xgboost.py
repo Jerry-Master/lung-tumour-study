@@ -167,15 +167,7 @@ def _create_parser():
 
 
 def main_with_args(args: Namespace, logger: Logger):
-    graph_dir = args.graph_dir
-
-    X_train, X_val, X_test, y_train, y_val, y_test = \
-        create_node_splits(
-            graph_dir, 0.2, 0.2, 0, 'total'
-        )
-
-    X = np.vstack((X_train, X_val, X_test))
-    y = np.hstack((y_train, y_val, y_test))
+    X, y = read_all_nodes(args.graph_dir)
     y = np.array(y, dtype=np.int32)
     skf = StratifiedKFold(n_splits=args.cv_folds)
     skf.get_n_splits(X, y)
@@ -229,7 +221,7 @@ def main_with_args(args: Namespace, logger: Logger):
     tmp['colsample_bytree'] = float(best_conf['colsample_bytree'])
     best_conf = tmp
     logger.info('Retraining with best configuration.')
-    model = train(best_conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
+    model = train(best_conf, X, y, args.val_size, args.seed, args.num_classes)
     logger.info('Computing test metrics.')
     X_test, y_test = read_all_nodes(args.test_graph_dir)
     y_test = np.array(y_test, dtype=np.int32)
