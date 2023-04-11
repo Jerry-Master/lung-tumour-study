@@ -144,7 +144,7 @@ class GraphDataset(Dataset):
                 assert callable(getattr(normalizer, "transform", None)), \
                     'Normalizers provided must have transform method.'
         if self.column_normalize:
-            self.col_sc = fit_column_normalizer(self.node_dir, self.node_names)
+            self.col_sc = fit_column_normalizer(self.node_dir, self.node_names, remove_morph=self.remove_morph, remove_prior=self.remove_prior)
             assert callable(getattr(self.col_sc, "transform", None)), \
             'Error loading column normalizer.'
         if self.row_normalize:

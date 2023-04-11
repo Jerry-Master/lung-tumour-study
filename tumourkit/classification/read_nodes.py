@@ -70,7 +70,12 @@ def read_node_matrix(
             yy = df['Y'].to_numpy()
             return X, None, xx, yy
 
-def _read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
+def _read_all_nodes(
+        node_dir: str,
+        names: List[str],
+        remove_prior: Optional[bool] = False,
+        remove_morph: Optional[bool] = False,
+        ) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
@@ -81,7 +86,7 @@ def _read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
     """
     X, y = None, None
     for name in names:
-        X_, y_ = read_node_matrix(os.path.join(node_dir, name))
+        X_, y_ = read_node_matrix(os.path.join(node_dir, name), remove_morph=remove_morph, remove_prior=remove_prior)
         if X is None: 
             X = X_ # Shape (n_samples, n_features)
             y = y_ # Shape (n_samples,)
@@ -91,7 +96,11 @@ def _read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
     return X, y
 
 
-def read_all_nodes(node_dir: str) -> List[np.ndarray]:
+def read_all_nodes(
+        node_dir: str,
+        remove_prior: Optional[bool] = False,
+        remove_morph: Optional[bool] = False,
+        ) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
@@ -102,7 +111,7 @@ def read_all_nodes(node_dir: str) -> List[np.ndarray]:
     ext = '.nodes.csv'
     names = get_names(node_dir, ext)
     names = [x+ext for x in names]
-    X, y = _read_all_nodes(node_dir, names)
+    X, y = _read_all_nodes(node_dir, names, remove_morph=remove_morph, remove_prior=remove_prior)
     return X, y
 
 

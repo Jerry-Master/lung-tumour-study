@@ -20,7 +20,7 @@ Contact information: joseperez2000@hotmail.es
 """
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from ..classification.read_nodes import _read_all_nodes
 
 def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -43,7 +43,12 @@ def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tup
     sc.fit(X_train)
     return sc.transform(X_train), sc.transform(X_val), sc.transform(X_test)
 
-def fit_column_normalizer(node_dir: str, names: List[str]) -> StandardScaler:
+def fit_column_normalizer(
+        node_dir: str,
+        names: List[str],
+        remove_prior: Optional[bool] = False,
+        remove_morph: Optional[bool] = False,
+        ) -> StandardScaler:
     """
     Fits a StandardScaler object to the input data and returns it.
 
@@ -54,7 +59,7 @@ def fit_column_normalizer(node_dir: str, names: List[str]) -> StandardScaler:
     :return: A StandardScaler object fitted to the∫ input data.
     :rtype: StandardScaler
     """
-    X, y = _read_all_nodes(node_dir, [x+'.nodes.csv' for x in names])
+    X, y = _read_all_nodes(node_dir, [x+'.nodes.csv' for x in names], remove_morph=remove_morph, remove_prior=remove_prior)
     sc = StandardScaler()
     sc.fit(X)
     return sc
