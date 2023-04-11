@@ -49,7 +49,7 @@ def train(
         model = XGBClassifier(
             n_estimators=conf['n_estimators'],
             learning_rate=conf['learning_rate'],
-            max_depth=int(conf['max_depth']),
+            max_depth=conf['max_depth'],
             colsample_bytree=conf['colsample_bytree'],
             eval_metric='logloss',
             early_stopping_rounds=10
@@ -58,7 +58,7 @@ def train(
         model = XGBClassifier(
             n_estimators=conf['n_estimators'],
             learning_rate=conf['learning_rate'],
-            max_depth=int(conf['max_depth']),
+            max_depth=conf['max_depth'],
             colsample_bytree=conf['colsample_bytree'],
             eval_metric='mlogloss',
             objective='multi:softmax',
@@ -221,10 +221,12 @@ def main_with_args(args: Namespace, logger: Logger):
         best_conf = metrics.sort_values(by='f1', ascending=False).iloc[0]
     else:
         best_conf = metrics.sort_values(by='weighted', ascending=False).iloc[0]
-    best_conf['n_estimators'] = int(best_conf['n_estimators'])
-    best_conf['learning_rate'] = float(best_conf['learning_rate'])
-    best_conf['max_depth'] = int(best_conf['max_depth'])
-    best_conf['colsample_bytree'] = float(best_conf['colsample_bytree'])
+    tmp = {}
+    tmp['n_estimators'] = int(best_conf['n_estimators'][0])
+    tmp['learning_rate'] = float(best_conf['learning_rate'][0])
+    tmp['max_depth'] = int(best_conf['max_depth'][0])
+    tmp['colsample_bytree'] = float(best_conf['colsample_bytree'][0])
+    best_conf = tmp
     logger.info('Retraining with best configuration.')
     model = train(best_conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
     logger.info('Computing test metrics.')
