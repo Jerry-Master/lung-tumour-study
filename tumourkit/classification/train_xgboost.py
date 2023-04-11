@@ -202,12 +202,21 @@ def main_with_args(args: Namespace, logger: Logger):
         hdlr.terminator = '\r'
         logger.addHandler(hdlr)
     logger.info('Probando')
+    for hdlr in logger.handlers:
+        hdlr.flush()
     import time
     time.sleep(1)
     logger.info('Probando.')
+    for hdlr in logger.handlers:
+        hdlr.flush()
     time.sleep(1)
     logger.info('Probando..')
+    for hdlr in logger.handlers:
+        hdlr.flush()
     time.sleep(1)
+    logger.info('Probando...')
+    for hdlr in logger.handlers:
+        hdlr.flush()
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             futures = []
