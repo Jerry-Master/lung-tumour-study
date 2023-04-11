@@ -199,6 +199,7 @@ def run_xgb(args: Namespace, logger: Logger) -> None:
         num_workers = args.num_workers,
         cv_folds = 5,
         save_name = os.path.join(args.output_dir, 'xgb', 'cv_results'),
+        num_classes = args.num_classes,
     )
     train_xgb(newargs, logger)
 
