@@ -208,7 +208,6 @@ def main_with_args(args: Namespace, logger: Logger):
     time.sleep(1)
     logger.info('Probando..')
     time.sleep(1)
-    logger.info('Probando...\n')
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             futures = []
@@ -228,7 +227,9 @@ def main_with_args(args: Namespace, logger: Logger):
             save(metrics, args.save_name + '.csv')
     save(metrics, args.save_name + '.csv')
     for hdlr in logger.handlers:
+        logger.removeHandler(hdlr)
         hdlr.terminator = '\n'
+        logger.addHandler(hdlr)
 
     logger.info('Selecting best XGBoost configuration.')
     if args.num_classes == 2:
