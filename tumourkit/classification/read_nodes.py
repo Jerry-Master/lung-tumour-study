@@ -45,7 +45,7 @@ def read_node_matrix(file: str, return_coordinates: Optional[bool] = False, retu
             yy = df['Y'].to_numpy()
             return X, y, xx, yy
     else:
-        X = df.drop(['id', 'X', 'Y'], axis=1).to_numpy()
+        X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
         if not return_coordinates:
             return X, None
         else:

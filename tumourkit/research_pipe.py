@@ -1,18 +1,21 @@
+import shutil
 import argparse
 from argparse import Namespace
 import logging
 from logging import Logger
 import os
+import pandas as pd
 from .segmentation import hov_train, hov_infer
 from .utils.pipes import check_training, WrongConfigurationError, HovernetNotFoundError, check_void
 from .preprocessing import hovernet2centroids, geojson2pngcsv, pngcsv2centroids
 from .segmentation import pngcsv2npy
 from .utils.preprocessing import get_names
 from . import eval_segment
+from .classification import train_xgb
 
 
 def run_preprocessing(args: Namespace, logger: Logger) -> None:
-    if args.experiment == 'cnn-gnn':
+    if args.experiment == 'cnn-gnn' or args.experiment == 'xgb-gnn':
         check_training(args, logger)
     os.makedirs(args.output_dir, exist_ok=True)
     if args.experiment == 'scaling':
@@ -174,10 +177,31 @@ def run_scaling(args: Namespace, logger: Logger) -> None:
     evaluate_hovernet_with_shape('270FT', args, logger)
     evaluate_hovernet_with_shape('518', args, logger)
     evaluate_hovernet_with_shape('518FT', args, logger)
-    raise NotImplementedError
 
 
 def run_xgb(args: Namespace, logger: Logger) -> None:
+    logger.info('Moving graphs files into one single folder.')
+    all_graphs_dir = os.path.join(args.root_dir, 'data', 'train_validation', 'graphs', 'preds')
+    os.makedirs(all_graphs_dir, exist_ok=True)
+    tr_graphs_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds')
+    val_graphs_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds')
+    files = [os.path.join(tr_graphs_dir, f) for f in os.listdir(tr_graphs_dir)] + \
+            [os.path.join(val_graphs_dir, f) for f in os.listdir(val_graphs_dir)]
+    for file in files:
+        shutil.copy(file, all_graphs_dir)
+    logger.info('Starting XGBoost training.')
+    os.makedirs(os.path.join(args.output_dir, 'xgb'), exist_ok=True)
+    newargs = Namespace(
+        graph_dir = all_graphs_dir,
+        test_graph_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        val_size = 0.2,
+        seed = 0,
+        num_workers = args.num_workers,
+        cv_folds = 5,
+        save_name = os.path.join(args.output_dir, 'xgb', 'cv_results'),
+    )
+    train_xgb(newargs, logger)
+
     raise NotImplementedError
 
 
@@ -197,6 +221,7 @@ def _create_parser():
     parser.add_argument('--experiment', type=str, choices=['scaling', 'xgb-gnn', 'void-gnn', 'cnn-gnn'])
     parser.add_argument('--pretrained-path', type=str, help='Path to initial Hovernet weights.')
     parser.add_argument('--gpu', type=str, default='0')
+    parser.add_argument('--num-workers', type=int, default=0)
     return parser
 
 

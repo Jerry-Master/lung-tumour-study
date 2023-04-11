@@ -23,18 +23,15 @@ import argparse
 from argparse import Namespace
 from .read_nodes import create_node_splits
 from xgboost import XGBClassifier
-import os
+from logging import Logger
+import logging
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 import numpy as np
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
-
-FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
 
 
 def train(
@@ -42,65 +39,107 @@ def train(
         X_tr: np.ndarray, 
         y_tr: np.ndarray, 
         val_size: float,
-        seed: int
+        seed: int,
+        num_classes: Optional[int] = 2
         ) -> XGBClassifier:
     X_tr, X_val, y_tr, y_val = train_test_split(
         X_tr, y_tr, test_size=val_size, stratify=y_tr, random_state=seed
     )
-    model = XGBClassifier(
-        n_estimators=conf['n_estimators'],
-        learning_rate=conf['learning_rate'], # 0.05
-        max_depth=conf['max_depth'],
-        colsample_bytree=conf['colsample_bytree'],
-        eval_metric='logloss',
-        early_stopping_rounds=10
-    )
+    if num_classes == 2:
+        model = XGBClassifier(
+            n_estimators=conf['n_estimators'],
+            learning_rate=conf['learning_rate'],
+            max_depth=conf['max_depth'],
+            colsample_bytree=conf['colsample_bytree'],
+            eval_metric='logloss',
+            early_stopping_rounds=10
+        )
+    else:
+        model = XGBClassifier(
+            n_estimators=conf['n_estimators'],
+            learning_rate=conf['learning_rate'],
+            max_depth=conf['max_depth'],
+            colsample_bytree=conf['colsample_bytree'],
+            eval_metric='mlogloss',
+            objective='multi:softmax',
+            num_class=num_classes,
+            early_stopping_rounds=10
+        )
     model.fit(
         X_tr, y_tr,
         eval_set=[(X_val, y_val)], verbose=False
     )
     return model
 
+
 def evaluate(
         model: XGBClassifier, 
         X_val: np.ndarray,
-        y_val: np.ndarray
+        y_val: np.ndarray,
+        num_classes: Optional[int] = 2
         ) -> Tuple[float, float, float]:
     preds = model.predict(X_val)
-    probs = model.predict_proba(X_val)[:,1]
-    f1 = f1_score(y_val, preds)
-    acc = accuracy_score(y_val, preds)
-    auc = roc_auc_score(y_val, probs)
-    return f1, acc, auc
+    if num_classes == 2:
+        probs = model.predict_proba(X_val)[:,1]
+        f1 = f1_score(y_val, preds)
+        acc = accuracy_score(y_val, preds)
+        auc = roc_auc_score(y_val, probs)
+        return f1, acc, auc
+    else:
+        micro = f1_score(y_val, preds, average='micro')
+        macro = f1_score(y_val, preds, average='macro')
+        weighted = f1_score(y_val, preds, average='weighted')
+        return micro, macro, weighted
+
 
 def save(metrics: Dict[str,Tuple[float,float,float]], path: str) -> None:
     metrics.to_csv(path, index=False)
 
+
 def cross_validate(args, conf, skf, X, y):
-    f1_mean, acc_mean, auc_mean = 0, 0, 0
+    if args.num_classes == 2:
+        f1_mean, acc_mean, auc_mean = 0, 0, 0
+    else:
+        micro_mean, macro_mean, weighted_mean = 0, 0, 0
     for train_index, val_index in skf.split(X, y):
         X_train, X_cval = X[train_index], X[val_index]
         y_train, y_cval = y[train_index], y[val_index]
         ## Train
-        model = train(conf, X_train, y_train, args.val_size, args.seed)
+        model = train(conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
         ## Save metrics
-        f1, acc, auc = evaluate(model, X_cval, y_cval)
-        f1_mean += f1; acc_mean += acc; auc_mean += auc
-    f1_mean /= args.cv_folds; acc_mean /= args.cv_folds; auc_mean /= args.cv_folds
-    tmp = pd.DataFrame(
-        [(*conf.values(), f1_mean, acc_mean, auc_mean)], 
-        columns=[
-            'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-            'f1', 'accuracy', 'auc'
-            ]
-    )
+        val_metrics = evaluate(model, X_cval, y_cval, args.num_classes)
+        if args.num_classes == 2:
+            f1, acc, auc = val_metrics
+            f1_mean += f1; acc_mean += acc; auc_mean += auc
+        else:
+            micro, macro, weighted = val_metrics
+            micro_mean += micro; macro_mean += macro; weighted_mean += weighted
+    if args.num_classes == 2:
+        f1_mean /= args.cv_folds; acc_mean /= args.cv_folds; auc_mean /= args.cv_folds
+        tmp = pd.DataFrame(
+            [(*conf.values(), f1_mean, acc_mean, auc_mean)], 
+            columns=[
+                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+                'f1', 'accuracy', 'auc'
+                ]
+        )
+    else:
+        micro_mean /= args.cv_folds; macro_mean /= args.cv_folds; weighted_mean /= args.cv_folds
+        tmp = pd.DataFrame(
+            [(*conf.values(), micro_mean, macro_mean, weighted_mean)], 
+            columns=[
+                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+                'micro', 'macro', 'weighted'
+                ]
+        )
     return tmp
+
 
 def create_confs():
     confs = [{'n_estimators': n, 'learning_rate': l, 'max_depth': d, 'colsample_bytree': c}
             for n in [100, 500] 
             for l in [0.05, 0.005] 
-            for d in [4, 8, 16] 
+            for d in [8, 16] 
             for c in [0, 0.5]]
     return confs
 
@@ -109,6 +148,8 @@ def _create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--graph-dir', type=str, required=True,
                         help='Folder containing .graph.csv files.')
+    parser.add_argument('--test-graph-dir', type=str, required=True,
+                        help='Folder containing .graph.csv files to evaluate at the end.')
     parser.add_argument('--val-size', type=float, default=0.2,
                         help='Validation size used for early stopping. Default: 0.2')
     parser.add_argument('--seed', type=int, default=None,
@@ -119,15 +160,17 @@ def _create_parser():
                         help='Number of CV folds. Default: 10.')
     parser.add_argument('--save-name', type=str, required=True,
                         help='Name to save the result, without file type.')
+    parser.add_argument('--num-classes', type=int, default=2,
+                        help='Number of classes to consider for classification (background not included).')
     return parser
 
 
-def main_with_args(args: Namespace):
-    GRAPH_DIR = args.graph_dir
+def main_with_args(args: Namespace, logger: Logger):
+    graph_dir = args.graph_dir
 
     X_train, X_val, X_test, y_train, y_val, y_test = \
         create_node_splits(
-            GRAPH_DIR, 0.2, 0.2, 0, 'total'
+            graph_dir, 0.2, 0.2, 0, 'total'
         )
 
     X = np.vstack((X_train, X_val, X_test))
@@ -136,35 +179,94 @@ def main_with_args(args: Namespace):
     skf = StratifiedKFold(n_splits=args.cv_folds)
     skf.get_n_splits(X, y)
 
-    metrics = pd.DataFrame(
-        {}, 
-        columns=[
-            'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-            'f1', 'accuracy', 'auc'
-        ]
-    )
+    if args.num_classes == 2:
+        metrics = pd.DataFrame(
+            {}, 
+            columns=[
+                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+                'f1', 'accuracy', 'auc'
+            ]
+        )
+    else:
+        metrics = pd.DataFrame(
+            {}, 
+            columns=[
+                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+                'micro', 'macro', 'weighted'
+            ]
+        )
     confs = create_confs()
+    logger.info('Training various XGBoost configurations')
     with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
         futures = []
         for conf in confs:
             future = executor.submit(cross_validate, args, conf, skf, X, y)
             futures.append(future)
         for k, future in enumerate(futures):
-            print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
+            logger.info('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
             tmp = future.result()
             metrics = pd.concat((metrics, tmp))
             save(metrics, args.save_name + '.csv')
     for k, conf in enumerate(confs):
-        print('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
+        logger.info('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
         tmp = cross_validate(args, conf, skf, X, y)
         metrics = pd.concat((metrics, tmp))
         save(metrics, args.save_name + '.csv')
     save(metrics, args.save_name + '.csv')
 
+    logger.info('Selecting best XGBoost configuration.')
+    if args.num_classes == 2:
+        best_conf = metrics.sort_values(by='f1', ascending=False).iloc[0]
+    else:
+        best_conf = metrics.sort_values(by='weighted', ascending=False).iloc[0]
+    best_conf['n_estimators'] = float(best_conf['n_estimators'])
+    best_conf['learning_rate'] = float(best_conf['learning_rate'])
+    best_conf['max_depth'] = float(best_conf['max_depth'])
+    best_conf['colsample_bytree'] = float(best_conf['colsample_bytree'])
+    logger.info('Retraining with best configuration.')
+    model = train(best_conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
+    logger.info('Computing test metrics.')
+    X_train, X_val, X_test, y_train, y_val, y_test = \
+        create_node_splits(
+            args.test_graph_dir, 0.2, 0.2, 0, 'total'
+        )
+    X_test = np.vstack((X_train, X_val, X_test))
+    y_test = np.hstack((y_train, y_val, y_test))
+    y_test = np.array(y_test, dtype=np.int32)
+    test_metrics = evaluate(model, X_test, y_test, args.num_classes)
+    if args.num_classes == 2:
+        f1, acc, auc = test_metrics
+        test_metrics = pd.DataFrame(
+            [(*best_conf.values(), f1, acc, auc)], 
+            columns=[
+                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+                'f1', 'accuracy', 'auc'
+                ]
+        )
+    else:
+        micro, macro, weighted = test_metrics
+        test_metrics = pd.DataFrame(
+            [(*best_conf.values(), micro, macro, weighted)], 
+            columns=[
+                'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
+                'micro', 'macro', 'weighted'
+                ]
+        )
+    save(test_metrics, args.save_name + '_test.csv')
+
 
 def main():
     parser = _create_parser()
     args = parser.parse_args()
-    main_with_args(args)
+
+    logger = logging.getLogger('train_xgboost')
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    main_with_args(args, logger)
     
     
