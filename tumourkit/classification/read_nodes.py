@@ -53,7 +53,7 @@ def read_node_matrix(file: str, return_coordinates: Optional[bool] = False, retu
             yy = df['Y'].to_numpy()
             return X, None, xx, yy
 
-def read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
+def _read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
@@ -73,6 +73,23 @@ def read_all_nodes(node_dir: str, names: List[str]) -> List[np.ndarray]:
             y = np.hstack([y, y_])
     return X, y
 
+
+def read_all_nodes(node_dir: str) -> List[np.ndarray]:
+    """
+    Input
+      node_dir: Path to folder with csv files containing node features.
+      names: List of files to read. Must have file extension.
+    Output
+      X: Input data in array format.
+      y: Labels in array format.
+    """
+    ext = '.nodes.csv'
+    names = get_names(node_dir, ext)
+    names = [x+ext for x in names]
+    X, y = _read_all_nodes(node_dir, names)
+    return X, y
+
+
 def create_node_splits(
     node_dir: str, val_size: float, test_size: float, 
     seed: Optional[int] = None,
@@ -91,7 +108,7 @@ def create_node_splits(
     names = get_names(node_dir, ext)
     names = [x+ext for x in names]
     if mode == 'total':
-        X, y = read_all_nodes(node_dir, names)
+        X, y = _read_all_nodes(node_dir, names)
         X_tr_val, X_test, y_tr_val, y_test = train_test_split(
             X, y, test_size=test_size, stratify=y, random_state=seed
         )
@@ -110,9 +127,9 @@ def create_node_splits(
         train_names = names[:N_tr]
         val_names = names[N_tr:N_val+N_tr]
         test_names = names[N_val+N_tr:]
-        X_train, y_train = read_all_nodes(node_dir, train_names)
-        X_val, y_val = read_all_nodes(node_dir, val_names)
-        X_test, y_test = read_all_nodes(node_dir, test_names)
+        X_train, y_train = _read_all_nodes(node_dir, train_names)
+        X_val, y_val = _read_all_nodes(node_dir, val_names)
+        X_test, y_test = _read_all_nodes(node_dir, test_names)
         return X_train, X_val, X_test, y_train, y_val, y_test
     else:
         assert False, 'Wrong mode.'

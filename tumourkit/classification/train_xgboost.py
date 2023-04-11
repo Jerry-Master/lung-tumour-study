@@ -21,7 +21,7 @@ Contact information: joseperez2000@hotmail.es
 """
 import argparse
 from argparse import Namespace
-from .read_nodes import create_node_splits
+from .read_nodes import create_node_splits, read_all_nodes
 from xgboost import XGBClassifier
 from logging import Logger
 import logging
@@ -32,6 +32,7 @@ from typing import Dict, Any, Tuple, Optional
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
+from ..utils.preprocessing import get_names
 
 
 def train(
@@ -230,13 +231,9 @@ def main_with_args(args: Namespace, logger: Logger):
     logger.info('Retraining with best configuration.')
     model = train(best_conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
     logger.info('Computing test metrics.')
-    X_train, X_val, X_test, y_train, y_val, y_test = \
-        create_node_splits(
-            args.test_graph_dir, 0.2, 0.2, 0, 'total'
-        )
-    X_test = np.vstack((X_train, X_val, X_test))
-    y_test = np.hstack((y_train, y_val, y_test))
+    X_test, y_test = read_all_nodes(args.test_graph_dir)
     y_test = np.array(y_test, dtype=np.int32)
+    logger.info(str(len(X_test)))
     test_metrics = evaluate(model, X_test, y_test, args.num_classes)
     if args.num_classes == 2:
         f1, acc, auc = test_metrics
