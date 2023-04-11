@@ -420,9 +420,9 @@ def main_with_args(args: Namespace):
     confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file, args.num_classes)
     num_feats = 18 + (1 if args.num_classes == 2 else args.num_classes)
-    if args.disable_prior:
-        num_feats -= 18
     if args.disable_morph_feats:
+        num_feats -= 18
+    if args.disable_prior:
         num_feats -= (1 if args.num_classes == 2 else args.num_classes)
     if num_feats == 0:
         num_feats = 1

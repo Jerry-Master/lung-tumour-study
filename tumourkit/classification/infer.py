@@ -119,9 +119,9 @@ def main_with_args(args):
         remove_morph=args.disable_morph_feats, remove_prior=args.disable_prior)
     eval_dataloader = GraphDataLoader(eval_dataset, batch_size=1, shuffle=False)
     num_feats = 18 + (1 if args.num_classes == 2 else args.num_classes)
-    if args.disable_prior:
-        num_feats -= 18
     if args.disable_morph_feats:
+        num_feats -= 18
+    if args.disable_prior:
         num_feats -= (1 if args.num_classes == 2 else args.num_classes)
     if num_feats == 0:
         num_feats = 1
