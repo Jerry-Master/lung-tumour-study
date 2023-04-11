@@ -47,7 +47,10 @@ class GraphDataset(Dataset):
         row_normalize: Optional[bool] = False,
         normalizers: Optional[Tuple[Any]] = None,
         return_names: Optional[bool] = False,
-        is_inference: Optional[bool] = False):
+        is_inference: Optional[bool] = False,
+        remove_prior: Optional[bool] = False,
+        remove_morph: Optional[bool] = False,
+        ):
         """
         node_dir: Path to .nodes.csv files.
         max_dist: Maximum distance to consider two nodes as neighbours.
@@ -73,10 +76,15 @@ class GraphDataset(Dataset):
         self.initialize_normalizers()
         self.return_names = return_names
         self.is_inference = is_inference
+        self.remove_prior = remove_prior
+        self.remove_morph = remove_morph
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
-        X, y, xx, yy = read_node_matrix(os.path.join(self.node_dir, file_name), return_coordinates=True, return_class=not self.is_inference)
+        X, y, xx, yy = read_node_matrix(
+            os.path.join(self.node_dir, file_name), return_coordinates=True, return_class=not self.is_inference,
+            remove_prior=self.remove_prior, remove_morph=self.remove_morph
+            )
         if self.column_normalize:
             X = self.col_sc.transform(X)
         if self.row_normalize:

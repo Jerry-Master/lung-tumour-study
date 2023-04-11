@@ -202,6 +202,8 @@ def load_dataset(
         val_node_dir: str,
         test_node_dir: str,
         bsize: int,
+        remove_prior: Optional[bool] = False,
+        remove_morph: Optional[bool] = False,
         ) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
     """
     Creates Torch dataloaders for training. 
@@ -221,15 +223,15 @@ def load_dataset(
        ...
     """
     train_dataset = GraphDataset(
-        node_dir=train_node_dir,
+        node_dir=train_node_dir, remove_morph=remove_morph, remove_prior=remove_prior,
         max_dist=200, max_degree=10, column_normalize=True)
     train_dataloader = GraphDataLoader(train_dataset, batch_size=bsize, shuffle=True)
     val_dataset = GraphDataset(
-        node_dir=val_node_dir,
+        node_dir=val_node_dir, remove_morph=remove_morph, remove_prior=remove_prior,
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=False)
     test_dataset = GraphDataset(
-        node_dir=test_node_dir,
+        node_dir=test_node_dir, remove_morph=remove_morph, remove_prior=remove_prior,
         max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
@@ -262,12 +264,11 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
             confs.append(conf)
     return confs
 
-def load_model(conf: Dict[str,Any], num_classes: int) -> nn.Module:
+def load_model(conf: Dict[str,Any], num_classes: int, num_feats: int) -> nn.Module:
     """
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
     """
-    num_feats = 18 + (1 if num_classes == 2 else num_classes)
     hidden_feats = 100
     if conf['MODEL_NAME'] == 'GCN':
         return GCN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
@@ -337,11 +338,12 @@ def train_one_conf(
         save_weights: bool,
         save_dir: str,
         num_classes: int,
+        num_feats: int
         ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
     # Model
-    model = load_model(conf, num_classes)
+    model = load_model(conf, num_classes, num_feats)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
     train(
@@ -389,6 +391,8 @@ def _create_parser():
     parser.add_argument('--checkpoint-iters', type=int, default=-1, 
                         help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--disable-prior', action='store_true', help='If True, remove hovernet probabilities from node features.')
+    parser.add_argument('--disable-morph-feats', action='store_true', help='If True, remove morphological features from node features.')
     return parser
 
 
@@ -409,17 +413,26 @@ def main_with_args(args: Namespace):
         val_node_dir=args.validation_node_dir,
         test_node_dir=args.test_node_dir,
         bsize=args.batch_size,
+        remove_prior=args.disable_prior,
+        remove_morph=args.disable_morph_feats
     )
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)
     create_results_file(args.save_file, args.num_classes)
+    num_feats = 18 + (1 if args.num_classes == 2 else args.num_classes)
+    if args.disable_prior:
+        num_feats -= 18
+    if args.disable_morph_feats:
+        num_feats -= (1 if args.num_classes == 2 else args.num_classes)
+    if num_feats == 0:
+        num_feats = 1
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             futures = []
             for conf in confs:
                 future = executor.submit(
                     train_one_conf,
-                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes, num_feats
                 )
                 futures.append(future)
             for future in futures:
@@ -435,12 +448,12 @@ def main_with_args(args: Namespace):
         for conf in confs:
             if args.num_classes == 2:
                 test_f1, test_acc, test_auc, model, conf = train_one_conf(
-                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes, num_feats
                 )
                 append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
             else:
                 test_micro, test_macro, test_weighted, model, conf = train_one_conf(
-                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes
+                    args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes, num_feats
                 )
                 append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
             if save_weights:

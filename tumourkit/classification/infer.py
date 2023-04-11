@@ -35,7 +35,7 @@ import argparse
 import os
                   
 
-def load_saved_model(weights_path: str, conf_path: str, num_classes: int) -> nn.Module:
+def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_feats: int) -> nn.Module:
     """
     Loads state_dict into a torch module.
     Configuration file must match with state_dict.
@@ -43,7 +43,7 @@ def load_saved_model(weights_path: str, conf_path: str, num_classes: int) -> nn.
     state_dict = torch.load(weights_path, map_location='cpu')
     with open(conf_path, 'r') as f:
         conf = json.load(f)
-    model = load_model(conf, num_classes)
+    model = load_model(conf, num_classes, num_feats)
     model.load_state_dict(state_dict)
     return model
 
@@ -103,6 +103,8 @@ def _create_parser():
     parser.add_argument('--normalizers', type=str, required=True,
                         help='Path to normalizer objects for the model.')
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--disable-prior', action='store_true', help='If True, remove hovernet probabilities from node features.')
+    parser.add_argument('--disable-morph-feats', action='store_true', help='If True, remove morphological features from node features.')
     return parser
 
 
@@ -113,9 +115,17 @@ def main_with_args(args):
     normalizers = load_normalizer(args.normalizers)
     eval_dataset = GraphDataset(
         node_dir=node_dir, return_names=True, is_inference=True,
-        max_dist=200, max_degree=10, normalizers=normalizers)
+        max_dist=200, max_degree=10, normalizers=normalizers,
+        remove_morph=args.disable_morph_feats, remove_prior=args.disable_prior)
     eval_dataloader = GraphDataLoader(eval_dataset, batch_size=1, shuffle=False)
-    model = load_saved_model(args.weights, args.conf, args.num_classes)
+    num_feats = 18 + (1 if args.num_classes == 2 else args.num_classes)
+    if args.disable_prior:
+        num_feats -= 18
+    if args.disable_morph_feats:
+        num_feats -= (1 if args.num_classes == 2 else args.num_classes)
+    if num_feats == 0:
+        num_feats = 1
+    model = load_saved_model(args.weights, args.conf, args.num_classes, num_feats)
     model.eval()
     probs = run_inference(model, eval_dataloader, 'cpu', args.num_classes)
     save_probs(probs, node_dir, output_dir, args.num_classes)

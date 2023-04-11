@@ -161,7 +161,9 @@ def run_graph_pipe(args: Namespace, logger : Logger) -> None:
         device = 'cpu' if args.gpu == '' else 'cuda',
         num_workers = args.num_workers,
         checkpoint_iters = -1,
-        num_classes = args.num_classes
+        num_classes = args.num_classes,
+        disable_prior = False,
+        disable_morph_feats = False,
     )
     train_gnn(newargs)
     return

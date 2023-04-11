@@ -11,11 +11,11 @@ from .preprocessing import hovernet2centroids, geojson2pngcsv, pngcsv2centroids
 from .segmentation import pngcsv2npy
 from .utils.preprocessing import get_names
 from . import eval_segment
-from .classification import train_xgb
+from .classification import train_xgb, train_gnn
 
 
 def run_preprocessing(args: Namespace, logger: Logger) -> None:
-    if args.experiment == 'cnn-gnn' or args.experiment == 'xgb-gnn':
+    if args.experiment == 'cnn-gnn' or args.experiment == 'xgb-gnn' or args.experiment == 'void-gnn':
         check_training(args, logger)
     os.makedirs(args.output_dir, exist_ok=True)
     if args.experiment == 'scaling':
@@ -205,6 +205,68 @@ def run_xgb(args: Namespace, logger: Logger) -> None:
 
 
 def run_void(args: Namespace, logger: Logger) -> None:
+    logger.info('Training GNN without prior.')
+    newargs = Namespace(
+        train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir = os.path.join(args.root_dir, 'gnn_no_prior_logs'),
+        early_stopping_rounds = 10,
+        batch_size = 10,
+        model_name = 'GCN',
+        save_file = os.path.join(args.root_dir, 'gnn_no_prior_logs', 'gnn_results'),
+        num_confs = 32,
+        save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn_no_prior'),
+        device = 'cpu' if args.gpu == '' else 'cuda',
+        num_workers = args.num_workers,
+        checkpoint_iters = -1,
+        num_classes = args.num_classes,
+        disable_prior = True,
+        disable_morph_feats = False,
+    )
+    train_gnn(newargs)
+
+    logger.info('Training GNN without morphological features.')
+    newargs = Namespace(
+        train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir = os.path.join(args.root_dir, 'gnn_no_morph_logs'),
+        early_stopping_rounds = 10,
+        batch_size = 10,
+        model_name = 'GCN',
+        save_file = os.path.join(args.root_dir, 'gnn_no_morph_logs', 'gnn_results'),
+        num_confs = 32,
+        save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn_no_morph'),
+        device = 'cpu' if args.gpu == '' else 'cuda',
+        num_workers = args.num_workers,
+        checkpoint_iters = -1,
+        num_classes = args.num_classes,
+        disable_prior = False,
+        disable_morph_feats = True,
+    )
+    train_gnn(newargs)
+
+    logger.info('Training void GNN.')
+    newargs = Namespace(
+        train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir = os.path.join(args.root_dir, 'gnn_void_logs'),
+        early_stopping_rounds = 10,
+        batch_size = 10,
+        model_name = 'GCN',
+        save_file = os.path.join(args.root_dir, 'gnn_void_logs', 'gnn_results'),
+        num_confs = 32,
+        save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn_void'),
+        device = 'cpu' if args.gpu == '' else 'cuda',
+        num_workers = args.num_workers,
+        checkpoint_iters = -1,
+        num_classes = args.num_classes,
+        disable_prior = True,
+        disable_morph_feats = False,
+    )
+    train_gnn(newargs)
     raise NotImplementedError
 
 

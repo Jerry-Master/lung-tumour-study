@@ -98,7 +98,9 @@ def run_graphs(args: Namespace, logger: Logger) -> None:
         weights = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'weights', model_name + '.pth'),
         conf = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs', model_name + '.json'),
         normalizers = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'normalizers', model_name + '.pkl'),
-        num_classes = args.num_classes
+        num_classes = args.num_classes,
+        disable_prior = False,
+        disable_morph_feats = False,
     )
     infer_gnn(newargs)
     return

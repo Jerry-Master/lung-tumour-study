@@ -28,16 +28,31 @@ import os
 from ..utils.preprocessing import *
 
 
-def read_node_matrix(file: str, return_coordinates: Optional[bool] = False, return_class: Optional[bool] = True) -> Tuple[np.ndarray, np.ndarray]:
+def read_node_matrix(
+        file: str,
+        return_coordinates: Optional[bool] = False,
+        return_class: Optional[bool] = True,
+        remove_prior: Optional[bool] = False,
+        remove_morph: Optional[bool] = False,
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Read csv and creates X and y matrices.
     Centroids coordinates are removed.
     Labels are subtracted 1 to be in 0-1 range.
     """
     df = pd.read_csv(file)
+    remove_vars = ['id', 'class', 'X', 'Y']
+    if remove_morph:
+        remove_vars.extend([
+            'area','perimeter','std','red0','red1','red2','red3','red4','green0','green1','green2','green3','green4','blue0','blue1','blue2','blue3','blue4'
+        ])
+    if remove_prior:
+        remove_vars.extend(list(filter(lambda x: 'prob' in x, df.columns)))
     if return_class:
         y = df['class'].to_numpy() - 1
-        X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
+        X = df.drop(remove_vars, axis=1).to_numpy()
+        if remove_morph and remove_prior:
+            X = np.zeros((len(y), 1))
         if not return_coordinates:
             return X, y
         else:
@@ -45,7 +60,9 @@ def read_node_matrix(file: str, return_coordinates: Optional[bool] = False, retu
             yy = df['Y'].to_numpy()
             return X, y, xx, yy
     else:
-        X = df.drop(['id', 'class', 'X', 'Y'], axis=1).to_numpy()
+        X = df.drop(remove_vars, axis=1).to_numpy()
+        if remove_morph and remove_prior:
+            X = np.zeros((len(y), 1))
         if not return_coordinates:
             return X, None
         else:
