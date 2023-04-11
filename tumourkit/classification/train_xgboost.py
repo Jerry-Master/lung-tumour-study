@@ -49,7 +49,7 @@ def train(
         model = XGBClassifier(
             n_estimators=conf['n_estimators'],
             learning_rate=conf['learning_rate'],
-            max_depth=conf['max_depth'],
+            max_depth=int(conf['max_depth']),
             colsample_bytree=conf['colsample_bytree'],
             eval_metric='logloss',
             early_stopping_rounds=10
@@ -58,7 +58,7 @@ def train(
         model = XGBClassifier(
             n_estimators=conf['n_estimators'],
             learning_rate=conf['learning_rate'],
-            max_depth=conf['max_depth'],
+            max_depth=int(conf['max_depth']),
             colsample_bytree=conf['colsample_bytree'],
             eval_metric='mlogloss',
             objective='multi:softmax',
