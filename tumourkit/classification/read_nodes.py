@@ -95,7 +95,6 @@ def read_all_nodes(node_dir: str) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
-      names: List of files to read. Must have file extension.
     Output
       X: Input data in array format.
       y: Labels in array format.

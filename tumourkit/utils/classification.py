@@ -21,7 +21,7 @@ Contact information: joseperez2000@hotmail.es
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, List
-from ..classification.read_nodes import read_all_nodes
+from ..classification.read_nodes import _read_all_nodes
 
 def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -51,10 +51,10 @@ def fit_column_normalizer(node_dir: str, names: List[str]) -> StandardScaler:
     :type node_dir: str
     :param names: A list of node names to read from the node directory.
     :type names: List[str]
-    :return: A StandardScaler object fitted to the input data.
+    :return: A StandardScaler object fitted to the∫ input data.
     :rtype: StandardScaler
     """
-    X, y = read_all_nodes(node_dir, [x+'.nodes.csv' for x in names])
+    X, y = _read_all_nodes(node_dir, [x+'.nodes.csv' for x in names])
     sc = StandardScaler()
     sc.fit(X)
     return sc
