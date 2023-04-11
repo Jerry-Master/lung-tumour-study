@@ -73,11 +73,11 @@ class GraphDataset(Dataset):
         self.column_normalize = column_normalize
         self.row_normalize = row_normalize
         self.normalizers = normalizers
+        self.remove_prior = remove_prior
+        self.remove_morph = remove_morph
         self.initialize_normalizers()
         self.return_names = return_names
         self.is_inference = is_inference
-        self.remove_prior = remove_prior
-        self.remove_morph = remove_morph
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
