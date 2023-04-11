@@ -137,7 +137,7 @@ def cross_validate(args, conf, skf, X, y):
 
 def create_confs():
     confs = [{'n_estimators': n, 'learning_rate': l, 'max_depth': d, 'colsample_bytree': c}
-            for n in [100, 500] 
+            for n in [500] 
             for l in [0.05, 0.005] 
             for d in [8, 16] 
             for c in [0, 0.5]]
@@ -197,21 +197,23 @@ def main_with_args(args: Namespace, logger: Logger):
         )
     confs = create_confs()
     logger.info('Training various XGBoost configurations')
-    with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
-        futures = []
-        for conf in confs:
-            future = executor.submit(cross_validate, args, conf, skf, X, y)
-            futures.append(future)
-        for k, future in enumerate(futures):
+    if args.num_workers > 0:
+        with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
+            futures = []
+            for conf in confs:
+                future = executor.submit(cross_validate, args, conf, skf, X, y)
+                futures.append(future)
+            for k, future in enumerate(futures):
+                logger.info('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
+                tmp = future.result()
+                metrics = pd.concat((metrics, tmp))
+                save(metrics, args.save_name + '.csv')
+    else:
+        for k, conf in enumerate(confs):
             logger.info('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
-            tmp = future.result()
+            tmp = cross_validate(args, conf, skf, X, y)
             metrics = pd.concat((metrics, tmp))
             save(metrics, args.save_name + '.csv')
-    for k, conf in enumerate(confs):
-        logger.info('Configuration {:2}/{:2}'.format(k, len(confs)), end='\r')
-        tmp = cross_validate(args, conf, skf, X, y)
-        metrics = pd.concat((metrics, tmp))
-        save(metrics, args.save_name + '.csv')
     save(metrics, args.save_name + '.csv')
 
     logger.info('Selecting best XGBoost configuration.')
