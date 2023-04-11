@@ -197,26 +197,6 @@ def main_with_args(args: Namespace, logger: Logger):
         )
     confs = create_confs()
     logger.info('Training various XGBoost configurations')
-    for hdlr in logger.handlers:
-        logger.removeHandler(hdlr)
-        hdlr.terminator = '\r'
-        logger.addHandler(hdlr)
-    logger.info('Probando')
-    for hdlr in logger.handlers:
-        hdlr.flush()
-    import time
-    time.sleep(1)
-    logger.info('Probando.')
-    for hdlr in logger.handlers:
-        hdlr.flush()
-    time.sleep(1)
-    logger.info('Probando..')
-    for hdlr in logger.handlers:
-        hdlr.flush()
-    time.sleep(1)
-    logger.info('Probando...')
-    for hdlr in logger.handlers:
-        hdlr.flush()
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             futures = []
@@ -235,10 +215,6 @@ def main_with_args(args: Namespace, logger: Logger):
             metrics = pd.concat((metrics, tmp))
             save(metrics, args.save_name + '.csv')
     save(metrics, args.save_name + '.csv')
-    for hdlr in logger.handlers:
-        logger.removeHandler(hdlr)
-        hdlr.terminator = '\n'
-        logger.addHandler(hdlr)
 
     logger.info('Selecting best XGBoost configuration.')
     if args.num_classes == 2:
