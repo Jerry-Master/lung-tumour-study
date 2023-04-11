@@ -225,7 +225,6 @@ def main_with_args(args: Namespace, logger: Logger):
     logger.info('Computing test metrics.')
     X_test, y_test = read_all_nodes(args.test_graph_dir)
     y_test = np.array(y_test, dtype=np.int32)
-    logger.info(str(len(X_test)))
     test_metrics = evaluate(model, X_test, y_test, args.num_classes)
     if args.num_classes == 2:
         f1, acc, auc = test_metrics
