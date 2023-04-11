@@ -23,7 +23,7 @@ from ..utils.preprocessing import parse_path, create_dir
 import torch
 from torch import nn
 import torch.nn.functional as F
-from .train_gnn import load_model
+from .train_graphs import load_model
 from .read_graph import GraphDataset
 import dgl
 from dgl.dataloading import GraphDataLoader
