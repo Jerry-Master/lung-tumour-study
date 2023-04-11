@@ -222,10 +222,10 @@ def main_with_args(args: Namespace, logger: Logger):
     else:
         best_conf = metrics.sort_values(by='weighted', ascending=False).iloc[0]
     tmp = {}
-    tmp['n_estimators'] = int(best_conf['n_estimators'][0])
-    tmp['learning_rate'] = float(best_conf['learning_rate'][0])
-    tmp['max_depth'] = int(best_conf['max_depth'][0])
-    tmp['colsample_bytree'] = float(best_conf['colsample_bytree'][0])
+    tmp['n_estimators'] = int(best_conf['n_estimators'])
+    tmp['learning_rate'] = float(best_conf['learning_rate'])
+    tmp['max_depth'] = int(best_conf['max_depth'])
+    tmp['colsample_bytree'] = float(best_conf['colsample_bytree'])
     best_conf = tmp
     logger.info('Retraining with best configuration.')
     model = train(best_conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
