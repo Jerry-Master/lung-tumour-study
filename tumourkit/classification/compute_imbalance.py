@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 import argparse
-from .read_nodes import read_all_nodes
+from ..utils.read_nodes import read_all_nodes
 import os
 import numpy as np
 

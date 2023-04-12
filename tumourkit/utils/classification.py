@@ -22,8 +22,8 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, List, Optional
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
-from ..classification.read_nodes import _read_all_nodes
-from ..classification.calibration_error import calibration_error
+from .read_nodes import _read_all_nodes
+from .calibration_error import calibration_error
 
 def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """

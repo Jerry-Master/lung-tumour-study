@@ -21,7 +21,7 @@ Contact information: joseperez2000@hotmail.es
 """
 import argparse
 from argparse import Namespace
-from .read_nodes import read_all_nodes
+from ..utils.read_nodes import read_all_nodes
 from xgboost import XGBClassifier
 from logging import Logger
 import logging

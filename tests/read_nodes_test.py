@@ -19,7 +19,7 @@ Contact information: joseperez2000@hotmail.es
 import pytest
 import os
 
-from tumourkit.classification.read_nodes import create_node_splits
+from tumourkit.utils.read_nodes import create_node_splits
 from tumourkit.utils.preprocessing import parse_path 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

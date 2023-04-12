@@ -25,7 +25,7 @@ import numpy as np
 from ..utils.preprocessing import get_names
 from ..utils.nearest import generate_tree
 from ..utils.classification import fit_column_normalizer
-from .read_nodes import read_node_matrix
+from ..utils.read_nodes import read_node_matrix
 import torch
 from torch.utils.data import Dataset
 import dgl
