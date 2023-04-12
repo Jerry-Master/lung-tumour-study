@@ -41,7 +41,7 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 import pickle
 from ..utils.preprocessing import parse_path, create_dir
-from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
+from ..utils.classification import metrics_from_predictions
 warnings.filterwarnings('ignore')
 
 def evaluate(
@@ -52,14 +52,14 @@ def evaluate(
         epoch: Optional[int] = None,
         log_suffix: Optional[str] = None,
         num_classes: Optional[str] = 2,
-        ) -> Tuple[float, float, float]:
+        ) -> List[float]:
     """
     Evaluates model in loader.
     Logs to tensorboard with suffix log_suffix.
     Returns the model in evaluation mode.
     """
     model.eval()
-    preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1)
+    preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1 if num_classes == 2 else num_classes)
     for g in loader:
         g = g.to(device)
         # self-loops
@@ -73,31 +73,32 @@ def evaluate(
         preds = np.vstack((preds, pred))
         if num_classes == 2:
             prob = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1].reshape(-1,1)
-            probs = np.vstack((probs, prob))
+        else:
+            prob = F.softmax(logits, dim=1).detach().cpu().numpy()
+        probs = np.vstack((probs, prob))
         label = g.ndata['y'].detach().cpu().numpy().reshape(-1,1)
         labels = np.vstack((labels, label))
     # Compute metrics on validation  
     if num_classes == 2:
-        f1 = f1_score(labels, preds)  
-        acc = accuracy_score(labels, preds)
-        auc = roc_auc_score(labels, probs)
+        acc, f1, auc, perc_err, ece = metrics_from_predictions(labels, preds, probs, 2)
         # Tensorboard
         if writer is not None:
             assert(log_suffix is not None and epoch is not None)
             writer.add_scalar('Accuracy/' + log_suffix, acc, epoch)
             writer.add_scalar('F1/' + log_suffix, f1, epoch)
             writer.add_scalar('ROC_AUC/' + log_suffix, auc, epoch)
-        return f1, acc, auc
+            writer.add_scalar('Percentage error/' + log_suffix, perc_err, epoch)
+            writer.add_scalar('ECE/' + log_suffix, ece, epoch)
+        return f1, acc, auc, perc_err, ece
     else:
-        micro = f1_score(labels, preds, average='micro')
-        macro = f1_score(labels, preds, average='macro')
-        weighted = f1_score(labels, preds, average='weighted')
+        micro, macro, weighted, ece = metrics_from_predictions(labels, preds, probs, num_classes)
         # Tensorboard
         if writer is not None:
             writer.add_scalar('Accuracy/' + log_suffix, micro, epoch)
             writer.add_scalar('Macro F1/' + log_suffix, macro, epoch)
             writer.add_scalar('Weighted F1/' + log_suffix, weighted, epoch)
-        return micro, macro, weighted
+            writer.add_scalar('ECE/' + log_suffix, ece, epoch)
+        return micro, macro, weighted, ece
     
 
 def train_one_iter(
@@ -129,29 +130,25 @@ def train_one_iter(
         loss.backward()
         optimizer.step()
         # Compute metrics on training
-        pred = logits.argmax(1).detach().cpu().numpy()
+        preds = logits.argmax(1).detach().cpu().numpy()
         labels = labels.detach().cpu().numpy()
         if num_classes == 2:
-            train_acc = accuracy_score(labels, pred)
-            train_f1 = f1_score(labels, pred)
             probs = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1]
-            train_auc = None
-            if len(np.unique(labels)) > 1:
-                train_auc = roc_auc_score(labels, probs)
-            
+            train_acc, train_f1, train_auc, train_perc_err, train_ece = metrics_from_predictions(labels, preds, probs, 2)
             # Tensorboard
             writer.add_scalar('Accuracy/train', train_acc, step+len(tr_loader)*epoch)
             writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
-            if train_auc is not None:
-                writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
+            writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
+            writer.add_scalar('ECE/train', train_ece, step+len(tr_loader)*epoch)
+            writer.add_scalar('Percentage Error/train', train_perc_err, step+len(tr_loader)*epoch)
         else:
-            train_micro = f1_score(labels, pred, average='micro')
-            train_macro = f1_score(labels, pred, average='macro')
-            train_weighted = f1_score(labels, pred, average='weighted')
+            probs = F.softmax(logits, dim=1).detach().cpu().numpy()
+            train_micro, train_macro, train_weighted, train_ece = metrics_from_predictions(labels, preds, probs, num_classes)
             # Tensorboard
             writer.add_scalar('Accuracy/train', train_micro, step+len(tr_loader)*epoch)
             writer.add_scalar('Macro F1/train', train_macro, step+len(tr_loader)*epoch)
             writer.add_scalar('Weighted F1/train', train_weighted, step+len(tr_loader)*epoch)
+            writer.add_scalar('ECE/train', train_perc_err, step+len(tr_loader)*epoch)
 
 def train(
         save_dir: str,
@@ -179,9 +176,9 @@ def train(
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes)
         val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes)
         if num_classes == 2:
-            val_f1, val_acc, val_auc = val_metrics
+            val_f1, val_acc, val_auc, val_perc_error, val_ece = val_metrics
         else:
-            val_micro, val_macro, val_f1 = val_metrics
+            val_micro, val_macro, val_f1, val_ece = val_metrics
         # Save checkpoint
         if save_weights and check_iters != -1 and epoch % check_iters == 0:
             save_model(save_dir, model, conf, normalizers, prefix='last_')
@@ -288,20 +285,23 @@ def create_results_file(filename: str, num_classes: int) -> None:
     """
     if num_classes == 2:
         with open(filename + '.csv', 'w') as f:
-            print('F1 Score,Accuracy,ROC AUC,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
+            print('F1 Score,Accuracy,ROC AUC,PERC ERR,ECE,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
     else:
         with open(filename + '.csv', 'w') as f:
-            print('Micro F1,Macro F1,Weighted F1,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
+            print('Micro F1,Macro F1,Weighted F1,ECE,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
 
 def append_results(
-    filename: str, f1: float, acc: float, auc: float, num_layers: int, dropout: float, bn_type: str
+    filename: str, f1: float, acc: float, auc: float, num_layers: int, dropout: float, bn_type: str, ece: float, perc_err: Optional[float] = None
 ) -> None:
     """
     Appends result to given filename.
     filename must not contain extension.
     """
     with open(filename + '.csv', 'a') as f:
-        print(f1, acc, auc, num_layers, dropout, bn_type, file=f, sep=',')
+        if perc_err is not None:
+            print(f1, acc, auc, perc_err, ece, num_layers, dropout, bn_type, file=f, sep=',')
+        else:
+            print(f1, acc, auc, ece, num_layers, dropout, bn_type, file=f, sep=',')
 
 def name_from_conf(conf: Dict[str, Any]) -> str:
     """
@@ -339,7 +339,7 @@ def train_one_conf(
         save_dir: str,
         num_classes: int,
         num_feats: int
-        ) -> Tuple[float, float, float, nn.Module, Dict[str, Any]]:
+        ) -> Tuple[List[float], nn.Module, Dict[str, Any]]:
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
     # Model
@@ -355,11 +355,11 @@ def train_one_conf(
     test_metrics = evaluate(test_dataloader, model, args.device, num_classes=num_classes)
     model = model.cpu()
     if num_classes == 2:
-        test_f1, test_acc, test_auc = test_metrics
-        return test_f1, test_acc, test_auc, model, conf
+        test_f1, test_acc, test_auc, test_perc_err, test_ece = test_metrics
+        return test_f1, test_acc, test_auc, test_perc_err, test_ece, model, conf
     else:
-        test_micro, test_macro, test_weighted = test_metrics
-        return test_micro, test_macro, test_weighted, model, conf
+        test_micro, test_macro, test_weighted, test_ece = test_metrics
+        return test_micro, test_macro, test_weighted, test_ece, model, conf
 
 
 def _create_parser():
@@ -437,25 +437,25 @@ def main_with_args(args: Namespace):
                 futures.append(future)
             for future in futures:
                 if args.num_classes == 2:
-                    test_f1, test_acc, test_auc, model, conf = future.result()
-                    append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                    test_f1, test_acc, test_auc, test_perc_err, test_ece, model, conf = future.result()
+                    append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], test_ece, test_perc_err)
                 else:
-                    test_micro, test_macro, test_weighted, model, conf = future.result()
-                    append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                    test_micro, test_macro, test_weighted, test_ece, model, conf = future.result()
+                    append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], test_ece)
                 if save_weights:
                     save_model(save_dir, model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
     else:
         for conf in confs:
             if args.num_classes == 2:
-                test_f1, test_acc, test_auc, model, conf = train_one_conf(
+                test_f1, test_acc, test_auc, test_perc_err, test_ece, model, conf = train_one_conf(
                     args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes, num_feats
                 )
-                append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                append_results(args.save_file, test_f1, test_acc, test_auc, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], test_ece, test_perc_err)
             else:
-                test_micro, test_macro, test_weighted, model, conf = train_one_conf(
+                test_micro, test_macro, test_weighted, test_ece, model, conf = train_one_conf(
                     args, conf, train_dataloader, val_dataloader, test_dataloader, log_dir, save_weights, save_dir, args.num_classes, num_feats
                 )
-                append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+                append_results(args.save_file, test_micro, test_macro, test_weighted, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], test_ece)
             if save_weights:
                 save_model(save_dir, model, conf, train_dataloader.dataset.get_normalizers(), 'last_')
 

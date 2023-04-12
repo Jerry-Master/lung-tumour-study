@@ -21,18 +21,17 @@ Contact information: joseperez2000@hotmail.es
 """
 import argparse
 from argparse import Namespace
-from .read_nodes import create_node_splits, read_all_nodes
+from .read_nodes import read_all_nodes
 from xgboost import XGBClassifier
 from logging import Logger
 import logging
-from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 import numpy as np
 from typing import Dict, Any, Tuple, Optional
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
-from ..utils.preprocessing import get_names
+from ..utils.classification import metrics_from_predictions
 
 
 def train(
@@ -82,15 +81,12 @@ def evaluate(
     preds = model.predict(X_val)
     if num_classes == 2:
         probs = model.predict_proba(X_val)[:,1]
-        f1 = f1_score(y_val, preds)
-        acc = accuracy_score(y_val, preds)
-        auc = roc_auc_score(y_val, probs)
-        return f1, acc, auc
+        acc, f1, auc, perc_err, ece = metrics_from_predictions(y_val, preds, probs, 2)
+        return f1, acc, auc, perc_err, ece
     else:
-        micro = f1_score(y_val, preds, average='micro')
-        macro = f1_score(y_val, preds, average='macro')
-        weighted = f1_score(y_val, preds, average='weighted')
-        return micro, macro, weighted
+        probs = model.predict_proba(X_val)
+        micro, macro, weighted, ece = metrics_from_predictions(y_val, preds, probs, num_classes)
+        return micro, macro, weighted, ece
 
 
 def save(metrics: Dict[str,Tuple[float,float,float]], path: str) -> None:
@@ -99,9 +95,9 @@ def save(metrics: Dict[str,Tuple[float,float,float]], path: str) -> None:
 
 def cross_validate(args, conf, skf, X, y):
     if args.num_classes == 2:
-        f1_mean, acc_mean, auc_mean = 0, 0, 0
+        f1_mean, acc_mean, auc_mean, perc_err_mean, ece_mean = 0, 0, 0, 0, 0
     else:
-        micro_mean, macro_mean, weighted_mean = 0, 0, 0
+        micro_mean, macro_mean, weighted_mean, ece_mean = 0, 0, 0, 0
     for train_index, val_index in skf.split(X, y):
         X_train, X_cval = X[train_index], X[val_index]
         y_train, y_cval = y[train_index], y[val_index]
@@ -110,27 +106,31 @@ def cross_validate(args, conf, skf, X, y):
         ## Save metrics
         val_metrics = evaluate(model, X_cval, y_cval, args.num_classes)
         if args.num_classes == 2:
-            f1, acc, auc = val_metrics
+            f1, acc, auc, perc_err, ece = val_metrics
             f1_mean += f1; acc_mean += acc; auc_mean += auc
+            perc_err_mean += perc_err; ece_mean += ece
         else:
-            micro, macro, weighted = val_metrics
+            micro, macro, weighted, ece = val_metrics
             micro_mean += micro; macro_mean += macro; weighted_mean += weighted
+            ece_mean += ece
     if args.num_classes == 2:
         f1_mean /= args.cv_folds; acc_mean /= args.cv_folds; auc_mean /= args.cv_folds
+        perc_err_mean /= args.cv_folds; ece_mean /= args.cv_folds
         tmp = pd.DataFrame(
-            [(*conf.values(), f1_mean, acc_mean, auc_mean)], 
+            [(*conf.values(), f1_mean, acc_mean, auc_mean, perc_err_mean, ece_mean)], 
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'f1', 'accuracy', 'auc'
+                'f1', 'accuracy', 'auc', 'perc_err', 'ece'
                 ]
         )
     else:
         micro_mean /= args.cv_folds; macro_mean /= args.cv_folds; weighted_mean /= args.cv_folds
+        ece_mean /= args.cv_folds
         tmp = pd.DataFrame(
-            [(*conf.values(), micro_mean, macro_mean, weighted_mean)], 
+            [(*conf.values(), micro_mean, macro_mean, weighted_mean, ece_mean)], 
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'micro', 'macro', 'weighted'
+                'micro', 'macro', 'weighted', 'ece'
                 ]
         )
     return tmp
@@ -177,7 +177,7 @@ def main_with_args(args: Namespace, logger: Logger):
             {}, 
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'f1', 'accuracy', 'auc'
+                'f1', 'accuracy', 'auc', 'perc_err', 'ece'
             ]
         )
     else:
@@ -185,7 +185,7 @@ def main_with_args(args: Namespace, logger: Logger):
             {}, 
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'micro', 'macro', 'weighted'
+                'micro', 'macro', 'weighted', 'ece'
             ]
         )
     confs = create_confs()
@@ -227,21 +227,21 @@ def main_with_args(args: Namespace, logger: Logger):
     y_test = np.array(y_test, dtype=np.int32)
     test_metrics = evaluate(model, X_test, y_test, args.num_classes)
     if args.num_classes == 2:
-        f1, acc, auc = test_metrics
+        f1, acc, auc, perc_err, ece = test_metrics
         test_metrics = pd.DataFrame(
-            [(*best_conf.values(), f1, acc, auc)], 
+            [(*best_conf.values(), f1, acc, auc, perc_err, ece)], 
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'f1', 'accuracy', 'auc'
+                'f1', 'accuracy', 'auc', 'perc_err', 'ece'
                 ]
         )
     else:
-        micro, macro, weighted = test_metrics
+        micro, macro, weighted, ece = test_metrics
         test_metrics = pd.DataFrame(
-            [(*best_conf.values(), micro, macro, weighted)], 
+            [(*best_conf.values(), micro, macro, weighted, ece)], 
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
-                'micro', 'macro', 'weighted'
+                'micro', 'macro', 'weighted', 'ece'
                 ]
         )
     save(test_metrics, args.save_name + '_test.csv')

@@ -29,10 +29,10 @@ Contact information: joseperez2000@hotmail.es
 import pandas as pd
 import numpy as np
 from typing import List, Tuple
-from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 
 from ..utils.preprocessing import read_names, read_centroids
 from ..utils.nearest import generate_tree, find_nearest
+from ..utils.classification import metrics_from_predictions
 
 import argparse
 
@@ -108,15 +108,7 @@ def compute_metrics(true_labels: np.ndarray, pred_labels: np.ndarray) -> Tuple[f
     Given arrays of binary prediction and true labels,
     returns F1 score, Accuracy, ROC AUC and percentage error.
     """
-    f1 = f1_score(true_labels, pred_labels, zero_division=1)
-    acc = accuracy_score(true_labels, pred_labels)
-    if len(np.unique(true_labels)) > 1:
-        auc = roc_auc_score(true_labels, pred_labels)
-    else:
-        auc = -1
-    true_perc, _, _ = compute_percentage(true_labels+1)
-    pred_perc, _, _ = compute_percentage(pred_labels+1)
-    err = abs(true_perc - pred_perc)
+    acc, f1, auc, err, ece = metrics_from_predictions(true_labels, pred_labels, None, 2)
     return f1, acc, auc, err
 
 def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:

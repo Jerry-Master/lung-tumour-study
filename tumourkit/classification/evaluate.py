@@ -20,30 +20,15 @@ from typing import Dict, List, Optional
 import os
 import pandas as pd
 import numpy as np
-from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 from sklearn.calibration import calibration_curve
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 from ..utils.preprocessing import parse_path, create_dir
-from .calibration_error import calibration_error
+from ..utils.classification import metrics_from_predictions
 
 import argparse
 
-
-def check_imbalance(labels: np.ndarray) -> bool:
-    """
-    Returns true if there are at least two classes, and false otherwise.
-    """
-    return len(np.unique(labels)) > 1
-
-def percentage_error(labels: np.ndarray, preds: np.ndarray) -> float:
-    """
-    Computes the deviation in the percentage of tumoral cells.
-    """
-    gt_perc = (labels==1).sum() / len(labels)
-    pred_perc = (preds==1).sum() / len(preds)
-    return abs(gt_perc - pred_perc)
 
 def abline(slope: float, intercept: float, axes: Axes) -> None:
     """
@@ -101,17 +86,11 @@ def compute_metrics(
     probs = nodes_df['prob1'].to_numpy()
     preds = (probs > 0.5) * 1
 
+    acc, f1, auc, perc_error, ece = metrics_from_predictions(labels, preds, probs, 2)
+
     if draw_on is not None:
         draw_reliability_diagram(labels, probs, draw_on, method_name)
 
-    acc = accuracy_score(labels, preds)
-    f1 = f1_score(labels, preds, zero_division=0)
-    if check_imbalance(labels):
-        auc = roc_auc_score(labels, probs)
-    else:
-        auc = -1
-    perc_error = percentage_error(labels, preds)
-    ece = calibration_error(labels, probs, norm='l1', reduce_bias=False)
     return {'Accuracy': acc, 'F1-score': f1, 'ROC AUC': auc, 'Error percentage': perc_error, 'ECE': ece}
 
 def save_metrics(metrics: Dict[str, float], save_name):

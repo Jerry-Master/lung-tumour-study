@@ -267,7 +267,6 @@ def run_void(args: Namespace, logger: Logger) -> None:
         disable_morph_feats = False,
     )
     train_gnn(newargs)
-    raise NotImplementedError
 
 
 def run_cnn(args: Namespace, logger: Logger) -> None:
