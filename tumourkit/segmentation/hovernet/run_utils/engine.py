@@ -137,69 +137,72 @@ class RunEngine(object):
         self.state.global_state = shared_state
 
         while self.state.curr_epoch < nr_epoch:
-            self.state.reset_variable()  # * reset all EMA holder per epoch
+            try:
+                self.state.reset_variable()  # * reset all EMA holder per epoch
 
-            if not chained:
-                print("----------------EPOCH %d" % (self.state.curr_epoch + 1))
+                if not chained:
+                    print("----------------EPOCH %d" % (self.state.curr_epoch + 1))
 
-            self.__trigger_events(Events.EPOCH_STARTED)
+                self.__trigger_events(Events.EPOCH_STARTED)
 
-            pbar_format = (
-                "Processing: |{bar}| "
-                "{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_fmt}]"
-            )
-            if self.engine_name == "train":
-                pbar_format += (
-                    "Batch = {postfix[1][Batch]:0.5f}|" "EMA = {postfix[1][EMA]:0.5f}"
+                pbar_format = (
+                    "Processing: |{bar}| "
+                    "{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_fmt}]"
                 )
-                # * changing print char may break the bar so avoid it
-                pbar = tqdm.tqdm(
-                    total=len(self.dataloader),
-                    leave=True,
-                    initial=0,
-                    bar_format=pbar_format,
-                    ascii=True,
-                    postfix=["", dict(Batch=float("NaN"), EMA=float("NaN"))],
-                )
-            else:
-                pbar = tqdm.tqdm(
-                    total=len(self.dataloader),
-                    leave=True,
-                    bar_format=pbar_format,
-                    ascii=True,
-                )
-
-            for data_batch in self.dataloader:
-                self.__trigger_events(Events.STEP_STARTED)
-
-                step_run_info = [
-                    self.state.run_info,
-                    {
-                        "epoch": self.state.curr_epoch,
-                        "step": self.state.curr_global_step,
-                    },
-                ]
-                step_output = self.run_step(data_batch, step_run_info)
-                self.state.step_output = step_output
-
-                self.__trigger_events(Events.STEP_COMPLETED)
-                self.state.curr_global_step += 1
-                self.state.curr_epoch_step += 1
-
                 if self.engine_name == "train":
-                    pbar.postfix[1]["Batch"] = step_output["EMA"]["overall_loss"]
-                    pbar.postfix[1]["EMA"] = self.state.tracked_step_output["scalar"][
-                        "overall_loss"
-                    ]
-                pbar.update()
-            pbar.close()  # to flush out the bar before doing end of epoch reporting
-            self.state.curr_epoch += 1
-            self.__trigger_events(Events.EPOCH_COMPLETED)
+                    pbar_format += (
+                        "Batch = {postfix[1][Batch]:0.5f}|" "EMA = {postfix[1][EMA]:0.5f}"
+                    )
+                    # * changing print char may break the bar so avoid it
+                    pbar = tqdm.tqdm(
+                        total=len(self.dataloader),
+                        leave=True,
+                        initial=0,
+                        bar_format=pbar_format,
+                        ascii=True,
+                        postfix=["", dict(Batch=float("NaN"), EMA=float("NaN"))],
+                    )
+                else:
+                    pbar = tqdm.tqdm(
+                        total=len(self.dataloader),
+                        leave=True,
+                        bar_format=pbar_format,
+                        ascii=True,
+                    )
 
-            # TODO: [CRITICAL] align the protocol
-            self.state.run_accumulated_output.append(
-                self.state.epoch_accumulated_output
-            )
+                for data_batch in self.dataloader:
+                    self.__trigger_events(Events.STEP_STARTED)
+
+                    step_run_info = [
+                        self.state.run_info,
+                        {
+                            "epoch": self.state.curr_epoch,
+                            "step": self.state.curr_global_step,
+                        },
+                    ]
+                    step_output = self.run_step(data_batch, step_run_info)
+                    self.state.step_output = step_output
+
+                    self.__trigger_events(Events.STEP_COMPLETED)
+                    self.state.curr_global_step += 1
+                    self.state.curr_epoch_step += 1
+
+                    if self.engine_name == "train":
+                        pbar.postfix[1]["Batch"] = step_output["EMA"]["overall_loss"]
+                        pbar.postfix[1]["EMA"] = self.state.tracked_step_output["scalar"][
+                            "overall_loss"
+                        ]
+                    pbar.update()
+                pbar.close()  # to flush out the bar before doing end of epoch reporting
+                self.state.curr_epoch += 1
+                self.__trigger_events(Events.EPOCH_COMPLETED)
+
+                # TODO: [CRITICAL] align the protocol
+                self.state.run_accumulated_output.append(
+                    self.state.epoch_accumulated_output
+                )
+            except Exception as e:
+                print(e)
 
         return
 
