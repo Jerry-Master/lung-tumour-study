@@ -52,13 +52,13 @@ def get_confusion_matrix(
         N = np.max(pred_centroids[:,2])
         M = np.zeros((N+1,N+1))
         classes, freqs = np.unique(pred_centroids[:,2], return_counts=True)
-        M[0][classes] += freqs
+        M[0, classes] += freqs
         return M
     if len(pred_centroids) == 0:
         N = np.max(gt_centroids[:,2])
         M = np.zeros((N+1,N+1))
         classes, freqs = np.unique(gt_centroids[:,2], return_counts=True)
-        M[classes][0] += freqs
+        M[classes, 0] += freqs
         return M
     if type(gt_centroids) == list:
         gt_centroids = np.array(gt_centroids)
