@@ -148,7 +148,7 @@ def train_one_iter(
             writer.add_scalar('Accuracy/train', train_micro, step+len(tr_loader)*epoch)
             writer.add_scalar('Macro F1/train', train_macro, step+len(tr_loader)*epoch)
             writer.add_scalar('Weighted F1/train', train_weighted, step+len(tr_loader)*epoch)
-            writer.add_scalar('ECE/train', train_perc_err, step+len(tr_loader)*epoch)
+            writer.add_scalar('ECE/train', train_ece, step+len(tr_loader)*epoch)
 
 def train(
         save_dir: str,
