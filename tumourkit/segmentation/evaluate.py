@@ -46,7 +46,7 @@ def get_confusion_matrix(
     Matrix has (N+1)x(N+1) entries, one more for background when no match is found.
     N is the maximum value encountered for class.
     """
-    if len(gt_centroids) == 0:
+    if len(gt_centroids) == 0 or len(pred_centroids) == 0:
         return None
     if type(gt_centroids) == list:
         gt_centroids = np.array(gt_centroids)
