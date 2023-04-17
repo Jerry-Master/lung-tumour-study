@@ -2,11 +2,14 @@ import argparse
 from argparse import Namespace
 import logging
 from logging import Logger
+import numpy as np
+import pandas as pd
 from . import eval_segment
 import os
 from .preprocessing import hovernet2centroids, geojson2pngcsv, pngcsv2centroids
 from .utils.preprocessing import get_names
 from .utils.pipes import HovernetNotFoundError, check_void
+from .utils.classification import metrics_from_predictions
 
 
 def run_preprocessing(args: Namespace, logger : Logger) -> None:
@@ -48,6 +51,42 @@ def run_preprocessing(args: Namespace, logger : Logger) -> None:
     return
 
 
+def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
+    folder = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds')
+    trues, probs = None, None
+    for file in folder:
+        df = pd.read_csv(os.path.join(folder, file))
+        _trues = df['class'].to_numpy()
+        if trues is None:
+            trues = _trues.reshape((-1,1))
+        else:
+            trues = np.vstack((trues, _trues.reshape((-1, 1))))
+        if args.num_classes == 2:
+            _probs = df['prob1'].to_numpy()
+            _probs = np.hstack((1 - _probs, _probs))
+        else:
+            cols = ['prob' + str(k) for k in range(1, args.num_classes + 1)]
+            _probs = df[cols].to_numpy()
+        if probs is None:
+            probs = _probs
+        else:
+            probs = np.vstack((probs, _probs))
+    preds = np.argmax(probs, axis=0).reshape((-1, 1))
+    metrics = metrics_from_predictions(trues, preds, probs)
+    if args.num_classes == 2:
+        acc, f1, auc, perc_error, ece = metrics
+        dic_metrics = {
+            'F1': [f1], 'Accuracy': [acc], 'ROC_AUC': [auc], 'Perc_err': [perc_error], 'ECE': [ece]
+        }
+    else:
+        micro, macro, weighted, ece = metrics
+        dic_metrics = {
+            'Macro F1': [macro], 'Weighted F1': [weighted], 'Micro F1': [micro], 'ECE': [ece]
+        }
+    metrics_df = pd.DataFrame(dic_metrics)
+    metrics_df.to_csv(args.save_name + '_ece.csv', index=False)
+
+
 def run_evaluation(args: Namespace, logger: Logger) -> None:
     logger.info('Starting evaluation of Hovernet output.')
     for split in ['train', 'validation', 'test']:
@@ -61,6 +100,8 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
             num_classes = args.num_classes
         )
         eval_segment(newargs, logger)
+
+        compute_ece(args, logger, split)
     return
 
 
