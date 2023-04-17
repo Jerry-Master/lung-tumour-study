@@ -13,7 +13,12 @@ import pandas as pd
 
 def set_best_configuration(args: Namespace, logger: Logger) -> None:
     logger.info('Configuration not provided, using best configuration from training based on F1 score.')
-    save_file = os.path.join(args.root_dir, 'gnn_logs', 'gnn_results.csv')
+    if args.best_arch == 'GCN':
+        save_file = os.path.join(args.root_dir, 'gnn_logs', 'gcn_results.csv')
+    elif args.best_arch == 'ATT':
+        save_file = os.path.join(args.root_dir, 'gnn_logs', 'gat_results.csv')
+    else:
+        assert False, 'Architecture not supported'
     gnn_results = pd.read_csv(save_file)
     if args.num_classes == 2:
         best_conf = gnn_results.sort_values(by='F1 Score', ascending=False).iloc[0]
