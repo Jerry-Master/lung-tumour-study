@@ -54,7 +54,7 @@ def run_preprocessing(args: Namespace, logger : Logger) -> None:
 def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
     folder = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds')
     trues, probs = None, None
-    for file in folder:
+    for file in os.listdir(folder):
         df = pd.read_csv(os.path.join(folder, file))
         _trues = df['class'].to_numpy()
         if trues is None:
