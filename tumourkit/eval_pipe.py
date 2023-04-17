@@ -60,7 +60,7 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
             debug_path = None,
             num_classes = args.num_classes
         )
-        eval_segment(newargs)
+        eval_segment(newargs, logger)
     return
 
 

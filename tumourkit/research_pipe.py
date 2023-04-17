@@ -151,7 +151,7 @@ def evaluate_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) ->
             debug_path = None,
             num_classes = args.num_classes
         )
-        eval_segment(newargs)
+        eval_segment(newargs, logger)
     
 
 def run_scaling(args: Namespace, logger: Logger) -> None:
