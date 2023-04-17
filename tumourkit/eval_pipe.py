@@ -56,7 +56,7 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
     trues, probs = None, None
     for file in os.listdir(folder):
         df = pd.read_csv(os.path.join(folder, file))
-        _trues = df['class'].to_numpy()
+        _trues = df['class'].to_numpy()-1
         if trues is None:
             trues = _trues.reshape((-1,1))
         else:
@@ -71,7 +71,7 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
             probs = _probs
         else:
             probs = np.vstack((probs, _probs))
-    preds = np.argmax(probs, axis=1).reshape((-1, 1))
+    preds = np.argmax(probs, axis=1).reshape((-1, 1))-1
     metrics = metrics_from_predictions(trues, preds, probs, args.num_classes)
     if args.num_classes == 2:
         acc, f1, auc, perc_error, ece = metrics
@@ -84,7 +84,7 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
             'Macro F1': [macro], 'Weighted F1': [weighted], 'Micro F1': [micro], 'ECE': [ece]
         }
     metrics_df = pd.DataFrame(dic_metrics)
-    metrics_df.to_csv(args.save_name + '_ece.csv', index=False)
+    metrics_df.to_csv(args.save_name + '_' + split + '_ece.csv', index=False)
 
 
 def run_evaluation(args: Namespace, logger: Logger) -> None:
