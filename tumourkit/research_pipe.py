@@ -149,6 +149,7 @@ def evaluate_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) ->
             pred_path = os.path.join(args.output_dir, 'hovernet', 'output', shape, 'centroids_hov'),
             save_name = os.path.join(args.output_dir, 'hovernet', 'output', shape, 'results', shape + '_' + split),
             debug_path = None,
+            num_classes = args.num_classes
         )
         eval_segment(newargs)
     

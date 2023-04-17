@@ -58,6 +58,7 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
             pred_path = os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
             save_name = args.save_name + '_' + split,
             debug_path = None,
+            num_classes = args.num_classes
         )
         eval_segment(newargs)
     return
@@ -67,6 +68,7 @@ def _create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root-dir', type=str, default='./.internals/', help='Root folder to save data and models.')
     parser.add_argument('--save-name', type=str, required=True, help='Name to save the result, without file type.')
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 

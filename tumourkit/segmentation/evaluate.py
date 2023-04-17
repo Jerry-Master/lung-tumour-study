@@ -28,13 +28,16 @@ Contact information: joseperez2000@hotmail.es
 """
 import pandas as pd
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from ..utils.preprocessing import read_names, read_centroids
 from ..utils.nearest import generate_tree, find_nearest
 from ..utils.classification import metrics_from_predictions
 
 import argparse
+from argparse import Namespace
+import logging
+from logging import Logger
 
 
 def get_confusion_matrix(
@@ -91,6 +94,7 @@ def get_pairs(
     Each centroid is represented by a 3-tuple with (X, Y, class).
     Class is 1=non-tumour, 2=tumour.
     Returns true and predicted labels ordered by their correspondences.
+    Returned labels start at 0.
     """
     if len(gt_centroids) == 0:
         return None, None
@@ -106,22 +110,6 @@ def get_pairs(
             pred_labels.append(closest[2]-1)
     return np.array(true_labels), np.array(pred_labels)
 
-def compute_percentage(arr: np.ndarray) -> float:
-    """
-    arr is an array of integers representing classes
-    It returns the the percentage of class 2: #2 / (#1 + #2)
-    """
-    n_one = np.sum(arr==1)
-    n_two = np.sum(arr==2)
-    return n_two / (n_one + n_two), n_one, n_two
-
-def compute_metrics(true_labels: np.ndarray, pred_labels: np.ndarray) -> Tuple[float, float, float, float]:
-    """
-    Given arrays of binary prediction and true labels,
-    returns F1 score, Accuracy, ROC AUC and percentage error.
-    """
-    acc, f1, auc, err, ece = metrics_from_predictions(true_labels, pred_labels, None, 2)
-    return f1, acc, auc, err
 
 def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
     """
@@ -189,12 +177,12 @@ def add_matrices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
 
 
 def save_csv(
-    metrics: List[Tuple[str,float,float,float,float,float,float]], 
+    metrics: Dict[str, List[float]], 
     save_path: str
     ) -> None:
     """
     Saves metrics in csv format for later use.
-    Columns: 'name', 'F1', 'Accuracy', 'ROC_AUC', 'Perc_err'
+    Columns depend on dictionary keys.
     """
     metrics_df = pd.DataFrame(metrics)
     metrics_df.to_csv(save_path + '.csv', index=False)
@@ -204,11 +192,10 @@ def save_debug_matrix(
     save_path: str
     ) -> None:
     """
-    Saves metrics in csv format for later use.
-    Columns: 'name', 'F1', 'Accuracy', 'ROC_AUC', 'Perc_err'
+    Saves confusion matrices for debug purposes.
     """
-    metrics_df = pd.DataFrame(mat)
-    metrics_df.to_csv(save_path + '.csv')
+    conf_mat_df = pd.DataFrame(mat)
+    conf_mat_df.to_csv(save_path + '.csv')
 
 
 def _create_parser():
@@ -223,19 +210,26 @@ def _create_parser():
                         help='Name to save the result, without file type.')
     parser.add_argument('--debug-path', type=str, default=None,
                         help='Name of file where to save confusion matrices (optional).')
+    parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
 
-def main_with_args(args):
+def main_with_args(args: Namespace, logger: Logger):
     names = read_names(args.names)
-    metrics = {
-        'Name': [], 'F1': [], 'Accuracy': [], 'ROC_AUC': [], 'Perc_err': [],
-        'Macro F1': [], 'Weighted F1': [], 'Micro F1': []
-    }
+    if args.num_classes == 2:
+        metrics = {
+            'Name': [], 'F1': [], 'Accuracy': [], 'ROC_AUC': [], 'Perc_err': [], 'ECE': [],
+            'Macro F1 (bkgr)': [], 'Weighted F1 (bkgr)': [], 'Micro F1 (bkgr)': []
+        }
+    else:
+        metrics = {
+            'Name': [], 'Macro F1': [], 'Weighted F1': [], 'Micro F1': [], 'ECE': [],
+            'Macro F1 (bkgr)': [], 'Weighted F1 (bkgr)': [], 'Micro F1 (bkgr)': []
+        }
     global_conf_mat = None
     global_pred, global_true = [], []
     for k, name in enumerate(names):
-        print('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
+        logger.info('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
         metrics['Name'].append(name)
         # Read
         gt_centroids = read_centroids(name, args.gt_path)
@@ -244,10 +238,7 @@ def main_with_args(args):
         conf_mat = get_confusion_matrix(gt_centroids, pred_centroids)
         if args.debug_path is not None:
             save_debug_matrix(conf_mat, args.debug_path + '_' + name)
-        if len(conf_mat) == 3:
-            true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
-        else:
-            true_labels, pred_labels = None, None
+        true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
         # Save for later
         if true_labels is not None and pred_labels is not None:
             global_true.extend(true_labels)
@@ -258,37 +249,60 @@ def main_with_args(args):
             global_conf_mat = add_matrices(global_conf_mat, conf_mat)
         # Compute per image scores and percentages
         try:
-            if true_labels is not None and pred_labels is not None:
-                f1, acc, auc, err = compute_metrics(true_labels, pred_labels)
-            else:
-                f1, acc, auc, err = -1, -1, -1, -1
-            macro, weighted, micro = compute_metrics_from_matrix(conf_mat)
+            _metrics = metrics_from_predictions(true_labels, pred_labels, None, args.num_classes)
+            macro_bkgr, weighted_bkgr, micro_bkgr = compute_metrics_from_matrix(conf_mat)
         except Exception as e:
-            print(e)
-            print(name)
-        metrics['F1'].append(f1)
-        metrics['Accuracy'].append(acc)
-        metrics['ROC_AUC'].append(auc)
-        metrics['Perc_err'].append(err)
-        metrics['Macro F1'].append(macro)
-        metrics['Weighted F1'].append(weighted)
-        metrics['Micro F1'].append(micro)
+            logger.error(e)
+            logger.error(name)
+        if args.num_classes == 2:
+            acc, f1, auc, perc_error, ece = _metrics
+            metrics['F1'].append(f1)
+            metrics['Accuracy'].append(acc)
+            metrics['ROC_AUC'].append(auc)
+            metrics['Perc_err'].append(perc_error)
+            metrics['ECE'].append(ece)
+            metrics['Macro F1 (bkgr)'].append(macro_bkgr)
+            metrics['Weighted F1 (bkgr)'].append(weighted_bkgr)
+            metrics['Micro F1 (bkgr)'].append(micro_bkgr)
+        else:
+            micro, macro, weighted, ece = _metrics
+            metrics['Macro F1'].append(macro)
+            metrics['Weighted F1'].append(weighted)
+            metrics['Micro F1'].append(micro)
+            metrics['ECE'].append(ece)
+            metrics['Macro F1 (bkgr)'].append(macro_bkgr)
+            metrics['Weighted F1 (bkgr)'].append(weighted_bkgr)
+            metrics['Micro F1 (bkgr)'].append(micro_bkgr)
     if args.debug_path is not None:
         save_debug_matrix(global_conf_mat, args.debug_path + '_global')
     save_csv(metrics, args.save_name)
     # Global scores and percentages
-    if len(global_true) > 0 and len(global_pred) > 0:
-        f1, acc, auc, err = compute_metrics(np.array(global_true), np.array(global_pred))
+    _global_metrics = metrics_from_predictions(np.array(global_true), np.array(global_pred), None, args.num_classes)
+    macro_bkgr, weighted_bkgr, micro_bkgr = compute_metrics_from_matrix(global_conf_mat)
+    if args.num_classes == 2:
+        acc, f1, auc, perc_error, ece = _global_metrics
+        global_metrics = {
+            'Name': ['All'], 'F1': [f1], 'Accuracy': [acc], 'ROC_AUC': [auc], 'Perc_err': [perc_error], 'ECE': [ece],
+            'Macro F1 (bkgr)': [macro_bkgr], 'Weighted F1 (bkgr)': [weighted_bkgr], 'Micro F1 (bkgr)': [micro_bkgr]
+        }
     else:
-        f1, acc, auc, err = -1, -1, -1, -1
-    macro, weighted, micro = compute_metrics_from_matrix(global_conf_mat)
-    global_metrics = {
-        'Name': ['All'], 'F1': [f1], 'Accuracy': [acc], 'ROC_AUC': [auc], 'Perc_err': [err],
-        'Macro F1': [macro], 'Weighted F1': [weighted], 'Micro F1': [micro]
-    }
+        micro, macro, weighted, ece = _global_metrics
+        global_metrics = {
+            'Name': ['All'], 'Macro F1': [macro], 'Weighted F1': [weighted], 'Micro F1': [micro], 'ECE': [ece],
+            'Macro F1 (bkgr)': [macro_bkgr], 'Weighted F1 (bkgr)': [weighted_bkgr], 'Micro F1 (bkgr)': [micro_bkgr]
+        }
     save_csv(global_metrics, args.save_name + '_all')
 
 def main():
     parser = _create_parser()
     args = parser.parse_args()
-    main(args)
+
+    logger = logging.getLogger('eval_segment')
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    main(args, logger)
