@@ -229,7 +229,7 @@ def main_with_args(args: Namespace, logger: Logger):
     global_conf_mat = None
     global_pred, global_true = [], []
     for k, name in enumerate(names):
-        logger.info('Progress: {:2d}/{}'.format(k+1, len(names)), end="\r")
+        logger.info('Progress: {:2d}/{}'.format(k+1, len(names)))
         metrics['Name'].append(name)
         # Read
         gt_centroids = read_centroids(name, args.gt_path)
