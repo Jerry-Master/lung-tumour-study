@@ -143,7 +143,7 @@ def _create_parser():
     parser.add_argument('--best-num-layers', type=str, help='Optimal number of layers when training GNNs.')
     parser.add_argument('--best-dropout', type=str, help='Optimal dropout rate when training GNNs')
     parser.add_argument('--best-norm-type', type=str, help='Optimal type of normalization layers when training GNNs')
-    parser.add_argument('--best-arch', type=str, help='Best architecture (convolutional, attention, ...) when training GNNs', required=True)
+    parser.add_argument('--best-arch', type=str, help='Best architecture (convolutional, attention, ...) when training GNNs', required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'])
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     return parser
 
