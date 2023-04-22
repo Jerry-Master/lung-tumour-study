@@ -36,7 +36,6 @@ def check_same_num(dir_list: List[str]) -> bool:
 def check_training(args: Namespace, logger: Logger) -> None:
     logger.info('Checking training pipeline was run correctly.')
     check_list = [
-        os.path.join(args.root_dir, 'gnn_logs', 'gnn_results.csv'),
         os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs'),
         os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'normalizers'),
         os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'weights'),
@@ -47,6 +46,18 @@ def check_training(args: Namespace, logger: Logger) -> None:
     for element in check_list:
         if check_void(element):
             raise WrongConfigurationError(f'The following folder / file was not found: {element}. Try running the training pipeline again.')
+    graph_check_list = [
+        os.path.join(args.root_dir, 'gnn_logs', 'gnn_results.csv'),
+        os.path.join(args.root_dir, 'gnn_logs', 'gcn_results.csv'),
+        os.path.join(args.root_dir, 'gnn_logs', 'gat_results.csv'),
+    ]
+    exist_result_file = False
+    for element in graph_check_list:
+        if not check_void(element):
+            exist_result_file = True
+    if not exist_result_file:
+        graph_folder = os.path.join(args.root_dir, 'gnn_logs')
+        raise WrongConfigurationError(f'There is not graph result csv file under {graph_folder}')
         
     dir_list = [os.path.join(args.root_dir, 'weights', 'classification', 'gnn', dir) for dir in ['confs', 'normalizers', 'weights']]
     if not check_same_num(dir_list):
