@@ -249,13 +249,12 @@ def main_with_args(args: Namespace, logger: Logger):
         if true_labels is not None and pred_labels is not None:
             global_true.extend(true_labels)
             global_pred.extend(pred_labels)
-            # Compute per image scores and percentages
-            try:
-                _metrics = metrics_from_predictions(true_labels, pred_labels, None, args.num_classes)
-            except Exception as e:
-                logger.error(e)
-                logger.error(name)
-        else:
+        # Compute per image scores and percentages
+        try:
+            _metrics = metrics_from_predictions(true_labels, pred_labels, None, args.num_classes)
+        except Exception as e:
+            logger.error(e)
+            logger.error(name)
             _metrics = [-1] * 5 if args.num_classes == 2 else [-1] * 4
         if args.num_classes == 2:
             acc, f1, auc, perc_error, ece = _metrics
