@@ -236,26 +236,26 @@ def main_with_args(args: Namespace, logger: Logger):
         pred_centroids = read_centroids(name, args.pred_path)
         # Compute pairs and confusion matrix
         conf_mat = get_confusion_matrix(gt_centroids, pred_centroids)
-        macro_bkgr, weighted_bkgr, micro_bkgr = compute_metrics_from_matrix(conf_mat)
-        if global_conf_mat is None:
-            global_conf_mat = conf_mat
-        else:
-            global_conf_mat = add_matrices(global_conf_mat, conf_mat)
         if args.debug_path is not None:
             save_debug_matrix(conf_mat, args.debug_path + '_' + name)
-
         true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
         # Save for later
         if true_labels is not None and pred_labels is not None:
             global_true.extend(true_labels)
             global_pred.extend(pred_labels)
+        if global_conf_mat is None:
+            global_conf_mat = conf_mat
+        else:
+            global_conf_mat = add_matrices(global_conf_mat, conf_mat)
         # Compute per image scores and percentages
         try:
             _metrics = metrics_from_predictions(true_labels, pred_labels, None, args.num_classes)
+            macro_bkgr, weighted_bkgr, micro_bkgr = compute_metrics_from_matrix(conf_mat)
         except Exception as e:
             logger.error(e)
             logger.error(name)
             _metrics = [-1] * 5 if args.num_classes == 2 else [-1] * 4
+            macro_bkgr, weighted_bkgr, micro_bkgr = -1, -1, -1
         if args.num_classes == 2:
             acc, f1, auc, perc_error, ece = _metrics
             metrics['F1'].append(f1)
