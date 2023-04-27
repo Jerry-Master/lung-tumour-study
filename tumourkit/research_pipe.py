@@ -140,7 +140,7 @@ def run_postprocessing_with_shape(shape: str, args: Namespace, logger : Logger) 
 
 def evaluate_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) -> None:
     logger.info(f'Starting evaluation of {shape}.')
-    os.makedirs(os.path.join(args.output_dir, 'hovernet', 'output', shape, 'results'))
+    os.makedirs(os.path.join(args.output_dir, 'hovernet', 'output', shape, 'results'), exist_ok=True)
     for split in ['train', 'validation', 'test']:
         logger.info(f'    Evaluating {split} split')
         newargs = Namespace(
