@@ -238,7 +238,14 @@ def main_with_args(args: Namespace, logger: Logger):
         conf_mat = get_confusion_matrix(gt_centroids, pred_centroids)
         if args.debug_path is not None:
             save_debug_matrix(conf_mat, args.debug_path + '_' + name)
-        true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
+        try:
+            true_labels, pred_labels = get_pairs(gt_centroids, pred_centroids)
+        except Exception as e:
+            logger.error(e)
+            logger.error(name)
+            _metrics = [-1] * 5 if args.num_classes == 2 else [-1] * 4
+            macro_bkgr, weighted_bkgr, micro_bkgr = -1, -1, -1
+            true_labels, pred_labels = None, None
         # Save for later
         if true_labels is not None and pred_labels is not None:
             global_true.extend(true_labels)
