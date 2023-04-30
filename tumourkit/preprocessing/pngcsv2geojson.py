@@ -23,27 +23,12 @@ import argparse
 import pandas as pd
 import cv2
 import numpy as np
-import geojson
 from tqdm import tqdm
 from ..utils.preprocessing import (
     get_names, create_dir, parse_path,
-    format_contour, create_geojson, read_labels
+    format_contour, create_geojson, read_labels,
+    save_geojson
 )
-
-def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
-    """
-    Save a list of geojson features to a file with the given name at the
-    specified path.
-
-    :param gson: A list of geojson features to save.
-    :type gson: List[Dict[str, Any]]
-    :param name: The name of the file to save.
-    :type name: str
-    :param path: The path to save the file at.
-    :type path: str
-    """
-    with open(path + name + '.geojson', 'w') as f:
-        geojson.dump(gson, f)
 
 
 def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
@@ -83,7 +68,7 @@ def pngcsv2features(png: np.ndarray, csv: pd.DataFrame, label: int, num_classes:
     """
     mask = create_mask(png, csv, label)
     contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
-    contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), label) for c in contours])
+    contours = filter(lambda x: len(x[0]) >= 4, [(format_contour(c), label) for c in contours])
     return create_geojson(contours, num_classes)
 
 
@@ -107,7 +92,7 @@ def pngcsv2geojson(png: np.ndarray, csv: pd.DataFrame, num_classes: Optional[int
         mask[mask == idx] = 1
         mask = mask.astype(np.uint8)
         contours, _ = cv2.findContours(mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
-        contours = filter(lambda x: len(x[0]) >= 3, [(format_contour(c), cell_label) for c in contours])
+        contours = filter(lambda x: len(x[0]) >= 4, [(format_contour(c), cell_label) for c in contours])
         total_contours.extend(create_geojson(contours, num_classes))
         del mask
     return total_contours

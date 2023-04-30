@@ -20,28 +20,11 @@ Contact information: joseperez2000@hotmail.es
 """
 from typing import Dict, Any, Tuple, List, Optional
 import argparse
-import geojson
 from skimage.draw import polygon
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from ..utils.preprocessing import parse_path, create_dir, get_names, save_pngcsv
-    
-
-def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
-    """
-    Reads the GeoJSON file at the specified path with the given name.
-
-    :param name: The base name of the file (without extension).
-    :type name: str
-    :param path: The path to the directory containing the file.
-    :type path: str
-    :return: The contents of the GeoJSON file as a list of dictionaries.
-    :rtype: List[Dict[str, Any]]
-    """
-    with open(path + name + '.geojson', 'r') as f:
-        gson = geojson.load(f)
-    return gson
+from ..utils.preprocessing import parse_path, create_dir, get_names, save_pngcsv, read_gson
 
 
 def geojson2pngcsv(gson: List[Dict[str, Any]], num_classes: Optional[int] = 2) -> Tuple[np.ndarray, pd.DataFrame]:

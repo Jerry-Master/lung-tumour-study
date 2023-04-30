@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-
+import geojson
 import os
 from geojson import Feature, Polygon
 import cv2
@@ -131,6 +131,22 @@ def read_csv(name: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
         return csv
     except:
         return None
+    
+
+def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
+    """
+    Reads the GeoJSON file at the specified path with the given name.
+
+    :param name: The base name of the file (without extension).
+    :type name: str
+    :param path: The path to the directory containing the file.
+    :type path: str
+    :return: The contents of the GeoJSON file as a list of dictionaries.
+    :rtype: List[Dict[str, Any]]
+    """
+    with open(os.path.join(path, name + '.geojson'), 'r') as f:
+        gson = geojson.load(f)
+    return gson
     
 
 def read_labels(name: str, png_dir: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
@@ -373,6 +389,23 @@ def save_graph(graph: pd.DataFrame, path: str) -> None:
     graph.set_index('id', inplace=True)
     graph.sort_index(inplace=True)
     graph.to_csv(path)
+
+
+def save_geojson(gson: List[Dict[str, Any]], name: str, path: str) -> None:
+    """
+    Save a list of geojson features to a file with the given name at the
+    specified path.
+
+    :param gson: A list of geojson features to save.
+    :type gson: List[Dict[str, Any]]
+    :param name: The name of the file to save.
+    :type name: str
+    :param path: The path to save the file at.
+    :type path: str
+    """
+    with open(os.path.join(path, name + '.geojson'), 'w') as f:
+        geojson.dump(gson, f, sort_keys=True, indent=2)
+
 
 def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
     """
