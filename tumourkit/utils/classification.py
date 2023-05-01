@@ -102,7 +102,7 @@ def metrics_from_predictions(
     :type y_true: np.ndarray
     :param y_pred: Predictions with values starting at 0. Shape: (N, 1).
     :type y_pred: np.ndarray
-    :param y_prob: Probabilities of the predictions. Shape: (N, num_classes)
+    :param y_prob: Probabilities of the predictions. Shape: (N, num_classes) or (N, 1) if binary.
     :type y_prob: Optional[np.ndarray]
     :param num_classes: Number of classes to consider.
     :type num_classes: Optional[int]

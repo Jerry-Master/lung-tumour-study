@@ -72,7 +72,7 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
         else:
             probs = np.vstack((probs, _probs))
     preds = np.argmax(probs, axis=1).reshape((-1, 1))
-    metrics = metrics_from_predictions(trues, preds, probs, args.num_classes)
+    metrics = metrics_from_predictions(trues, preds, probs[:, 1], args.num_classes)
     if args.num_classes == 2:
         acc, f1, auc, perc_error, ece = metrics
         dic_metrics = {
