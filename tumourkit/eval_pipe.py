@@ -62,7 +62,7 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
         else:
             trues = np.vstack((trues, _trues.reshape((-1, 1))))
         if args.num_classes == 2:
-            _probs = df['prob1'].to_numpy()
+            _probs = df['prob1'].to_numpy().reshape((-1, 1))
             _probs = np.hstack((1 - _probs, _probs))
         else:
             cols = ['prob' + str(k) for k in range(1, args.num_classes + 1)]

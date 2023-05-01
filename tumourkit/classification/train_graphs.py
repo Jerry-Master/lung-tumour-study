@@ -87,7 +87,7 @@ def evaluate(
             writer.add_scalar('Accuracy/' + log_suffix, acc, epoch)
             writer.add_scalar('F1/' + log_suffix, f1, epoch)
             writer.add_scalar('ROC_AUC/' + log_suffix, auc, epoch)
-            writer.add_scalar('Percentage error/' + log_suffix, perc_err, epoch)
+            writer.add_scalar('Percentage Error/' + log_suffix, perc_err, epoch)
             writer.add_scalar('ECE/' + log_suffix, ece, epoch)
         return f1, acc, auc, perc_err, ece
     else:
