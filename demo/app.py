@@ -193,7 +193,7 @@ def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn
     run_hovernet(hov_dataset, hov_model, num_classes)
     run_posthov(num_classes, logger)
     run_graphs(gnn_dataset, gnn_model, num_classes)
-    run_postgraphs()
+    run_postgraphs(num_classes)
     return input_image
 
 
