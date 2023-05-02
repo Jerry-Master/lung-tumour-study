@@ -60,6 +60,7 @@ def read_node_matrix(
             yy = df['Y'].to_numpy()
             return X, y, xx, yy
     else:
+        remove_vars.remove('class')
         X = df.drop(remove_vars, axis=1).to_numpy()
         if remove_morph and remove_prior:
             X = np.zeros((len(y), 1))

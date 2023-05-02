@@ -80,7 +80,7 @@ def create_input_dir(input_image: np.ndarray):
 
 def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int):
     newargs = {
-        'nr_types': num_classes,
+        'nr_types': str(num_classes + 1),
         'type_info_path': os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
         'gpu': '0',
         'nr_inference_workers': '0',
@@ -188,11 +188,11 @@ def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn
     download_models_if_needed(hov_dataset, hov_model, gnn_dataset, gnn_model)
     with open(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'), 'r') as f:
         type_info = json.load(f)
-        num_classes = len(type_info.keys())
+        num_classes = len(type_info.keys()) - 1
     create_input_dir(input_image)
     run_hovernet(hov_dataset, hov_model, num_classes)
     run_posthov(num_classes, logger)
-    run_graphs(gnn_dataset, gnn_model)
+    run_graphs(gnn_dataset, gnn_model, num_classes)
     run_postgraphs()
     return input_image
 
