@@ -53,7 +53,7 @@ def download_folder(url_folder: str, url_files: str, dirname: str):
         progress.close()
 
 
-def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_dataset: str, gnn_model: str):
+def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_model: str):
     if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar')):
         os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset), exist_ok=True)
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/{hov_model}.tar'
@@ -64,12 +64,12 @@ def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_dataset: str
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/type_info.json'
         filename = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json')
         download_file(url, filename)
-    if not os.path.exists(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model)) \
-        or len(os.listdir(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model))) < 3:
-        os.makedirs(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model), exist_ok=True)
-        url_folder = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/tree/main/{gnn_dataset}/gnn/{gnn_model}/'
-        url_files = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{gnn_dataset}/gnn/{gnn_model}/'
-        dirname = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model)
+    if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model)) \
+        or len(os.listdir(os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model))) < 3:
+        os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model), exist_ok=True)
+        url_folder = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/tree/main/{hov_dataset}/gnn/{gnn_model}/'
+        url_files = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/gnn/{gnn_model}/'
+        dirname = os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model)
         download_folder(url_folder, url_files, dirname)
 
 
@@ -188,9 +188,9 @@ def create_logger():
     return logger
 
 
-def clean(hov_dataset: str, use_gnn: bool):
+def overlay_outputs(hov_dataset: str, use_gnn: bool):
     """
-    Removes auxiliary tmp folder and returns the output images.
+    Returns the output images.
     """
     newargs = Namespace(
         orig_dir = os.path.join(APP_DIR, 'tmp', 'input'),
@@ -221,15 +221,22 @@ def clean(hov_dataset: str, use_gnn: bool):
 
 
 LAST_HOV_MODEL = '518FT'
-def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_dataset: str, gnn_model: str):
+LAST_IMG_HASH = None
+def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_model: str):
     global LAST_HOV_MODEL
-    if LAST_HOV_MODEL is None or LAST_HOV_MODEL != hov_model:
+    global LAST_IMG_HASH
+    input_hash = hash(str(input_image))
+    if LAST_IMG_HASH is None:
+        LAST_IMG_HASH = input_hash
+    if LAST_HOV_MODEL is None or LAST_IMG_HASH is None \
+         or LAST_HOV_MODEL != hov_model or LAST_IMG_HASH != input_hash:
         LAST_HOV_MODEL = hov_model
+        LAST_IMG_HASH = input_hash
         delete_prev = True
     else:
         delete_prev = False
     logger = create_logger()
-    download_models_if_needed(hov_dataset, hov_model, gnn_dataset, gnn_model)
+    download_models_if_needed(hov_dataset, hov_model, gnn_model)
     with open(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'), 'r') as f:
         type_info = json.load(f)
         num_classes = len(type_info.keys()) - 1
@@ -239,9 +246,9 @@ def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn
         run_posthov(num_classes, logger)
     use_gnn = gnn_model != 'None'
     if use_gnn:
-        run_graphs(gnn_dataset, gnn_model, num_classes)
+        run_graphs(hov_dataset, gnn_model, num_classes)
         run_postgraphs(num_classes)
-    hov, gnn = clean(hov_dataset, use_gnn)
+    hov, gnn = overlay_outputs(hov_dataset, use_gnn)
     return hov, gnn
 
 
@@ -249,13 +256,10 @@ def create_ui():
     image_input = gr.Image(shape=(1024, 1024))
     hov_dataset = gr.Dropdown(choices=[
         'consep', 'monusac', 'breast', 'lung'
-    ], label='Select dataset in which hovernet was trained')
+    ], label='Select dataset in which models were trained')
     hov_model = gr.Dropdown(choices=[
         '270', '270FT', '518', '518FT'
-    ], label="Select Hovernet model.")
-    gnn_dataset = gr.Dropdown(choices=[
-        'consep', 'monusac', 'breast', 'lung'
-    ], label='Select dataset in which gnns were trained')
+    ], label="Select Hovernet model")
     gnn_model = gr.Dropdown(choices=[
         'gcn-full', 'gat-full',
         'gcn-no-morph', 'gcn-no-prior', 'gcn-void',
@@ -265,7 +269,7 @@ def create_ui():
     out2 = gr.Image(label='GNN')
     ui = gr.Interface(
         fn=process_image,
-        inputs=[image_input, hov_dataset, hov_model, gnn_dataset, gnn_model],
+        inputs=[image_input, hov_dataset, hov_model, gnn_model],
         outputs=[out1, out2],
         title="CNN+GNN Demo",
         description="Upload an image to see the output of the algorithm.",

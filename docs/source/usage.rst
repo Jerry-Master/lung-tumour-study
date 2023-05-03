@@ -59,9 +59,9 @@ To avoid moving objects around and keep everything organized, a strict folder st
 Keep in mind throughout the whole process that the parameter :code:`--num-classes` must be specified always. 
 Here it is responsible for creating the correct :code:`type_info.json` which contains needed information for hovernet to classify in the number of classes you specify. 
 
-Once you have created that structure, you must move all your original tiles to :code:`data/orig` and the geojson files to :code:`data/gson`. 
+Once you have created that structure, you must move all your original tiles to :code:`data/orig` and the geojson files to :code:`data/train/gson`, :code:`data/validation/gson` or :code:`data/test/gson` depending on the split they belong to. 
 That is enough for the pipeline to proceed. If your labels don't come from QuPath and don't have a geojson format, you will need to convert whatever format you have to the geojson format first. 
-For more details on how to do so, go to :ref:`the last section <preproc_utils>`.
+For more details on how to do so, go to :ref:`the format conversion section <preproc_utils>`.
 
 .. _run_training:
 
@@ -83,6 +83,11 @@ The other parameters are computational parameters. They indicate in which gpu id
 During training, hovernet logs are saved in :code:`root-dir/weights/segmentation/hovernet/` and graph neural network logs in :code:`root-dir/gnn_logs/`. 
 For a detailed explanation of what you can find and how to visualize them, go to :ref:`the relevant section <logs>`.
 
+Keep in mind that training the hovernet model with a field of view of 518 pixels by side requires around 20-24GB of GPU RAM.
+You can modify the code to use a smaller field of view of 270, but it will probably yield worse results.
+Apart from that, the space occupied by the checkpoints and other data inside the root directory can reach up to 50GB of disk space.
+Also, for a dataset of about one hundred images it can take up to 20 hours to train. Be prepared. 
+
 .. _run_inference:
 
 run_inference
@@ -103,6 +108,26 @@ that was best in validation and test while training by not specifying them. Also
 training, it will not work.
 
 If you find that hovernet is breaking cells into parts, we provide an algorithm to solve that. For more information go to :ref:`the relevant section <merge_cells>`.
+
+Be aware that you will need at least 10GB of RAM in order to execute the hovernet model. The rest of the pipeline works smoothly on CPU, but the hovernet model requires heavy computation.
+It should take only a few seconds for the hovernet to process one image and less than a minute per image for the whole pipeline. Obviously, it depends on your hardware.
+
+.. _run_research:
+
+run_research
+^^^^^^^^^^^^^
+
+This command is provided in case you want to reproduce the experiments from my bachelor's thesis. The command is as follows:
+
+.. code-block:: console
+
+   $ run_research --root-dir [...] --output-dir [...] --experiment [...] --pretrained-path [...] --num-classes [...] --gpu 0 --num-workers 10
+
+It works quite similar as the two commands above. In the output directory everything will be saved, from logs to newly trained models. 
+There are three different experiments available to choose: scaling, void-gnn, xgb-gnn. For more information on what do the experiments represent, you can read my thesis. 
+With respect to compute power needed, except for the scaling one they are all lighter than the run_training pipeline. The xgb-gnn can even be done in the CPU in less than half an hour. 
+An the void-gnn can also be done in CPU if needed. The scaling experiment trains four different hovernet models with different field of views. 
+For the 270 models it needs less than 10GB GPU RAM while for the 518 models it requires at least 20GB RAM.
 
 .. _preproc_utils:
 
