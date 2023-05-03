@@ -51,22 +51,22 @@ def download_folder(url_folder: str, url_files: str, dirname: str):
 
 
 def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_dataset: str, gnn_model: str):
-    if not os.path.exists(os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, hov_model + '.tar')):
-        os.makedirs(os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset), exist_ok=True)
+    if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar')):
+        os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset), exist_ok=True)
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/{hov_model}.tar'
-        filename = os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, hov_model + '.tar')
+        filename = os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar')
         download_file(url, filename)
-    if not os.path.exists(os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, 'type_info.json')):
-        os.makedirs(os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset), exist_ok=True)
+    if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json')):
+        os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset), exist_ok=True)
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/type_info.json'
-        filename = os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, 'type_info.json')
+        filename = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json')
         download_file(url, filename)
-    if not os.path.exists(os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model)) \
-        or len(os.listdir(os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model))) < 3:
-        os.makedirs(os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model), exist_ok=True)
+    if not os.path.exists(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model)) \
+        or len(os.listdir(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model))) < 3:
+        os.makedirs(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model), exist_ok=True)
         url_folder = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/tree/main/{gnn_dataset}/gnn/{gnn_model}/'
         url_files = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{gnn_dataset}/gnn/{gnn_model}/'
-        dirname = os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model)
+        dirname = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model)
         download_folder(url_folder, url_files, dirname)
 
 
@@ -81,10 +81,10 @@ def create_input_dir(input_image: np.ndarray):
 def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int):
     newargs = {
         'nr_types': str(num_classes + 1),
-        'type_info_path': os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, 'type_info.json'),
+        'type_info_path': os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
         'gpu': '0',
         'nr_inference_workers': '0',
-        'model_path': os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, hov_model + '.tar'),
+        'model_path': os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar'),
         'batch_size': '10',
         'shape': hov_model[:-2] if 'FT' in hov_model else hov_model,
         'nr_post_proc_workers': '0',
@@ -136,13 +136,13 @@ def run_posthov(num_classes: int, logger: Logger):
 def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int):
     disable_prior = 'no-prior' in gnn_model or 'void' in gnn_model
     disable_morph_feats = 'no-morph' in gnn_model or 'void' in gnn_model
-    model_name = os.listdir(os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model))[0][:-4]
+    model_name = os.listdir(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model))[0][:-4]
     newargs = Namespace(
         node_dir = os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
         output_dir = os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
-        weights = os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model, model_name + '.pth'),
-        conf = os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model, model_name + '.json'),
-        normalizers = os.path.join(APP_DIR, 'tmp', 'weights', gnn_dataset, gnn_model, model_name + '.pkl'),
+        weights = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model, model_name + '.pth'),
+        conf = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model, model_name + '.json'),
+        normalizers = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model, model_name + '.pkl'),
         num_classes = num_classes,
         disable_prior = disable_prior,
         disable_morph_feats = disable_morph_feats,
@@ -197,7 +197,7 @@ def clean():
 def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_dataset: str, gnn_model: str):
     logger = create_logger()
     download_models_if_needed(hov_dataset, hov_model, gnn_dataset, gnn_model)
-    with open(os.path.join(APP_DIR, 'tmp', 'weights', hov_dataset, 'type_info.json'), 'r') as f:
+    with open(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'), 'r') as f:
         type_info = json.load(f)
         num_classes = len(type_info.keys()) - 1
     create_input_dir(input_image)
@@ -233,7 +233,7 @@ def create_ui():
         outputs=[out1, out2],
         title="CNN+GNN Demo",
         description="Upload an image to see the output of the algorithm.",
-        examples=[[os.path.join(APP_DIR, 'tmp', 'examples', x), 'breast', '518FT', 'breast', 'gcn-full'] for x in os.listdir(os.path.join(APP_DIR, 'tmp', 'examples'))]
+        examples=[[os.path.join(APP_DIR, 'examples', x), 'breast', '518FT', 'breast', 'gcn-full'] for x in os.listdir(os.path.join(APP_DIR, 'examples'))]
     )
     return ui
 
