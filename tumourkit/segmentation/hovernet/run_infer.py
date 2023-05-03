@@ -104,13 +104,14 @@ def main_with_args(args: Dict, sub_args: Dict, sub_cmd: str) -> None:
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_list
 
     nr_gpus = torch.cuda.device_count()
-    log_info('Detect #GPUS: %d' % nr_gpus)
+    log_info('Detect #GPUS: %d' % nr_gpus)        
 
     if args['model_path'] == None:
         raise Exception('A model path must be supplied as an argument with --model_path.')
 
     nr_types = int(args['nr_types']) if int(args['nr_types']) > 0 else None
     method_args = {
+        'nr_gpus' : nr_gpus,
         'method' : {
             'model_args' : {
                 'nr_types'   : nr_types,
@@ -124,8 +125,8 @@ def main_with_args(args: Dict, sub_args: Dict, sub_cmd: str) -> None:
 
     # ***
     run_args = {
-        'batch_size' : int(args['batch_size']) * nr_gpus,
-
+        'batch_size' : int(args['batch_size']) * max(1, nr_gpus),
+        
         'nr_inference_workers' : int(args['nr_inference_workers']),
         'nr_post_proc_workers' : int(args['nr_post_proc_workers']),
     }

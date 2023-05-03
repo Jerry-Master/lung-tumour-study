@@ -9,6 +9,7 @@ from tumourkit.preprocessing import geojson2pngcsv, png2graph, hovernet2geojson,
 from tumourkit.postprocessing import join_hovprob_graph
 from tumourkit.utils.preprocessing import create_dir
 from tumourkit.classification import infer_gnn
+from tumourkit.postprocessing import draw_cells
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -23,7 +24,8 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 def download_file(url: str, filename: str):
     response = requests.get(url, stream=True)
     file_size = int(response.headers.get('Content-Length', 0))
-    progress = tqdm(response.iter_content(1024), f"Downloading {filename}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
+    showname = '...' + filename[-20:] if len(filename) > 20 else filename
+    progress = tqdm(response.iter_content(1024), f"Downloading {showname}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
     with open(filename, 'wb') as f:
         for data in progress.iterable:
             f.write(data)
@@ -42,7 +44,8 @@ def download_folder(url_folder: str, url_files: str, dirname: str):
         url = url_files + file
         response = requests.get(url, stream=True)
         file_size = int(response.headers.get('Content-Length', 0))
-        progress = tqdm(response.iter_content(1024), f"Downloading {filename}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
+        showname = '...' + filename[-20:] if len(filename) > 20 else filename
+        progress = tqdm(response.iter_content(1024), f"Downloading {showname}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
         with open(filename, 'wb') as f:
             for data in progress.iterable:
                 f.write(data)
@@ -70,11 +73,12 @@ def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_dataset: str
         download_folder(url_folder, url_files, dirname)
 
 
-def create_input_dir(input_image: np.ndarray):
+def create_input_dir(input_image: np.ndarray, delete_prev: bool):
+    if os.path.exists(os.path.join(APP_DIR, 'tmp')):
+        if delete_prev:
+            shutil.rmtree(os.path.join(APP_DIR, 'tmp'))
     input_dir = os.path.join(APP_DIR, 'tmp', 'input')
-    if os.path.exists(input_dir):
-        shutil.rmtree(input_dir)
-    os.makedirs(input_dir)
+    os.makedirs(input_dir, exist_ok=True)
     cv2.imwrite(os.path.join(input_dir, 'input_image.png'), input_image[:, :, ::-1])
 
 
@@ -136,7 +140,8 @@ def run_posthov(num_classes: int, logger: Logger):
 def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int):
     disable_prior = 'no-prior' in gnn_model or 'void' in gnn_model
     disable_morph_feats = 'no-morph' in gnn_model or 'void' in gnn_model
-    model_name = os.listdir(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model))[0][:-4]
+    model_name = os.listdir(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model))[0]
+    model_name, ext = os.path.splitext(model_name)
     newargs = Namespace(
         node_dir = os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
         output_dir = os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
@@ -183,29 +188,60 @@ def create_logger():
     return logger
 
 
-def clean():
+def clean(hov_dataset: str, use_gnn: bool):
     """
     Removes auxiliary tmp folder and returns the output images.
     """
-    hov_dir = os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'overlay')
+    newargs = Namespace(
+        orig_dir = os.path.join(APP_DIR, 'tmp', 'input'),
+        png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
+        csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_hov'),
+        output_dir = os.path.join(APP_DIR, 'tmp', 'overlay_hov'),
+        type_info = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
+    )
+    draw_cells(newargs)
+    hov_dir = os.path.join(APP_DIR, 'tmp', 'overlay_hov')
     hov_file = os.listdir(hov_dir)[0]
     hov = cv2.imread(os.path.join(hov_dir, hov_file), -1)[:, :, ::-1]
-    shutil.rmtree(os.path.join(APP_DIR, 'tmp'))
-    return hov, None
+    if use_gnn:
+        newargs = Namespace(
+            orig_dir = os.path.join(APP_DIR, 'tmp', 'input'),
+            png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
+            csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
+            output_dir = os.path.join(APP_DIR, 'tmp', 'overlay_gnn'),
+            type_info = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
+        )
+        draw_cells(newargs)
+        gnn_dir = os.path.join(APP_DIR, 'tmp', 'overlay_gnn')
+        gnn_file = os.listdir(gnn_dir)[0]
+        gnn = cv2.imread(os.path.join(gnn_dir, gnn_file), -1)[:, :, ::-1]
+    else:
+        gnn = None
+    return hov, gnn
 
 
+LAST_HOV_MODEL = '518FT'
 def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_dataset: str, gnn_model: str):
+    global LAST_HOV_MODEL
+    if LAST_HOV_MODEL is None or LAST_HOV_MODEL != hov_model:
+        LAST_HOV_MODEL = hov_model
+        delete_prev = True
+    else:
+        delete_prev = False
     logger = create_logger()
     download_models_if_needed(hov_dataset, hov_model, gnn_dataset, gnn_model)
     with open(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'), 'r') as f:
         type_info = json.load(f)
         num_classes = len(type_info.keys()) - 1
-    create_input_dir(input_image)
-    run_hovernet(hov_dataset, hov_model, num_classes)
-    run_posthov(num_classes, logger)
-    run_graphs(gnn_dataset, gnn_model, num_classes)
-    run_postgraphs(num_classes)
-    hov, gnn = clean()
+    create_input_dir(input_image, delete_prev)
+    if delete_prev:
+        run_hovernet(hov_dataset, hov_model, num_classes)
+        run_posthov(num_classes, logger)
+    use_gnn = gnn_model != 'None'
+    if use_gnn:
+        run_graphs(gnn_dataset, gnn_model, num_classes)
+        run_postgraphs(num_classes)
+    hov, gnn = clean(hov_dataset, use_gnn)
     return hov, gnn
 
 

@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Gradio demo
+- Gradio demo.
+- Modified requirements.txt to include Gradio demo dependencies.
 
 ## [0.5.0] - 2023-04-30
 

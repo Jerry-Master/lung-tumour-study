@@ -265,7 +265,7 @@ def run_void(args: Namespace, logger: Logger) -> None:
         checkpoint_iters = -1,
         num_classes = args.num_classes,
         disable_prior = True,
-        disable_morph_feats = False,
+        disable_morph_feats = True,
     )
     train_gnn(newargs)
 

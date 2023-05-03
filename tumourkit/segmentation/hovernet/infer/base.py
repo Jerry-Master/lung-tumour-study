@@ -50,16 +50,20 @@ class InferManager(object):
         model_creator = getattr(model_desc, "create_model")
 
         net = model_creator(**self.method["model_args"])
-        saved_state_dict = torch.load(self.method["model_path"])["desc"]
+        if self.nr_gpus > 0:
+            saved_state_dict = torch.load(self.method["model_path"])["desc"]
+        else:
+            saved_state_dict = torch.load(self.method["model_path"], map_location=torch.device('cpu'))["desc"]
         saved_state_dict = convert_pytorch_checkpoint(saved_state_dict)
 
         net.load_state_dict(saved_state_dict, strict=True)
         net = torch.nn.DataParallel(net)
-        net = net.to("cuda")
+        if self.nr_gpus > 0:
+            net = net.to("cuda")
 
         module_lib = import_module(".segmentation.hovernet.models.hovernet.run_desc", package="tumourkit")
         run_step = getattr(module_lib, "infer_step")
-        self.run_step = lambda input_batch: run_step(input_batch, net)
+        self.run_step = lambda input_batch: run_step(input_batch, net, use_cpu=self.nr_gpus==0)
 
         module_lib = import_module(".segmentation.hovernet.models.hovernet.post_proc", package="tumourkit")
         self.post_proc_func = getattr(module_lib, "process")
