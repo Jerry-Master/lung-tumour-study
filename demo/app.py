@@ -273,7 +273,7 @@ def create_ui():
         outputs=[out1, out2],
         title="CNN+GNN Demo",
         description="Upload an image to see the output of the algorithm.",
-        examples=[[os.path.join(APP_DIR, 'examples', x), 'breast', '518FT', 'breast', 'gcn-full'] for x in os.listdir(os.path.join(APP_DIR, 'examples'))]
+        examples=[[os.path.join(APP_DIR, 'examples', x), 'breast', '518FT', 'gcn-full'] for x in os.listdir(os.path.join(APP_DIR, 'examples'))]
     )
     return ui
 
