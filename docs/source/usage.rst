@@ -354,4 +354,4 @@ The name of the hovernet model indicates the field of view and FT means that it 
 otherwise it was trained from scratch. In my thesis we found that 518FT was normally the best. 
 The graph models provided operate on different sets of features. No prior means that it doesn't use the hovernet probabilities. 
 No morph means no visual features are used. Void means no features at all. And full means using both probabilities and morphological features. 
-For all except monusac I also provide the graph attention network in full mode.
+For all except monusac I also provide the graph attention network in full mode. You can also find the checkpoint on `Hugging Face <https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/tree/main>`_.
