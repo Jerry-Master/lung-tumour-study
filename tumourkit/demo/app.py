@@ -16,6 +16,7 @@ from bs4 import BeautifulSoup
 from argparse import Namespace
 import logging
 from logging import Logger
+import argparse
 
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -53,23 +54,23 @@ def download_folder(url_folder: str, url_files: str, dirname: str):
         progress.close()
 
 
-def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_model: str):
-    if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar')):
-        os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset), exist_ok=True)
+def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_model: str, weights_dir: str):
+    if not os.path.exists(os.path.join(weights_dir, hov_dataset, hov_model + '.tar')):
+        os.makedirs(os.path.join(weights_dir, hov_dataset), exist_ok=True)
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/{hov_model}.tar'
-        filename = os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar')
+        filename = os.path.join(weights_dir, hov_dataset, hov_model + '.tar')
         download_file(url, filename)
-    if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json')):
-        os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset), exist_ok=True)
+    if not os.path.exists(os.path.join(weights_dir, hov_dataset, 'type_info.json')):
+        os.makedirs(os.path.join(weights_dir, hov_dataset), exist_ok=True)
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/type_info.json'
-        filename = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json')
+        filename = os.path.join(weights_dir, hov_dataset, 'type_info.json')
         download_file(url, filename)
-    if not os.path.exists(os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model)) \
-        or len(os.listdir(os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model))) < 3:
-        os.makedirs(os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model), exist_ok=True)
+    if not os.path.exists(os.path.join(weights_dir, hov_dataset, gnn_model)) \
+        or len(os.listdir(os.path.join(weights_dir, hov_dataset, gnn_model))) < 3:
+        os.makedirs(os.path.join(weights_dir, hov_dataset, gnn_model), exist_ok=True)
         url_folder = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/tree/main/{hov_dataset}/gnn/{gnn_model}/'
         url_files = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/gnn/{gnn_model}/'
-        dirname = os.path.join(APP_DIR, 'weights', hov_dataset, gnn_model)
+        dirname = os.path.join(weights_dir, hov_dataset, gnn_model)
         download_folder(url_folder, url_files, dirname)
 
 
@@ -82,13 +83,13 @@ def create_input_dir(input_image: np.ndarray, delete_prev: bool):
     cv2.imwrite(os.path.join(input_dir, 'input_image.png'), input_image[:, :, ::-1])
 
 
-def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int):
+def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int, weights_dir: str):
     newargs = {
         'nr_types': str(num_classes + 1),
-        'type_info_path': os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
+        'type_info_path': os.path.join(weights_dir, hov_dataset, 'type_info.json'),
         'gpu': '0',
         'nr_inference_workers': '0',
-        'model_path': os.path.join(APP_DIR, 'weights', hov_dataset, hov_model + '.tar'),
+        'model_path': os.path.join(weights_dir, hov_dataset, hov_model + '.tar'),
         'batch_size': '10',
         'shape': hov_model[:-2] if 'FT' in hov_model else hov_model,
         'nr_post_proc_workers': '0',
@@ -137,17 +138,17 @@ def run_posthov(num_classes: int, logger: Logger):
     join_hovprob_graph(newargs, logger)
 
 
-def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int):
+def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int, weights_dir: str):
     disable_prior = 'no-prior' in gnn_model or 'void' in gnn_model
     disable_morph_feats = 'no-morph' in gnn_model or 'void' in gnn_model
-    model_name = os.listdir(os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model))[0]
+    model_name = os.listdir(os.path.join(weights_dir, gnn_dataset, gnn_model))[0]
     model_name, ext = os.path.splitext(model_name)
     newargs = Namespace(
         node_dir = os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
         output_dir = os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
-        weights = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model, model_name + '.pth'),
-        conf = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model, model_name + '.json'),
-        normalizers = os.path.join(APP_DIR, 'weights', gnn_dataset, gnn_model, model_name + '.pkl'),
+        weights = os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.pth'),
+        conf = os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.json'),
+        normalizers = os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.pkl'),
         num_classes = num_classes,
         disable_prior = disable_prior,
         disable_morph_feats = disable_morph_feats,
@@ -220,9 +221,10 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
     return hov, gnn
 
 
-LAST_HOV_MODEL = '518FT'
+LAST_HOV_MODEL = None
 LAST_IMG_HASH = None
-def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_model: str):
+def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_model: str):
+    # Cache information when possible
     global LAST_HOV_MODEL
     global LAST_IMG_HASH
     input_hash = hash(str(input_image))
@@ -235,24 +237,31 @@ def process_image(input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn
         delete_prev = True
     else:
         delete_prev = False
+
+    # Monusac doesn't have graph attention
+    if hov_model == 'monusac' and gnn_model == 'gat-full':
+        gnn_model = 'None'
+    
+    if weights_dir is None:
+        weights_dir = os.path.join(APP_DIR, 'weights')
     logger = create_logger()
-    download_models_if_needed(hov_dataset, hov_model, gnn_model)
+    download_models_if_needed(hov_dataset, hov_model, gnn_model, weights_dir)
     with open(os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'), 'r') as f:
         type_info = json.load(f)
         num_classes = len(type_info.keys()) - 1
     create_input_dir(input_image, delete_prev)
     if delete_prev:
-        run_hovernet(hov_dataset, hov_model, num_classes)
+        run_hovernet(hov_dataset, hov_model, num_classes, weights_dir)
         run_posthov(num_classes, logger)
     use_gnn = gnn_model != 'None'
     if use_gnn:
-        run_graphs(hov_dataset, gnn_model, num_classes)
+        run_graphs(hov_dataset, gnn_model, num_classes, weights_dir)
         run_postgraphs(num_classes)
     hov, gnn = overlay_outputs(hov_dataset, use_gnn)
     return hov, gnn
 
 
-def create_ui():
+def create_ui(weights_dir: str) -> gr.Interface:
     image_input = gr.Image(shape=(1024, 1024))
     hov_dataset = gr.Dropdown(choices=[
         'consep', 'monusac', 'breast', 'lung'
@@ -267,8 +276,9 @@ def create_ui():
         ], label='Select GNN model')
     out1 = gr.Image(label='Hovernet')
     out2 = gr.Image(label='GNN')
+    func = lambda a,b,c,d: process_image(weights_dir, a,b,c,d)
     ui = gr.Interface(
-        fn=process_image,
+        fn=func,
         inputs=[image_input, hov_dataset, hov_model, gnn_model],
         outputs=[out1, out2],
         title="CNN+GNN Demo",
@@ -278,9 +288,20 @@ def create_ui():
     return ui
 
 
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ip', type=str, default='localhost', help='Default: localhost.')
+    parser.add_argument('--port', type=int, default=15000, help='Default: 15000.')
+    parser.add_argument('--share', action='store_true', help='Whether to create public link for the gradio demo.')
+    parser.add_argument('--weights-dir', type=str, help='Folder to save and load weights from. Leave it blank to use tumourkit internal folders.')
+    return parser
+
+
 def main():
-    ui = create_ui()
-    ui.launch()
+    parser = _create_parser()
+    args = parser.parse_args()
+    ui = create_ui(args.weights_dir)
+    ui.launch(server_name=args.ip, server_port=args.port, share=args.share)
 
 
 if __name__ == '__main__':

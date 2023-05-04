@@ -25,7 +25,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import random
 import os
-from .preprocessing import *
+from .preprocessing import get_names
 
 
 def read_node_matrix(
