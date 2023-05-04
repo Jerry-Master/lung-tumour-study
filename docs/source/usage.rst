@@ -314,3 +314,44 @@ The other function needed to be adapted is :py:func:`extract_features <tumourkit
       # Add any feature you want to the dictionary feats.
       # You can use the keys you want, they will be reflected as columns in the saved files.
       return feats
+
+
+.. _gradio:
+
+Gradio demo
+-----------
+
+If you want to try the models from my thesis on new images you can do so in the Gradio app this library provides.
+To run it locally execute the following command: 
+
+.. code-block:: console
+
+    $ start_app --ip localhost --port 15000
+
+If you have a GPU it will use it and if you don't everything will be run on the CPU.
+Inference of one image on the CPU takes more than ten minutes. And for the GPU you may require at most 10GB of RAM.
+In case you want to run it in an server just change the ip to 0.0.0.0
+
+.. code-block:: console
+
+    $ start_app --ip "0.0.0.0" --port 15000
+
+Or if you want to share with other people, Gradio provides a free shareable ip for 72 hours. 
+To invoke it add an extra flag like this:
+
+.. code-block:: console
+
+    $ start_app --ip localhost --port 15000 --share
+
+Once you open the link in the server you should see something like this.
+
+.. image:: imgs/gradio.png
+  :width: 600
+  :alt: gradio demo.
+
+You can select 4 different datasets, with 4 different hovernet models each and 6 different graph models. 
+The name of the hovernet model indicates the field of view and FT means that it was fine-tuned from a previously trained checkpoint, 
+otherwise it was trained from scratch. In my thesis we found that 518FT was normally the best. 
+The graph models provided operate on different sets of features. No prior means that it doesn't use the hovernet probabilities. 
+No morph means no visual features are used. Void means no features at all. And full means using both probabilities and morphological features. 
+For all except monusac I also provide the graph attention network in full mode.
