@@ -54,7 +54,7 @@ def main_with_args(args: Namespace) -> None:
     os.makedirs(args.output_dir, exist_ok=True)
     names = get_names(args.orig_dir, '.png')
     for name in tqdm(names):
-        orig = cv2.imread(os.path.join(args.orig_dir, name + '.png'), -1)[:, :, ::-1]
+        orig = cv2.imread(os.path.join(args.orig_dir, name + '.png'), cv2.IMREAD_COLOR)[:, :, ::-1]
         png, csv = read_labels(name, args.png_dir, args.csv_dir)
         with open(args.type_info, 'r') as f:
             type_info = json.load(f)
