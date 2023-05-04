@@ -222,6 +222,7 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
 
 
 LAST_HOV_MODEL = None
+LAST_HOV_DATASET = None
 LAST_IMG_HASH = None
 def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_model: str):
     # Cache information when possible
@@ -230,16 +231,17 @@ def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, h
     input_hash = hash(str(input_image))
     if LAST_IMG_HASH is None:
         LAST_IMG_HASH = input_hash
-    if LAST_HOV_MODEL is None or LAST_IMG_HASH is None \
-         or LAST_HOV_MODEL != hov_model or LAST_IMG_HASH != input_hash:
+    if LAST_HOV_MODEL is None or LAST_IMG_HASH is None or LAST_HOV_DATASET is None \
+         or LAST_HOV_MODEL != hov_model or LAST_IMG_HASH != input_hash or LAST_HOV_DATASET != hov_dataset:
         LAST_HOV_MODEL = hov_model
         LAST_IMG_HASH = input_hash
+        LAST_HOV_DATASET = hov_dataset
         delete_prev = True
     else:
         delete_prev = False
 
     # Monusac doesn't have graph attention
-    if hov_model == 'monusac' and gnn_model == 'gat-full':
+    if hov_dataset == 'monusac' and gnn_model == 'gat-full':
         gnn_model = 'None'
     
     if weights_dir is None:
