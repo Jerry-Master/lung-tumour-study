@@ -141,7 +141,7 @@ def create_confs():
             for n in [500] 
             for l in [0.05, 0.005] 
             for d in [8, 16] 
-            for c in [0, 0.5]]
+            for c in [1, 0.5]]
     return confs
 
 
