@@ -22,7 +22,8 @@ from scipy.spatial import KDTree
 import numpy as np
 from typing import List, Tuple, Optional
 
-def generate_tree(centroids: List[Tuple[int,int,int]]) -> KDTree:
+
+def generate_tree(centroids: List[Tuple[int, int, int]]) -> KDTree:
     """
     Returns a KDTree object from a list of (x, y, class) tuples.
 
@@ -34,7 +35,8 @@ def generate_tree(centroids: List[Tuple[int,int,int]]) -> KDTree:
     centroids_ = np.array(list(map(lambda x: (x[0], x[1]), centroids)))
     return KDTree(centroids_)
 
-def find_nearest(a: Tuple[int,int,int], B: KDTree) -> int:
+
+def find_nearest(a: Tuple[int, int, int], B: KDTree) -> int:
     """
     Finds the index of the nearest point in a KDTree to a given (x, y, class) tuple.
 
@@ -46,10 +48,11 @@ def find_nearest(a: Tuple[int,int,int], B: KDTree) -> int:
     :rtype: int
     """
     x, y = a[0], a[1]
-    dist, idx = B.query([x,y], k=1)
+    dist, idx = B.query([x, y], k=1)
     return idx
 
-def find_nearest_dist_idx(a: Tuple[int,int,int], B: KDTree) -> Tuple[float, int]:
+
+def find_nearest_dist_idx(a: Tuple[int, int, int], B: KDTree) -> Tuple[float, int]:
     """
     Finds the distance and index of the nearest point in a KDTree to a given (x, y, class) tuple.
 
@@ -61,15 +64,17 @@ def find_nearest_dist_idx(a: Tuple[int,int,int], B: KDTree) -> Tuple[float, int]
     :rtype: tuple(float, int)
     """
     x, y = a[0], a[1]
-    dist, idx = B.query([x,y], k=1)
+    dist, idx = B.query([x, y], k=1)
     return dist, idx
 
-Point = Tuple[float,float]
+
+Point = Tuple[float, float]
 Contour = List[Point]
-Cell = Tuple[int, int, Contour] # id, class
+Cell = Tuple[int, int, Contour]  # id, class
+
 
 def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int,
-    threshold: Optional[float] = np.inf) -> List[float]:
+                              threshold: Optional[float] = np.inf) -> List[float]:
     """
     Returns the N closest pairs distances between two sets of points.
 
@@ -100,8 +105,9 @@ def get_N_closest_pairs_dists(a: Contour, b: Contour, N: int,
         cpairs = cpairs[:N]
     return cpairs
 
+
 def get_N_closest_pairs_idx(a: Contour, b: Contour, N: int,
-    threshold: Optional[float] = np.inf) -> Tuple[List[int],List[int]]:
+                            threshold: Optional[float] = np.inf) -> Tuple[List[int], List[int]]:
     """
     Returns the indices of the N closest pairs of points between two sets of points.
 

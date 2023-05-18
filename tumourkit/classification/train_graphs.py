@@ -44,6 +44,7 @@ from ..utils.preprocessing import parse_path, create_dir
 from ..utils.classification import metrics_from_predictions
 warnings.filterwarnings('ignore')
 
+
 def evaluate(
         loader: GraphDataLoader,
         model: nn.Module,
@@ -59,7 +60,7 @@ def evaluate(
     Returns the model in evaluation mode.
     """
     model.eval()
-    preds, labels, probs = np.array([]).reshape(0,1), np.array([]).reshape(0,1), np.array([]).reshape(0,1 if num_classes == 2 else num_classes)
+    preds, labels, probs = np.array([]).reshape(0, 1), np.array([]).reshape(0, 1), np.array([]).reshape(0, 1 if num_classes == 2 else num_classes)
     for g in loader:
         g = g.to(device)
         # self-loops
@@ -69,21 +70,21 @@ def evaluate(
         features = g.ndata['X']
         # Forward
         logits = model(g, features)
-        pred = logits.argmax(1).detach().cpu().numpy().reshape(-1,1)
+        pred = logits.argmax(1).detach().cpu().numpy().reshape(-1, 1)
         preds = np.vstack((preds, pred))
         if num_classes == 2:
-            prob = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1].reshape(-1,1)
+            prob = F.softmax(logits, dim=1).detach().cpu().numpy()[:, 1].reshape(-1, 1)
         else:
             prob = F.softmax(logits, dim=1).detach().cpu().numpy()
         probs = np.vstack((probs, prob))
-        label = g.ndata['y'].detach().cpu().numpy().reshape(-1,1)
+        label = g.ndata['y'].detach().cpu().numpy().reshape(-1, 1)
         labels = np.vstack((labels, label))
-    # Compute metrics on validation  
+    # Compute metrics on validation
     if num_classes == 2:
         acc, f1, auc, perc_err, ece = metrics_from_predictions(labels, preds, probs, 2)
         # Tensorboard
         if writer is not None:
-            assert(log_suffix is not None and epoch is not None)
+            assert (log_suffix is not None and epoch is not None)
             writer.add_scalar('Accuracy/' + log_suffix, acc, epoch)
             writer.add_scalar('F1/' + log_suffix, f1, epoch)
             writer.add_scalar('ROC_AUC/' + log_suffix, auc, epoch)
@@ -99,7 +100,7 @@ def evaluate(
             writer.add_scalar('Weighted F1/' + log_suffix, weighted, epoch)
             writer.add_scalar('ECE/' + log_suffix, ece, epoch)
         return micro, macro, weighted, ece
-    
+
 
 def train_one_iter(
         tr_loader: GraphDataLoader,
@@ -133,35 +134,36 @@ def train_one_iter(
         preds = logits.argmax(1).detach().cpu().numpy()
         labels = labels.detach().cpu().numpy()
         if num_classes == 2:
-            probs = F.softmax(logits, dim=1).detach().cpu().numpy()[:,1]
+            probs = F.softmax(logits, dim=1).detach().cpu().numpy()[:, 1]
             train_acc, train_f1, train_auc, train_perc_err, train_ece = metrics_from_predictions(labels, preds, probs, 2)
             # Tensorboard
-            writer.add_scalar('Accuracy/train', train_acc, step+len(tr_loader)*epoch)
-            writer.add_scalar('F1/train', train_f1, step+len(tr_loader)*epoch)
-            writer.add_scalar('ROC_AUC/train', train_auc, step+len(tr_loader)*epoch)
-            writer.add_scalar('ECE/train', train_ece, step+len(tr_loader)*epoch)
-            writer.add_scalar('Percentage Error/train', train_perc_err, step+len(tr_loader)*epoch)
+            writer.add_scalar('Accuracy/train', train_acc, step + len(tr_loader) * epoch)
+            writer.add_scalar('F1/train', train_f1, step + len(tr_loader) * epoch)
+            writer.add_scalar('ROC_AUC/train', train_auc, step + len(tr_loader) * epoch)
+            writer.add_scalar('ECE/train', train_ece, step + len(tr_loader) * epoch)
+            writer.add_scalar('Percentage Error/train', train_perc_err, step + len(tr_loader) * epoch)
         else:
             probs = F.softmax(logits, dim=1).detach().cpu().numpy()
             train_micro, train_macro, train_weighted, train_ece = metrics_from_predictions(labels, preds, probs, num_classes)
             # Tensorboard
-            writer.add_scalar('Accuracy/train', train_micro, step+len(tr_loader)*epoch)
-            writer.add_scalar('Macro F1/train', train_macro, step+len(tr_loader)*epoch)
-            writer.add_scalar('Weighted F1/train', train_weighted, step+len(tr_loader)*epoch)
-            writer.add_scalar('ECE/train', train_ece, step+len(tr_loader)*epoch)
+            writer.add_scalar('Accuracy/train', train_micro, step + len(tr_loader) * epoch)
+            writer.add_scalar('Macro F1/train', train_macro, step + len(tr_loader) * epoch)
+            writer.add_scalar('Weighted F1/train', train_weighted, step + len(tr_loader) * epoch)
+            writer.add_scalar('ECE/train', train_ece, step + len(tr_loader) * epoch)
+
 
 def train(
         save_dir: str,
         save_weights: bool,
-        tr_loader: GraphDataLoader, 
-        val_loader: GraphDataLoader, 
+        tr_loader: GraphDataLoader,
+        val_loader: GraphDataLoader,
         model: nn.Module,
         optimizer: Optimizer,
         writer: SummaryWriter,
         n_early: int,
         device: Optional[str] = 'cpu',
         check_iters: Optional[int] = -1,
-        conf: Optional[Dict[str,Any]] = None,
+        conf: Optional[Dict[str, Any]] = None,
         normalizers: Optional[Tuple[Normalizer]] = None,
         num_classes: Optional[int] = 2,
         ) -> None:
@@ -192,7 +194,7 @@ def train(
             early_stop_rounds += 1
         else:
             return
-        
+
 
 def load_dataset(
         train_node_dir: str,
@@ -203,7 +205,7 @@ def load_dataset(
         remove_morph: Optional[bool] = False,
         ) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
     """
-    Creates Torch dataloaders for training. 
+    Creates Torch dataloaders for training.
     Folder structure:
     node_dir:
      - train
@@ -233,6 +235,7 @@ def load_dataset(
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
 
+
 def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, int]]:
     """
     Generates a grid in the search space with no more than max_confs configurations.
@@ -240,12 +243,12 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
     """
     num_layers_confs = int(math.sqrt(max_confs / 2))
     num_dropout_confs = int(max_confs // (2 * num_layers_confs))
-    assert(2 * num_layers_confs * num_dropout_confs <= max_confs)
+    assert (2 * num_layers_confs * num_dropout_confs <= max_confs)
     assert num_layers_confs <= 15, 'Too many layers'
     confs = []
-    for num_layers in np.linspace(1,15, num_layers_confs):
+    for num_layers in np.linspace(1, 15, num_layers_confs):
         num_layers = int(num_layers)
-        for dropout in np.linspace(0,0.9, num_dropout_confs):
+        for dropout in np.linspace(0, 0.9, num_dropout_confs):
             conf = {}
             conf['MODEL_NAME'] = model_name
             conf['NUM_LAYERS'] = num_layers
@@ -261,7 +264,8 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
             confs.append(conf)
     return confs
 
-def load_model(conf: Dict[str,Any], num_classes: int, num_feats: int) -> nn.Module:
+
+def load_model(conf: Dict[str, Any], num_classes: int, num_feats: int) -> nn.Module:
     """
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
@@ -278,6 +282,7 @@ def load_model(conf: Dict[str,Any], num_classes: int, num_feats: int) -> nn.Modu
         return HardGAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
     assert False, 'Model not implemented.'
 
+
 def create_results_file(filename: str, num_classes: int) -> None:
     """
     Creates header of .csv result file to append results.
@@ -290,9 +295,13 @@ def create_results_file(filename: str, num_classes: int) -> None:
         with open(filename + '.csv', 'w') as f:
             print('Micro F1,Macro F1,Weighted F1,ECE,NUM_LAYERS,DROPOUT,NORM_TYPE', file=f)
 
+
 def append_results(
-    filename: str, f1: float, acc: float, auc: float, num_layers: int, dropout: float, bn_type: str, ece: float, perc_err: Optional[float] = None
-) -> None:
+        filename: str,
+        f1: float, acc: float, auc: float,
+        num_layers: int, dropout: float, bn_type: str,
+        ece: float, perc_err: Optional[float] = None
+        ) -> None:
     """
     Appends result to given filename.
     filename must not contain extension.
@@ -303,12 +312,14 @@ def append_results(
         else:
             print(f1, acc, auc, ece, num_layers, dropout, bn_type, file=f, sep=',')
 
+
 def name_from_conf(conf: Dict[str, Any]) -> str:
     """
     Generates a name from the configuration object.
     """
     return conf['MODEL_NAME'] + '_' + str(conf['NUM_LAYERS']) + '_' \
-        + str(conf['DROPOUT']) + '_' + str(conf['NORM_TYPE']) 
+        + str(conf['DROPOUT']) + '_' + str(conf['NORM_TYPE'])
+
 
 def save_model(
         save_dir: str,
@@ -327,6 +338,7 @@ def save_model(
         json.dump(conf, f)
     with open(os.path.join(save_dir, 'normalizers', name + '.pkl'), 'wb') as f:
         pickle.dump(normalizers, f)
+
 
 def train_one_conf(
         args: Namespace,
@@ -386,9 +398,9 @@ def _create_parser():
                         help='Folder to save models weights and confs.')
     parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu',
                         help='Device to execute. Either cpu or cuda. Default: cpu.')
-    parser.add_argument('--num-workers', type=int, default=1, 
+    parser.add_argument('--num-workers', type=int, default=1,
                         help='Number of processors to use. Default: 1.')
-    parser.add_argument('--checkpoint-iters', type=int, default=-1, 
+    parser.add_argument('--checkpoint-iters', type=int, default=-1,
                         help='Number of iterations at which to save model periodically while training. Set to -1 for no checkpointing. Default: -1.')
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     parser.add_argument('--disable-prior', action='store_true', help='If True, remove hovernet probabilities from node features.')
@@ -464,4 +476,3 @@ def main():
     parser = _create_parser()
     args = parser.parse_args()
     main(args)
-

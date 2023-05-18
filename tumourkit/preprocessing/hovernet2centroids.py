@@ -21,14 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Contact information: joseperez2000@hotmail.es
 """
 from typing import Dict, Any, List, Tuple
-import pandas as pd
 import argparse
 import logging
 from tqdm import tqdm
 from ..utils.preprocessing import create_dir, read_json, parse_path, get_names, save_centroids
 
 
-def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
+def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int, int, int]]:
     """
     Extracts centroids from a HoverNet JSON dictionary and returns them as a list of (X,Y,class) tuples.
 
@@ -48,7 +47,7 @@ def parse_centroids(nuc: Dict[str, Any]) -> List[Tuple[int,int,int]]:
         if inst_type == 0:
             logging.warning('Found cell with class 0, removing it.')
         else:
-            centroids_.append((inst_centroid[1], inst_centroid[0], inst_type)) 
+            centroids_.append((inst_centroid[1], inst_centroid[0], inst_type))
     return centroids_
 
 

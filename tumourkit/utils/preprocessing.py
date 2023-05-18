@@ -1,5 +1,4 @@
 """
-
 Module with utility functions for preprocessing.
 
 Copyright (C) 2023  Jose Pérez Cano
@@ -43,6 +42,7 @@ def parse_path(path: str) -> str:
         return path + '/'
     return path
 
+
 def create_dir(path: str) -> None:
     """
     Creates a directory at the specified path if it does not already exist.
@@ -52,6 +52,7 @@ def create_dir(path: str) -> None:
     """
     if not os.path.isdir(path):
         os.mkdir(path)
+
 
 def get_names(path: str, pattern: str) -> List[str]:
     """
@@ -70,6 +71,7 @@ def get_names(path: str, pattern: str) -> List[str]:
         if pattern in name:
             names.append(name[:-len(pattern)])
     return names
+
 
 def read_names(file_path: str) -> List[str]:
     """
@@ -106,7 +108,7 @@ def read_png(name: str, png_dir: str) -> np.ndarray:
     try:
         img = cv2.imread(os.path.join(png_dir, name + '.GT_cells.png'), -1)
         return img
-    except:
+    except Exception:
         return None
 
 
@@ -129,11 +131,11 @@ def read_csv(name: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
         csv = pd.read_csv(os.path.join(csv_dir, name + '.class.csv'), header=None)
         csv.columns = ['id', 'label']
         return csv
-    except:
+    except Exception:
         return None
-    
 
-def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
+
+def read_gson(name: str, path: str) -> List[Dict[str, Any]]:
     """
     Reads the GeoJSON file at the specified path with the given name.
 
@@ -147,7 +149,7 @@ def read_gson(name: str, path: str) -> List[Dict[str,Any]]:
     with open(os.path.join(path, name + '.geojson'), 'r') as f:
         gson = geojson.load(f)
     return gson
-    
+
 
 def read_labels(name: str, png_dir: str, csv_dir: str) -> Tuple[np.ndarray, pd.DataFrame]:
     """
@@ -170,7 +172,7 @@ def read_labels(name: str, png_dir: str, csv_dir: str) -> Tuple[np.ndarray, pd.D
         img = read_png(name, png_dir)
         csv = read_csv(name, csv_dir)
         return img, csv
-    except:
+    except Exception:
         return None, None
 
 
@@ -192,6 +194,7 @@ def read_json(json_path: str) -> Dict[str, Any]:
         nuc_info = data['nuc']
     return nuc_info
 
+
 def read_centroids(name: str, path: str) -> np.ndarray:
     """
     Reads a CSV file from the specified directory containing centroids and returns their contents as a NumPy array.
@@ -208,7 +211,7 @@ def read_centroids(name: str, path: str) -> np.ndarray:
     Centroids with class -1 are dropped and the coordinates are converted to integers.
     """
     centroid_csv = pd.read_csv(os.path.join(path, name + '.centroids.csv'))
-    centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class']==-1].index)
+    centroid_csv = centroid_csv.drop(centroid_csv[centroid_csv['class'] == -1].index)
     return centroid_csv.to_numpy(dtype=int)
 
 
@@ -231,8 +234,10 @@ def read_graph(name: str, graph_dir: str) -> pd.DataFrame:
     return df
 
 
-Point = Tuple[float,float]
+Point = Tuple[float, float]
 Contour = List[Point]
+
+
 def format_contour(contour: Contour) -> Contour:
     """
     Formats a contour in cv2.findContours format to an array of shape (N,2).
@@ -243,17 +248,18 @@ def format_contour(contour: Contour) -> Contour:
     :return: The formatted contour.
     :rtype: Contour
     """
-    new_contour = np.reshape(contour, (-1,2)).tolist()
+    new_contour = np.reshape(contour, (-1, 2)).tolist()
     new_contour.append(new_contour[0])
     return new_contour
 
-def create_geojson(contours: List[Tuple[int,int]], num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
+
+def create_geojson(contours: List[Tuple[int, int]], num_classes: Optional[int] = 2) -> List[Dict[str, Any]]:
     """
-    Converts a list of contours and their labels to a list of dictionaries 
+    Converts a list of contours and their labels to a list of dictionaries
     containing GeoJSON-formatted data.
 
-    :param contours: A list of pairs (contour, label) where contour is a list of points starting 
-        and finishing in the same point and label is an integer representing the class of the 
+    :param contours: A list of pairs (contour, label) where contour is a list of points starting
+        and finishing in the same point and label is an integer representing the class of the
         cell (1: non-tumour, 2: tumour).
     :type contours: List[Tuple[int, int]]
     :param num_classes: The number of classes in the data. Defaults to 2.
@@ -261,50 +267,50 @@ def create_geojson(contours: List[Tuple[int,int]], num_classes: Optional[int] = 
     :return: A list of dictionaries with the GeoJSON format of QuPath.
     :rtype: List[Dict[str, Any]]
 
-    This function converts a list of contours and their labels to a list of dictionaries 
-    containing GeoJSON-formatted data. The function expects the contours to be a list of 
-    pairs (contour, label), where contour is a list of points starting and finishing in the 
-    same point, and label is an integer representing the class of the cell (1: non-tumour, 
-    2: tumour). 
+    This function converts a list of contours and their labels to a list of dictionaries
+    containing GeoJSON-formatted data. The function expects the contours to be a list of
+    pairs (contour, label), where contour is a list of points starting and finishing in the
+    same point, and label is an integer representing the class of the cell (1: non-tumour,
+    2: tumour).
 
-    The function returns a list of dictionaries with the GeoJSON format of QuPath. The 
-    number of classes can be specified with the num_classes parameter. By default, it is set 
-    to 2, but it can be set to any integer greater than or equal to 1. 
+    The function returns a list of dictionaries with the GeoJSON format of QuPath. The
+    number of classes can be specified with the num_classes parameter. By default, it is set
+    to 2, but it can be set to any integer greater than or equal to 1.
 
-    The function uses a list of labels and colour codes to create the classification data for 
-    the output dictionaries. The labels and colour codes are stored in the label_dict and 
-    colour_dict lists, respectively. The label_dict list contains the names of the labels and 
-    the colour_dict list contains the corresponding RGB colour codes for each label. By default, 
-    the label_dict list contains the values ["background", "non-tumour", "tumour", "segmented"] 
-    and the colour_dict list contains the value [-9408287, -9408287, -9408287, -9408287]. If 
-    the num_classes parameter is set to a value other than 2, the label_dict list is updated 
-    to contain the values ["background", "Class1", "Class2", ..., "ClassN"], where N is the 
-    number of classes, and the colour_dict list is updated to contain the value 
+    The function uses a list of labels and colour codes to create the classification data for
+    the output dictionaries. The labels and colour codes are stored in the label_dict and
+    colour_dict lists, respectively. The label_dict list contains the names of the labels and
+    the colour_dict list contains the corresponding RGB colour codes for each label. By default,
+    the label_dict list contains the values ["background", "non-tumour", "tumour", "segmented"]
+    and the colour_dict list contains the value [-9408287, -9408287, -9408287, -9408287]. If
+    the num_classes parameter is set to a value other than 2, the label_dict list is updated
+    to contain the values ["background", "Class1", "Class2", ..., "ClassN"], where N is the
+    number of classes, and the colour_dict list is updated to contain the value
     [-9408287, ..., -9408287] where the length of the list is N+1. Although this list is
     superfluous and not used by QuPath.
 
-    Each dictionary in the output list represents a cell contour and contains a Polygon 
-    object with the contour points, a classification object with the name and colour of the 
-    label, and a boolean indicating whether the object is locked. The dictionary is in the 
+    Each dictionary in the output list represents a cell contour and contains a Polygon
+    object with the contour points, a classification object with the name and colour of the
+    label, and a boolean indicating whether the object is locked. The dictionary is in the
     format expected by QuPath for reading annotations.
     """
     label_dict = ["background", "non-tumour", "tumour", "segmented"]
     colour_dict = [-9408287, -9408287, -9408287, -9408287]
     if num_classes != 2:
-        label_dict = ["background"] + ["Class" + str(i) for i in range(1, num_classes+1)]
+        label_dict = ["background"] + ["Class" + str(i) for i in range(1, num_classes + 1)]
     colour_dict = [-9408287] * (num_classes + 1)
     features = []
     for contour, label in contours:
-        assert(label > 0)
+        assert (label > 0)
         points = Polygon([contour])
         properties = {
-                    "object_type": "annotation",
-                    "classification": {
-                        "name": label_dict[label],
-                        "colorRGB": colour_dict[label]
-                    },
-                    "isLocked": False
-                    }
+            "object_type": "annotation",
+            "classification": {
+                "name": label_dict[label],
+                "colorRGB": colour_dict[label]
+            },
+            "isLocked": False
+        }
         feat = Feature(geometry=points, properties=properties)
         features.append(feat)
     return features
@@ -373,7 +379,7 @@ def save_centroids(centroids: np.ndarray, centroids_dir: str, name: str) -> None
     :param name: The base name for the file (without extensions).
     :type name: str
     """
-    df = pd.DataFrame(centroids, columns=['X','Y','class'])
+    df = pd.DataFrame(centroids, columns=['X', 'Y', 'class'])
     df.to_csv(os.path.join(centroids_dir, name + '.centroids.csv'), index=False)
 
 
@@ -411,7 +417,7 @@ def get_centroid_by_id(img: np.ndarray, idx: int) -> Tuple[int, int]:
     """
     Given an image and an id representing a component, returns the centroid
     of the component as a tuple (x, y).
-    
+
     :param img: A NumPy array representing the image.
     :type img: np.ndarray
     :param idx: An integer representing the id of the component.
@@ -440,8 +446,8 @@ def get_mask(png: np.ndarray, idx: int) -> np.ndarray:
     :rtype: np.ndarray
     """
     png_aux = png.copy()
-    png_aux[png_aux!=idx] = 0
-    png_aux[png_aux!=0] = 1
+    png_aux[png_aux != idx] = 0
+    png_aux[png_aux != 0] = 1
     return png_aux
 
 
@@ -461,13 +467,13 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, int, int]
     """
     img_aux = img.copy()
     img_aux = img_aux * mask.reshape(*mask.shape, 1)
-    x,y,w,h = cv2.boundingRect((mask * 255).astype(np.uint8))
+    x, y, w, h = cv2.boundingRect((mask * 255).astype(np.uint8))
     X, Y = np.where(mask == 1)
     if len(X) == 0 or len(Y) == 0:
         cx, cy = -1, -1
     else:
         cx, cy = X.mean(), Y.mean()
-    return img_aux[y:y+h, x:x+w].copy(), mask[y:y+h, x:x+w].copy(), cx, cy
+    return img_aux[y:y + h, x:x + w].copy(), mask[y:y + h, x:x + w].copy(), cx, cy
 
 
 def read_image(name: str, path: str) -> np.array:
@@ -482,7 +488,7 @@ def read_image(name: str, path: str) -> np.array:
     :return: Array with pixel values (RGB).
     :rtype: np.array
     """
-    aux = cv2.imread(os.path.join(path, name+'.png'))
+    aux = cv2.imread(os.path.join(path, name + '.png'))
     return cv2.cvtColor(aux, cv2.COLOR_BGR2RGB)
 
 
@@ -498,7 +504,7 @@ def compute_perimeter(c: Contour) -> float:
     :rtype: float
     """
     diff = np.diff(c, axis=0)
-    dists = np.hypot(diff[:,0], diff[:,1])
+    dists = np.hypot(diff[:, 0], diff[:, 1])
     return dists.sum()
 
 
@@ -522,29 +528,31 @@ def extract_features(msk_img: np.ndarray, bin_msk: np.ndarray, debug=False) -> D
     feats = {}
     feats['area'] = bin_msk.sum()
 
-    if debug: import pdb; pdb.set_trace()
+    if debug:
+        import pdb
+        pdb.set_trace()
     contours, _ = cv2.findContours(
-        (bin_msk * 255).astype(np.uint8), 
+        (bin_msk * 255).astype(np.uint8),
         mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE
     )
     contour = format_contour(contours[0])
     feats['perimeter'] = compute_perimeter(contour)
-    
+
     gray_msk = ma.masked_array(
-        gray_msk, mask=1-bin_msk
+        gray_msk, mask=1 - bin_msk
     )
     feats['std'] = gray_msk.std()
 
     msk_img = ma.masked_array(
-        msk_img, mask=1-np.repeat(bin_msk.reshape((*bin_msk.shape,1)), 3, axis=2)
+        msk_img, mask=1 - np.repeat(bin_msk.reshape((*bin_msk.shape, 1)), 3, axis=2)
     )
-    red = msk_img[:,:,0].compressed()
+    red = msk_img[:, :, 0].compressed()
     red_bins, _ = np.histogram(red, bins=5, density=True)
     feats['red'] = red_bins
-    green = msk_img[:,:,1].compressed()
+    green = msk_img[:, :, 1].compressed()
     green_bins, _ = np.histogram(green, bins=5, density=True)
     feats['green'] = green_bins
-    blue = msk_img[:,:,2].compressed()
+    blue = msk_img[:, :, 2].compressed()
     blue_bins, _ = np.histogram(blue, bins=5, density=True)
     feats['blue'] = blue_bins
     return feats
@@ -560,7 +568,7 @@ def add_node(graph: Dict[str, float], feats: Dict[str, np.ndarray]) -> None:
     :type graph: Dict[str, float]
     :param feats: Dictionary with vectorial features of a graph node.
     :type feats: Dict[str, np.ndarray]
-    :return: None. The graph dictionary is modified in place.    
+    :return: None. The graph dictionary is modified in place.
     """
     for k, v in feats.items():
         if hasattr(v, '__len__'):

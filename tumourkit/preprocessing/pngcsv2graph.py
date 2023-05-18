@@ -30,7 +30,7 @@ from ..utils.preprocessing import get_mask, read_labels, parse_path, create_dir,
 
 def pngcsv2graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
-    Given original image and pngcsv labels, 
+    Given original image and pngcsv labels,
     returns nodes with extracted attributes in a DataFrame.
     Current attributes are:
         - X, Y of centroid
@@ -43,10 +43,10 @@ def pngcsv2graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.Data
     graph = {}
     for idx, cls in csv.itertuples(index=False, name=None):
         mask = get_mask(png, idx)
-        msk_img, msk, X, Y  = apply_mask(img, mask)
+        msk_img, msk, X, Y = apply_mask(img, mask)
         try:
             feats = extract_features(msk_img, msk)
-        except:
+        except Exception:
             feats = extract_features(msk_img, msk, debug=True)
         if len(feats) > 0:
             feats['class'] = cls
@@ -78,7 +78,7 @@ def main_subthread(
         orig_dir: str,
         output_path: str,
         pbar: tqdm,
-        )-> None:
+        ) -> None:
     """
     Wrapper to use multiprocessing
     """
@@ -86,7 +86,7 @@ def main_subthread(
         png, csv = read_labels(name, png_dir, csv_dir)
         img = read_image(name, orig_dir)
         graph = pngcsv2graph(img, png, csv)
-        save_graph(graph, os.path.join(output_path, name+'.nodes.csv'))
+        save_graph(graph, os.path.join(output_path, name + '.nodes.csv'))
     except Exception as e:
         logging.warning(e)
         logging.warning('Failed at:', name)
@@ -106,7 +106,7 @@ def main_with_args(args):
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             for name in names:
-                executor.submit(main_subthread, name, png_dir, csv_dir, orig_dir, output_path, pbar) 
+                executor.submit(main_subthread, name, png_dir, csv_dir, orig_dir, output_path, pbar)
     else:
         for name in names:
             main_subthread(name, png_dir, csv_dir, orig_dir, output_path, pbar)

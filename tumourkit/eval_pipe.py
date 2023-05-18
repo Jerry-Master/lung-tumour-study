@@ -12,7 +12,7 @@ from .utils.pipes import HovernetNotFoundError, check_void
 from .utils.classification import metrics_from_predictions
 
 
-def run_preprocessing(args: Namespace, logger : Logger) -> None:
+def run_preprocessing(args: Namespace, logger: Logger) -> None:
     """
     Converts the gson format to the rest of formats.
     """
@@ -20,8 +20,8 @@ def run_preprocessing(args: Namespace, logger : Logger) -> None:
     if not os.path.isdir(os.path.join(args.root_dir, 'data', 'tmp_hov', 'json')):
         raise HovernetNotFoundError('Please, train again or extract hovernet outputs.')
     newargs = Namespace(
-        json_dir = os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'),
-        output_path = os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
+        json_dir=os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'),
+        output_path=os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
     )
     hovernet2centroids(newargs)
     for split in ['train', 'validation', 'test']:
@@ -34,18 +34,18 @@ def run_preprocessing(args: Namespace, logger : Logger) -> None:
         if check_void(os.path.join(args.root_dir, 'data', split, 'png')) or check_void(os.path.join(args.root_dir, 'data', split, 'csv')):
             logger.info('   From geojson to pngcsv.')
             newargs = Namespace(
-                gson_dir = os.path.join(args.root_dir, 'data', split, 'gson'),
-                png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
-                csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
-                num_classes = args.num_classes,
+                gson_dir=os.path.join(args.root_dir, 'data', split, 'gson'),
+                png_dir=os.path.join(args.root_dir, 'data', split, 'png'),
+                csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
+                num_classes=args.num_classes,
             )
             geojson2pngcsv(newargs)
         if check_void(os.path.join(args.root_dir, 'data', split, 'centroids')):
             logger.info('   Extracting centroids from GT.')
             newargs = Namespace(
-                png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
-                csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
-                output_path = os.path.join(args.root_dir, 'data', split, 'centroids')
+                png_dir=os.path.join(args.root_dir, 'data', split, 'png'),
+                csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
+                output_path=os.path.join(args.root_dir, 'data', split, 'centroids')
             )
             pngcsv2centroids(newargs)
     return
@@ -56,9 +56,9 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
     trues, probs = None, None
     for file in os.listdir(folder):
         df = pd.read_csv(os.path.join(folder, file))
-        _trues = df['class'].to_numpy()-1
+        _trues = df['class'].to_numpy() - 1
         if trues is None:
-            trues = _trues.reshape((-1,1))
+            trues = _trues.reshape((-1, 1))
         else:
             trues = np.vstack((trues, _trues.reshape((-1, 1))))
         if args.num_classes == 2:
@@ -92,12 +92,12 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
     for split in ['train', 'validation', 'test']:
         logger.info(f'    Evaluating {split} split')
         newargs = Namespace(
-            names = os.path.join(args.root_dir, 'data', split, 'names.txt'),
-            gt_path = os.path.join(args.root_dir, 'data', split, 'centroids'),
-            pred_path = os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
-            save_name = args.save_name + '_' + split,
-            debug_path = None,
-            num_classes = args.num_classes
+            names=os.path.join(args.root_dir, 'data', split, 'names.txt'),
+            gt_path=os.path.join(args.root_dir, 'data', split, 'centroids'),
+            pred_path=os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
+            save_name=args.save_name + '_' + split,
+            debug_path=None,
+            num_classes=args.num_classes
         )
         eval_segment(newargs, logger)
 

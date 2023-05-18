@@ -31,6 +31,7 @@ from torch.utils.data import Dataset
 import dgl
 from sklearn.preprocessing import Normalizer
 
+
 class GraphDataset(Dataset):
     """
     Torch Dataset to load graphs from .nodes.csv files.
@@ -40,17 +41,18 @@ class GraphDataset(Dataset):
 
     Graph edges are generated on the fly.
     """
-    def __init__(self, node_dir: str, max_dist: float, max_degree: int,
-        files: Optional[List[str]] = None,
-        transform: Optional[Callable[[np.ndarray], np.ndarray]] = None,
-        column_normalize: Optional[bool] = False,
-        row_normalize: Optional[bool] = False,
-        normalizers: Optional[Tuple[Any]] = None,
-        return_names: Optional[bool] = False,
-        is_inference: Optional[bool] = False,
-        remove_prior: Optional[bool] = False,
-        remove_morph: Optional[bool] = False,
-        ):
+    def __init__(
+            self, node_dir: str, max_dist: float, max_degree: int,
+            files: Optional[List[str]] = None,
+            transform: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+            column_normalize: Optional[bool] = False,
+            row_normalize: Optional[bool] = False,
+            normalizers: Optional[Tuple[Any]] = None,
+            return_names: Optional[bool] = False,
+            is_inference: Optional[bool] = False,
+            remove_prior: Optional[bool] = False,
+            remove_morph: Optional[bool] = False,
+            ):
         """
         node_dir: Path to .nodes.csv files.
         max_dist: Maximum distance to consider two nodes as neighbours.
@@ -99,7 +101,7 @@ class GraphDataset(Dataset):
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
         if not self.is_inference:
             g.ndata['y'] = torch.tensor(y, dtype=torch.long)
-        g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1,1))
+        g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1, 1))
         if self.return_names:
             return g, file_name
         return g
@@ -108,8 +110,10 @@ class GraphDataset(Dataset):
         return len(self.node_names)
 
     @staticmethod
-    def create_edges(xx: List[float], yy: List[float],
-        max_degree: int, threshold: float) -> Tuple[List[int], List[int]]:
+    def create_edges(
+            xx: List[float], yy: List[float],
+            max_degree: int, threshold: float
+            ) -> Tuple[List[int], List[int]]:
         """
         Creates edges between nearby nodes.
 
@@ -126,7 +130,7 @@ class GraphDataset(Dataset):
         tree = generate_tree(zip(xx, yy))
         source, dest, distances = [], [], []
         for i, (x, y) in enumerate(zip(xx, yy)):
-            dists, idx = tree.query((x,y), k=max_degree, distance_upper_bound=threshold)
+            dists, idx = tree.query((x, y), k=max_degree, distance_upper_bound=threshold)
             tmp = list(filter(lambda x: x[0] > 1e-10 and x[1] < len(xx), zip(dists, idx)))
             tmp1, tmp2 = tee(tmp)
             dists, idx = list(x[0] for x in tmp1), list(x[1] for x in tmp2)
@@ -146,11 +150,11 @@ class GraphDataset(Dataset):
         if self.column_normalize:
             self.col_sc = fit_column_normalizer(self.node_dir, self.node_names, remove_morph=self.remove_morph, remove_prior=self.remove_prior)
             assert callable(getattr(self.col_sc, "transform", None)), \
-            'Error loading column normalizer.'
+                'Error loading column normalizer.'
         if self.row_normalize:
             self.row_sc = Normalizer(norm='l1')
             assert callable(getattr(self.row_sc, "transform", None)), \
-            'Error loading row normalizer.'
+                'Error loading row normalizer.'
 
     def get_normalizers(self) -> Tuple[Any]:
         """
@@ -170,4 +174,3 @@ class GraphDataset(Dataset):
             return [self.row_sc, *self.normalizers]
         if self.normalizers is not None:
             return self.normalizers
-        

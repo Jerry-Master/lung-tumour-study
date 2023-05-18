@@ -28,21 +28,18 @@ from tqdm import tqdm
 from ..utils.preprocessing import read_png, save_graph, parse_path, create_dir, get_names, get_mask, apply_mask, add_node, extract_features, read_image
 
 
-
-
-
 def png2graph(img: np.ndarray, png: np.ndarray) -> pd.DataFrame:
     """
     Given an original image and a segmentation mask in PNG format, this function extracts the nodes and their attributes
     and returns them in a pandas DataFrame. The following attributes are computed for each node:
-    
+
     * X: The X-coordinate of the centroid.
     * Y: The Y-coordinate of the centroid.
     * Area: The area of the cell.
     * Perimeter: The perimeter of the cell.
     * Variance: The variance of the grayscale values inside the cell.
     * Histogram: The normalized histogram of the grayscale values inside the cell (5 bins).
-    
+
     :param img: The original image as a numpy array.
     :type img: np.ndarray
     :param png: The segmentation mask in PNG format as a numpy array.
@@ -55,10 +52,10 @@ def png2graph(img: np.ndarray, png: np.ndarray) -> pd.DataFrame:
         if idx == 0:
             continue
         mask = get_mask(png, idx)
-        msk_img, msk, X, Y  = apply_mask(img, mask)
+        msk_img, msk, X, Y = apply_mask(img, mask)
         try:
             feats = extract_features(msk_img, msk)
-        except:
+        except Exception:
             feats = extract_features(msk_img, msk, debug=True)
         if len(feats) > 0:
             feats['id'] = idx
@@ -86,7 +83,7 @@ def main_subthread(
         orig_dir: str,
         output_path: str,
         pbar: tqdm,
-        )-> None:
+        ) -> None:
     """
     A wrapper function to use multiprocessing.
 
@@ -105,7 +102,7 @@ def main_subthread(
         png = read_png(name, png_dir)
         img = read_image(name, orig_dir)
         graph = png2graph(img, png)
-        save_graph(graph, os.path.join(output_path, name+'.nodes.csv'))
+        save_graph(graph, os.path.join(output_path, name + '.nodes.csv'))
     except Exception as e:
         logging.warning(e)
         logging.warning('Failed at:', name)
@@ -124,7 +121,7 @@ def main_with_args(args):
     if args.num_workers > 0:
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             for name in names:
-                executor.submit(main_subthread, name, png_dir, orig_dir, output_path, pbar) 
+                executor.submit(main_subthread, name, png_dir, orig_dir, output_path, pbar)
     else:
         for name in names:
             main_subthread(name, png_dir, orig_dir, output_path, pbar)

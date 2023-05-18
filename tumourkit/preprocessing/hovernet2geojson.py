@@ -25,8 +25,10 @@ from tqdm import tqdm
 from ..utils.preprocessing import parse_path, get_names, create_dir, read_json, create_geojson
 
 
-Point = Tuple[float,float]
+Point = Tuple[float, float]
 Contour = List[Point]
+
+
 def parse_contours(nuc: Dict[str, Any], num_classes: Optional[int] = 2) -> List[Contour]:
     """
     Parses contours of cells from the given HoverNet JSON dictionary.
@@ -48,18 +50,18 @@ def parse_contours(nuc: Dict[str, Any], num_classes: Optional[int] = 2) -> List[
         if inst_type >= 1 and inst_type <= num_classes:
             inst_contour = inst_info['contour']
             inst_contour.append(inst_contour[0])
-            contours_.append((inst_contour, inst_type)) 
+            contours_.append((inst_contour, inst_type))
         elif inst_type is None:
             inst_contour = inst_info['contour']
             inst_contour.append(inst_contour[0])
-            contours_.append((inst_contour, 3)) 
+            contours_.append((inst_contour, 3))
     return contours_
 
 
 def save_contours(out_dir: str, name: str, contours: List[Contour]) -> None:
     """
     Save geojson in a file with given name in out_dir.
-    
+
     :param out_dir: The directory where the file will be saved.
     :type out_dir: str
     :param name: The name of the file.

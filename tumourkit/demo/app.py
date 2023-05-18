@@ -66,7 +66,7 @@ def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_model: str, 
         filename = os.path.join(weights_dir, hov_dataset, 'type_info.json')
         download_file(url, filename)
     if not os.path.exists(os.path.join(weights_dir, hov_dataset, gnn_model)) \
-        or len(os.listdir(os.path.join(weights_dir, hov_dataset, gnn_model))) < 3:
+       or len(os.listdir(os.path.join(weights_dir, hov_dataset, gnn_model))) < 3:
         os.makedirs(os.path.join(weights_dir, hov_dataset, gnn_model), exist_ok=True)
         url_folder = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/tree/main/{hov_dataset}/gnn/{gnn_model}/'
         url_files = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/gnn/{gnn_model}/'
@@ -109,31 +109,31 @@ def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int, weights_dir
 
 def run_posthov(num_classes: int, logger: Logger):
     newargs = Namespace(
-        json_dir = os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'json'),
-        gson_dir = os.path.join(APP_DIR, 'tmp', 'gson_hov'),
-        num_classes = num_classes
+        json_dir=os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'json'),
+        gson_dir=os.path.join(APP_DIR, 'tmp', 'gson_hov'),
+        num_classes=num_classes
     )
     hovernet2geojson(newargs)
     newargs = Namespace(
-        gson_dir = os.path.join(APP_DIR, 'tmp', 'gson_hov'),
-        png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
-        csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_hov'),
-        num_classes = num_classes
+        gson_dir=os.path.join(APP_DIR, 'tmp', 'gson_hov'),
+        png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
+        csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_hov'),
+        num_classes=num_classes
     )
     geojson2pngcsv(newargs)
     create_dir(os.path.join(APP_DIR, 'tmp', 'graphs'))
     newargs = Namespace(
-        png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
-        orig_dir = os.path.join(APP_DIR, 'tmp', 'input'),
-        output_path = os.path.join(APP_DIR, 'tmp', 'graphs', 'raw'),
-        num_workers = 0
+        png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
+        orig_dir=os.path.join(APP_DIR, 'tmp', 'input'),
+        output_path=os.path.join(APP_DIR, 'tmp', 'graphs', 'raw'),
+        num_workers=0
     )
     png2graph(newargs)
     newargs = Namespace(
-        json_dir = os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'json'),
-        graph_dir = os.path.join(APP_DIR, 'tmp', 'graphs', 'raw'),
-        output_dir = os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
-        num_classes = num_classes
+        json_dir=os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'json'),
+        graph_dir=os.path.join(APP_DIR, 'tmp', 'graphs', 'raw'),
+        output_dir=os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
+        num_classes=num_classes
     )
     join_hovprob_graph(newargs, logger)
 
@@ -144,36 +144,36 @@ def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int, weights_dir: 
     model_name = os.listdir(os.path.join(weights_dir, gnn_dataset, gnn_model))[0]
     model_name, ext = os.path.splitext(model_name)
     newargs = Namespace(
-        node_dir = os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
-        output_dir = os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
-        weights = os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.pth'),
-        conf = os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.json'),
-        normalizers = os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.pkl'),
-        num_classes = num_classes,
-        disable_prior = disable_prior,
-        disable_morph_feats = disable_morph_feats,
+        node_dir=os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
+        output_dir=os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
+        weights=os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.pth'),
+        conf=os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.json'),
+        normalizers=os.path.join(weights_dir, gnn_dataset, gnn_model, model_name + '.pkl'),
+        num_classes=num_classes,
+        disable_prior=disable_prior,
+        disable_morph_feats=disable_morph_feats,
     )
     infer_gnn(newargs)
 
 
 def run_postgraphs(num_classes: int):
     newargs = Namespace(
-        graph_dir = os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
-        centroids_dir = os.path.join(APP_DIR, 'tmp', 'centroids'),
-        num_classes = num_classes,
+        graph_dir=os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
+        centroids_dir=os.path.join(APP_DIR, 'tmp', 'centroids'),
+        num_classes=num_classes,
     )
     graph2centroids(newargs)
     newargs = Namespace(
-        centroids_dir = os.path.join(APP_DIR, 'tmp', 'centroids'),
-        png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
-        csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
+        centroids_dir=os.path.join(APP_DIR, 'tmp', 'centroids'),
+        png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
+        csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
     )
     centroidspng2csv(newargs)
     newargs = Namespace(
-        png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
-        csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
-        gson_dir = os.path.join(APP_DIR, 'tmp', 'gson_gnn'),
-        num_classes = num_classes
+        png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
+        csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
+        gson_dir=os.path.join(APP_DIR, 'tmp', 'gson_gnn'),
+        num_classes=num_classes
     )
     pngcsv2geojson(newargs)
 
@@ -194,11 +194,11 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
     Returns the output images.
     """
     newargs = Namespace(
-        orig_dir = os.path.join(APP_DIR, 'tmp', 'input'),
-        png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
-        csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_hov'),
-        output_dir = os.path.join(APP_DIR, 'tmp', 'overlay_hov'),
-        type_info = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
+        orig_dir=os.path.join(APP_DIR, 'tmp', 'input'),
+        png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
+        csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_hov'),
+        output_dir=os.path.join(APP_DIR, 'tmp', 'overlay_hov'),
+        type_info=os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
     )
     draw_cells(newargs)
     hov_dir = os.path.join(APP_DIR, 'tmp', 'overlay_hov')
@@ -206,11 +206,11 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
     hov = cv2.imread(os.path.join(hov_dir, hov_file), -1)[:, :, ::-1]
     if use_gnn:
         newargs = Namespace(
-            orig_dir = os.path.join(APP_DIR, 'tmp', 'input'),
-            png_dir = os.path.join(APP_DIR, 'tmp', 'png_hov'),
-            csv_dir = os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
-            output_dir = os.path.join(APP_DIR, 'tmp', 'overlay_gnn'),
-            type_info = os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
+            orig_dir=os.path.join(APP_DIR, 'tmp', 'input'),
+            png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
+            csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
+            output_dir=os.path.join(APP_DIR, 'tmp', 'overlay_gnn'),
+            type_info=os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
         )
         draw_cells(newargs)
         gnn_dir = os.path.join(APP_DIR, 'tmp', 'overlay_gnn')
@@ -224,15 +224,18 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
 LAST_HOV_MODEL = None
 LAST_HOV_DATASET = None
 LAST_IMG_HASH = None
+
+
 def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_model: str):
     # Cache information when possible
     global LAST_HOV_MODEL
     global LAST_IMG_HASH
+    global LAST_HOV_DATASET
     input_hash = hash(str(input_image))
     if LAST_IMG_HASH is None:
         LAST_IMG_HASH = input_hash
     if LAST_HOV_MODEL is None or LAST_IMG_HASH is None or LAST_HOV_DATASET is None \
-         or LAST_HOV_MODEL != hov_model or LAST_IMG_HASH != input_hash or LAST_HOV_DATASET != hov_dataset:
+       or LAST_HOV_MODEL != hov_model or LAST_IMG_HASH != input_hash or LAST_HOV_DATASET != hov_dataset:
         LAST_HOV_MODEL = hov_model
         LAST_IMG_HASH = input_hash
         LAST_HOV_DATASET = hov_dataset
@@ -243,7 +246,7 @@ def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, h
     # Monusac doesn't have graph attention
     if hov_dataset == 'monusac' and gnn_model == 'gat-full':
         gnn_model = 'None'
-    
+
     if weights_dir is None:
         weights_dir = os.path.join(APP_DIR, 'weights')
     logger = create_logger()
@@ -278,7 +281,9 @@ def create_ui(weights_dir: str) -> gr.Interface:
         ], label='Select GNN model')
     out1 = gr.Image(label='Hovernet')
     out2 = gr.Image(label='GNN')
-    func = lambda a,b,c,d: process_image(weights_dir, a,b,c,d)
+
+    def func(a: np.ndarray, b: str, c: str, d: str):
+        process_image(weights_dir, a, b, c, d)
     ui = gr.Interface(
         fn=func,
         inputs=[image_input, hov_dataset, hov_model, gnn_model],

@@ -60,14 +60,13 @@ def check_training(args: Namespace, logger: Logger) -> None:
     if not exist_result_file:
         graph_folder = os.path.join(args.root_dir, 'gnn_logs')
         raise WrongConfigurationError(f'There is not graph result csv file under {graph_folder}')
-        
+
     dir_list = [os.path.join(args.root_dir, 'weights', 'classification', 'gnn', dir) for dir in ['confs', 'normalizers', 'weights']]
     if not check_same_num(dir_list):
         raise WrongConfigurationError('Graph weights folders contain different number of files. Try running the training pipeline again')
-    
+
     results = pd.read_csv(graph_result_file)
     if 'F1 Score' in results.columns and args.num_classes != 2:
         raise WrongConfigurationError('You have trained the GNN models for binary problem but are asking to run research for multiclass.')
     elif 'Micro F1' in results.columns and args.num_classes == 2:
         raise WrongConfigurationError('You have trained the GNN models for multiclass problem but are asking to run research for binary.')
-        

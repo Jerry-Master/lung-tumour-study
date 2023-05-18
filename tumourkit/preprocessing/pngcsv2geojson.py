@@ -34,7 +34,7 @@ from ..utils.preprocessing import (
 def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
     """
     Returns an image with only the pixels of the class given in the label.
-    
+
     :param png: Segmentation mask with indices as pixel values.
     :type png: np.ndarray
     :param csv: DataFrame containing the class labels for each cell in the image.
@@ -47,7 +47,7 @@ def create_mask(png: np.ndarray, csv: pd.DataFrame, label: int) -> np.ndarray:
     mask = png.copy()
     for i, (idx, cell_label) in csv.iterrows():
         if cell_label != label:
-            mask[mask==idx] = 0
+            mask[mask == idx] = 0
     return np.array(mask, dtype=np.uint8)
 
 

@@ -37,7 +37,7 @@ def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
     assert len(centroids) > 0, 'GT must contain at least one cell.'
     graph = graph.copy()
     graph['prob1'] = graph['class'] - 1
-    gt_tree = generate_tree(centroids[:,:2])
+    gt_tree = generate_tree(centroids[:, :2])
     pred_centroids = graph[['X', 'Y']].to_numpy(dtype=int)
     pred_tree = generate_tree(pred_centroids)
     for point_id, point in enumerate(centroids):
@@ -48,12 +48,12 @@ def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
         if closest[2] == -1:
             continue
         if point_id == find_nearest(closest[:2], gt_tree):
-            graph.loc[closest_id, 'class'] = point[2] # 1-1 matchings
+            graph.loc[closest_id, 'class'] = point[2]  # 1-1 matchings
     for point_id, point in enumerate(pred_centroids):
         closest_id = find_nearest(point[:2], gt_tree)
         closest = centroids[closest_id]
         if point_id != find_nearest(closest[:2], pred_tree):
-            graph.drop(point_id, inplace=True) # Remove prediction not matched in GT
+            graph.drop(point_id, inplace=True)  # Remove prediction not matched in GT
     return graph
 
 

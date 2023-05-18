@@ -35,9 +35,9 @@ from ..utils.classification import metrics_from_predictions
 
 
 def train(
-        conf: Dict[str, Any], 
-        X_tr: np.ndarray, 
-        y_tr: np.ndarray, 
+        conf: Dict[str, Any],
+        X_tr: np.ndarray,
+        y_tr: np.ndarray,
         val_size: float,
         seed: int,
         num_classes: Optional[int] = 2
@@ -73,14 +73,14 @@ def train(
 
 
 def evaluate(
-        model: XGBClassifier, 
+        model: XGBClassifier,
         X_val: np.ndarray,
         y_val: np.ndarray,
         num_classes: Optional[int] = 2
         ) -> Tuple[float, float, float]:
     preds = model.predict(X_val)
     if num_classes == 2:
-        probs = model.predict_proba(X_val)[:,1]
+        probs = model.predict_proba(X_val)[:, 1]
         acc, f1, auc, perc_err, ece = metrics_from_predictions(y_val, preds, probs, 2)
         return f1, acc, auc, perc_err, ece
     else:
@@ -89,7 +89,7 @@ def evaluate(
         return micro, macro, weighted, ece
 
 
-def save(metrics: Dict[str,Tuple[float,float,float]], path: str) -> None:
+def save(metrics: Dict[str, Tuple[float, float, float]], path: str) -> None:
     metrics.to_csv(path, index=False)
 
 
@@ -101,33 +101,43 @@ def cross_validate(args, conf, skf, X, y):
     for train_index, val_index in skf.split(X, y):
         X_train, X_cval = X[train_index], X[val_index]
         y_train, y_cval = y[train_index], y[val_index]
-        ## Train
+        # Train
         model = train(conf, X_train, y_train, args.val_size, args.seed, args.num_classes)
-        ## Save metrics
+        # Save metrics
         val_metrics = evaluate(model, X_cval, y_cval, args.num_classes)
         if args.num_classes == 2:
             f1, acc, auc, perc_err, ece = val_metrics
-            f1_mean += f1; acc_mean += acc; auc_mean += auc
-            perc_err_mean += perc_err; ece_mean += ece
+            f1_mean += f1
+            acc_mean += acc
+            auc_mean += auc
+            perc_err_mean += perc_err
+            ece_mean += ece
         else:
             micro, macro, weighted, ece = val_metrics
-            micro_mean += micro; macro_mean += macro; weighted_mean += weighted
+            micro_mean += micro
+            macro_mean += macro
+            weighted_mean += weighted
             ece_mean += ece
     if args.num_classes == 2:
-        f1_mean /= args.cv_folds; acc_mean /= args.cv_folds; auc_mean /= args.cv_folds
-        perc_err_mean /= args.cv_folds; ece_mean /= args.cv_folds
+        f1_mean /= args.cv_folds
+        acc_mean /= args.cv_folds
+        auc_mean /= args.cv_folds
+        perc_err_mean /= args.cv_folds
+        ece_mean /= args.cv_folds
         tmp = pd.DataFrame(
-            [(*conf.values(), f1_mean, acc_mean, auc_mean, perc_err_mean, ece_mean)], 
+            [(*conf.values(), f1_mean, acc_mean, auc_mean, perc_err_mean, ece_mean)],
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
                 'f1', 'accuracy', 'auc', 'perc_err', 'ece'
                 ]
         )
     else:
-        micro_mean /= args.cv_folds; macro_mean /= args.cv_folds; weighted_mean /= args.cv_folds
+        micro_mean /= args.cv_folds
+        macro_mean /= args.cv_folds
+        weighted_mean /= args.cv_folds
         ece_mean /= args.cv_folds
         tmp = pd.DataFrame(
-            [(*conf.values(), micro_mean, macro_mean, weighted_mean, ece_mean)], 
+            [(*conf.values(), micro_mean, macro_mean, weighted_mean, ece_mean)],
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
                 'micro', 'macro', 'weighted', 'ece'
@@ -137,11 +147,11 @@ def cross_validate(args, conf, skf, X, y):
 
 
 def create_confs():
-    confs = [{'n_estimators': n, 'learning_rate': l, 'max_depth': d, 'colsample_bytree': c}
-            for n in [500] 
-            for l in [0.05, 0.005] 
-            for d in [8, 16] 
-            for c in [1, 0.5]]
+    confs = [{'n_estimators': n, 'learning_rate': lr, 'max_depth': d, 'colsample_bytree': c}
+             for n in [500]
+             for lr in [0.05, 0.005]
+             for d in [8, 16]
+             for c in [1, 0.5]]
     return confs
 
 
@@ -155,9 +165,9 @@ def _create_parser():
                         help='Validation size used for early stopping. Default: 0.2')
     parser.add_argument('--seed', type=int, default=None,
                         help='Seed for random split. Default: None')
-    parser.add_argument('--num-workers', type=int, default=1, 
+    parser.add_argument('--num-workers', type=int, default=1,
                         help='Number of processors to use. Default: 1.')
-    parser.add_argument('--cv-folds', type=int, default=10, 
+    parser.add_argument('--cv-folds', type=int, default=10,
                         help='Number of CV folds. Default: 10.')
     parser.add_argument('--save-name', type=str, required=True,
                         help='Name to save the result, without file type.')
@@ -174,7 +184,7 @@ def main_with_args(args: Namespace, logger: Logger):
 
     if args.num_classes == 2:
         metrics = pd.DataFrame(
-            {}, 
+            {},
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
                 'f1', 'accuracy', 'auc', 'perc_err', 'ece'
@@ -182,7 +192,7 @@ def main_with_args(args: Namespace, logger: Logger):
         )
     else:
         metrics = pd.DataFrame(
-            {}, 
+            {},
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
                 'micro', 'macro', 'weighted', 'ece'
@@ -229,7 +239,7 @@ def main_with_args(args: Namespace, logger: Logger):
     if args.num_classes == 2:
         f1, acc, auc, perc_err, ece = test_metrics
         test_metrics = pd.DataFrame(
-            [(*best_conf.values(), f1, acc, auc, perc_err, ece)], 
+            [(*best_conf.values(), f1, acc, auc, perc_err, ece)],
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
                 'f1', 'accuracy', 'auc', 'perc_err', 'ece'
@@ -238,7 +248,7 @@ def main_with_args(args: Namespace, logger: Logger):
     else:
         micro, macro, weighted, ece = test_metrics
         test_metrics = pd.DataFrame(
-            [(*best_conf.values(), micro, macro, weighted, ece)], 
+            [(*best_conf.values(), micro, macro, weighted, ece)],
             columns=[
                 'n_estimators', 'learning_rate', 'max_depth', 'colsample_bytree',
                 'micro', 'macro', 'weighted', 'ece'
@@ -260,5 +270,3 @@ def main():
     logger.addHandler(ch)
 
     main_with_args(args, logger)
-    
-    

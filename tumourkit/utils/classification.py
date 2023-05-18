@@ -25,6 +25,7 @@ from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 from .read_nodes import _read_all_nodes
 from .calibration_error import calibration_error
 
+
 def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Normalizes the input data using the mean and standard deviation of the training dataset.
@@ -44,6 +45,7 @@ def normalize(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> Tup
     sc = StandardScaler()
     sc.fit(X_train)
     return sc.transform(X_train), sc.transform(X_val), sc.transform(X_test)
+
 
 def fit_column_normalizer(
         node_dir: str,
@@ -65,7 +67,7 @@ def fit_column_normalizer(
     :return: A StandardScaler object fitted to the input data.
     :rtype: StandardScaler
     """
-    X, y = _read_all_nodes(node_dir, [x+'.nodes.csv' for x in names], remove_morph=remove_morph, remove_prior=remove_prior)
+    X, y = _read_all_nodes(node_dir, [x + '.nodes.csv' for x in names], remove_morph=remove_morph, remove_prior=remove_prior)
     sc = StandardScaler()
     sc.fit(X)
     return sc
@@ -82,8 +84,8 @@ def percentage_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Computes the deviation in the percentage of tumoral cells.
     """
-    gt_perc = (y_true==1).sum() / len(y_true)
-    pred_perc = (y_pred==1).sum() / len(y_pred)
+    gt_perc = (y_true == 1).sum() / len(y_true)
+    pred_perc = (y_pred == 1).sum() / len(y_pred)
     return abs(gt_perc - pred_perc)
 
 

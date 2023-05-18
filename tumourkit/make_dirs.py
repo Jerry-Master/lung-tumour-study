@@ -67,9 +67,9 @@ def main():
         os.mkdir(args.root_dir)
         create_subfolders(structure, args.root_dir)
         type_info = {
-            "0" : ["background", [0, 0, 0]], 
-            "1" : ["nontumour", [255, 0, 0]], 
-            "2" : ["tumour", [0, 255, 0]]
+            "0": ["background", [0, 0, 0]],
+            "1": ["nontumour", [255, 0, 0]],
+            "2": ["tumour", [0, 255, 0]]
         }
         if args.num_classes != 2:
             colors = [
@@ -81,7 +81,7 @@ def main():
                 [255, 0, 255],
                 [0, 255, 255],
                 [255, 255, 255]
-            ][:args.num_classes+1]
+            ][:args.num_classes + 1]
             type_info = {str(k): ["Class" + str(k), v] for k, v in enumerate(colors)}
             type_info['0'] = ["background", [0, 0, 0]]
         with open(os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet', 'type_info.json'), 'w') as f:

@@ -18,15 +18,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-
 from typing import Callable, Tuple, List
 from .nearest import get_N_closest_pairs_dists, get_N_closest_pairs_idx
 
-Point = Tuple[float,float]
-Contour = List[Point]
-Cell = Tuple[int, int, Contour] # id, class
 
-def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,Contour], bool]:
+Point = Tuple[float, float]
+Contour = List[Point]
+Cell = Tuple[int, int, Contour]  # id, class
+
+
+def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour, Contour], bool]:
     """
     Returns a comparator function between two contours.
 
@@ -44,7 +45,7 @@ def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,
     """
     def is_equal(a: Contour, b: Contour) -> bool:
         """
-        Two contours are equal if their num_frontier closest pairs 
+        Two contours are equal if their num_frontier closest pairs
         are at a distance lower than threshold.
         """
         cpairs_dists = get_N_closest_pairs_dists(a, b, num_frontier)
@@ -54,7 +55,8 @@ def create_comparator(threshold: float, num_frontier: int) -> Callable[[Contour,
         return True
     return is_equal
 
-def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int,int]:
+
+def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int, int]:
     """
     Given a list of indices, returns the left and right value of the greatest connected component.
 
@@ -75,12 +77,12 @@ def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int,
     idx.sort()
     l_final, l_aux, r_final, r_aux = 0, 0, 0, 0
     found_comp = False
-    for k in range(1,len(idx)):
-        if idx[k-1]+1 != idx[k]:
+    for k in range(1, len(idx)):
+        if idx[k - 1] + 1 != idx[k]:
             found_comp = True
             # End of component
-            r_aux = k-1
-            if  r_aux - l_aux > r_final - l_final:
+            r_aux = k - 1
+            if r_aux - l_aux > r_final - l_final:
                 # Save greatest component
                 r_final, l_final = r_aux, l_aux
             # Restart left auxiliary index
@@ -90,15 +92,16 @@ def get_greatest_connected_component(idx: List[int], max_idx: int) -> Tuple[int,
     if idx[0] == 0 and idx[-1] == max_idx:
         # Circular case
         r_aux = 1
-        while r_aux < len(idx) and idx[r_aux-1] + 1 == idx[r_aux]:
+        while r_aux < len(idx) and idx[r_aux - 1] + 1 == idx[r_aux]:
             r_aux += 1
         r_aux -= 1
-        l_aux = len(idx)-1
-        while l_aux >= 0 and idx[l_aux-1] + 1 == idx[l_aux]:
+        l_aux = len(idx) - 1
+        while l_aux >= 0 and idx[l_aux - 1] + 1 == idx[l_aux]:
             l_aux -= 1
-        if (r_aux-0) + (len(idx)-l_aux) > r_final - l_final:
+        if (r_aux - 0) + (len(idx) - l_aux) > r_final - l_final:
             r_final, l_final = r_aux, l_aux
     return idx[l_final], idx[r_final]
+
 
 def remove_idx(a: Cell, a_idx: List[int]) -> Cell:
     """
@@ -116,14 +119,15 @@ def remove_idx(a: Cell, a_idx: List[int]) -> Cell:
     The function then creates a new list of indices that includes all the indices in the contour of `a` that are not in the greatest connected component of `a_idx`.
     The function returns a new cell containing the original cell's first two elements and the modified list of indices as the third element.
     """
-    left, right = get_greatest_connected_component(a_idx, len(a[2])-1)
+    left, right = get_greatest_connected_component(a_idx, len(a[2]) - 1)
     res = []
-    if left > right: # Contour is in third position
-        res.extend(a[2][right+1:left])
+    if left > right:  # Contour is in third position
+        res.extend(a[2][right + 1:left])
     elif left <= right:
-        res.extend(a[2][right+1:])
-        res.extend(a[2][0:left]) 
+        res.extend(a[2][right + 1:])
+        res.extend(a[2][0:left])
     return (a[0], a[1], res)
+
 
 def check_order(a: Cell, b: Cell) -> Cell:
     """
@@ -132,6 +136,7 @@ def check_order(a: Cell, b: Cell) -> Cell:
     This function is intended to check whether joining two cells `a` and `b` creates a cross in the middle.
     """
     return True
+
 
 def join(a: Cell, b: Cell) -> Cell:
     """
@@ -149,6 +154,7 @@ def join(a: Cell, b: Cell) -> Cell:
         b[2].reverse()
     a[2].extend(b[2])
     return a
+
 
 def merge_cells(a: Cell, b: Cell) -> Cell:
     """

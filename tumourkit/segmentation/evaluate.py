@@ -1,5 +1,5 @@
 """
-Evaluating script for cell predictions. 
+Evaluating script for cell predictions.
 
 Input format
 ------------
@@ -41,9 +41,9 @@ from logging import Logger
 
 
 def get_confusion_matrix(
-    gt_centroids: List[Tuple[int,int,int]], 
-    pred_centroids: List[Tuple[int,int,int]]
-    ) -> np.ndarray:
+        gt_centroids: List[Tuple[int, int, int]],
+        pred_centroids: List[Tuple[int, int, int]]
+        ) -> np.ndarray:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
     Matrix has (N+1)x(N+1) entries, one more for background when no match is found.
@@ -52,44 +52,45 @@ def get_confusion_matrix(
     if len(gt_centroids) == 0 and len(pred_centroids) == 0:
         return np.array([[0]])
     if len(gt_centroids) == 0:
-        N = np.max(pred_centroids[:,2])
-        M = np.zeros((N+1,N+1))
-        classes, freqs = np.unique(pred_centroids[:,2], return_counts=True)
+        N = np.max(pred_centroids[:, 2])
+        M = np.zeros((N + 1, N + 1))
+        classes, freqs = np.unique(pred_centroids[:, 2], return_counts=True)
         M[0, classes] += freqs
         return M
     if len(pred_centroids) == 0:
-        N = np.max(gt_centroids[:,2])
-        M = np.zeros((N+1,N+1))
-        classes, freqs = np.unique(gt_centroids[:,2], return_counts=True)
+        N = np.max(gt_centroids[:, 2])
+        M = np.zeros((N + 1, N + 1))
+        classes, freqs = np.unique(gt_centroids[:, 2], return_counts=True)
         M[classes, 0] += freqs
         return M
     if type(gt_centroids) == list:
         gt_centroids = np.array(gt_centroids)
     if type(pred_centroids) == list:
         pred_centroids = np.array(pred_centroids)
-    N = int(max(np.max(gt_centroids[:,2]), np.max(pred_centroids[:,2])))
-    assert min(np.min(gt_centroids[:,2]), np.min(pred_centroids[:,2])) > 0, 'Zero should not be a class.'
-    gt_tree = generate_tree(gt_centroids[:,:2])
-    pred_tree = generate_tree(pred_centroids[:,:2])
-    M = np.zeros((N+1,N+1)) 
+    N = int(max(np.max(gt_centroids[:, 2]), np.max(pred_centroids[:, 2])))
+    assert min(np.min(gt_centroids[:, 2]), np.min(pred_centroids[:, 2])) > 0, 'Zero should not be a class.'
+    gt_tree = generate_tree(gt_centroids[:, :2])
+    pred_tree = generate_tree(pred_centroids[:, :2])
+    M = np.zeros((N + 1, N + 1))
     for point_id, point in enumerate(gt_centroids):
         closest_id = find_nearest(point[:2], pred_tree)
         closest = pred_centroids[closest_id]
         if point_id == find_nearest(closest[:2], gt_tree):
-            M[int(point[2])][int(closest[2])] += 1 # 1-1 matchings
+            M[int(point[2])][int(closest[2])] += 1  # 1-1 matchings
         else:
-            M[int(point[2])][0] += 1 # GT not matched in prediction
+            M[int(point[2])][0] += 1  # GT not matched in prediction
     for point_id, point in enumerate(pred_centroids):
         closest_id = find_nearest(point[:2], gt_tree)
         closest = gt_centroids[closest_id]
         if point_id != find_nearest(closest[:2], pred_tree):
-            M[0][int(point[2])] += 1 # Prediction not matched in GT
+            M[0][int(point[2])] += 1  # Prediction not matched in GT
     return M
 
+
 def get_pairs(
-    gt_centroids: List[Tuple[int,int,int]], 
-    pred_centroids: List[Tuple[int,int,int]]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        gt_centroids: List[Tuple[int, int, int]],
+        pred_centroids: List[Tuple[int, int, int]]
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Each centroid is represented by a 3-tuple with (X, Y, class).
     Class is 1=non-tumour, 2=tumour.
@@ -99,15 +100,15 @@ def get_pairs(
     if len(gt_centroids) == 0:
         return None, None
 
-    gt_tree = generate_tree(gt_centroids[:,:2])
-    pred_tree = generate_tree(pred_centroids[:,:2])
+    gt_tree = generate_tree(gt_centroids[:, :2])
+    pred_tree = generate_tree(pred_centroids[:, :2])
     true_labels, pred_labels = [], []
     for point_id, point in enumerate(gt_centroids):
         closest_id = find_nearest(point[:2], pred_tree)
         closest = pred_centroids[closest_id]
         if closest[2] != -1 and point[2] != -1 and point_id == find_nearest(closest[:2], gt_tree):
-            true_labels.append(point[2]-1)
-            pred_labels.append(closest[2]-1)
+            true_labels.append(point[2] - 1)
+            pred_labels.append(closest[2] - 1)
     return np.array(true_labels), np.array(pred_labels)
 
 
@@ -131,6 +132,7 @@ def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
         return 0
     return 2 * precision * recall / (precision + recall)
 
+
 def compute_metrics_from_matrix(conf_mat: np.ndarray) -> Tuple[float, float, float, float]:
     """
     Given confusion matrix,
@@ -144,7 +146,7 @@ def compute_metrics_from_matrix(conf_mat: np.ndarray) -> Tuple[float, float, flo
     adjust_weighted = 1
     for k in range(n_classes):
         f1_class = compute_f1_score_from_matrix(conf_mat, cls=k)
-        cls_supp = conf_mat[k,:].sum() / total
+        cls_supp = conf_mat[k, :].sum() / total
         if f1_class is not None:
             macro += f1_class
             weighted += f1_class * cls_supp
@@ -166,20 +168,20 @@ def add_matrices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
         return A + B
     n, m = A.shape[0], B.shape[0]
     if m > n:
-        res = np.zeros((m,m))
-        res[:n,:n] += A
+        res = np.zeros((m, m))
+        res[:n, :n] += A
         res += B
     else:
-        res = np.zeros((n,n))
-        res[:m,:m] += B
+        res = np.zeros((n, n))
+        res[:m, :m] += B
         res += A
     return res
 
 
 def save_csv(
-    metrics: Dict[str, List[float]], 
-    save_path: str
-    ) -> None:
+        metrics: Dict[str, List[float]],
+        save_path: str
+        ) -> None:
     """
     Saves metrics in csv format for later use.
     Columns depend on dictionary keys.
@@ -187,10 +189,11 @@ def save_csv(
     metrics_df = pd.DataFrame(metrics)
     metrics_df.to_csv(save_path + '.csv', index=False)
 
+
 def save_debug_matrix(
-    mat: np.ndarray,
-    save_path: str
-    ) -> None:
+        mat: np.ndarray,
+        save_path: str
+        ) -> None:
     """
     Saves confusion matrices for debug purposes.
     """
@@ -229,7 +232,7 @@ def main_with_args(args: Namespace, logger: Logger):
     global_conf_mat = None
     global_pred, global_true = [], []
     for k, name in enumerate(names):
-        logger.info('Progress: {:2d}/{}'.format(k+1, len(names)))
+        logger.info('Progress: {:2d}/{}'.format(k + 1, len(names)))
         metrics['Name'].append(name)
         # Read
         gt_centroids = read_centroids(name, args.gt_path)
@@ -301,6 +304,7 @@ def main_with_args(args: Namespace, logger: Logger):
             'Macro F1 (bkgr)': [macro_bkgr], 'Weighted F1 (bkgr)': [weighted_bkgr], 'Micro F1 (bkgr)': [micro_bkgr]
         }
     save_csv(global_metrics, args.save_name + '_all')
+
 
 def main():
     parser = _create_parser()

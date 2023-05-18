@@ -27,6 +27,7 @@ import numpy as np
 from ..utils.nearest import generate_tree, find_nearest
 from tqdm import tqdm
 
+
 def extract_centroids(img: np.ndarray) -> List[Tuple[int, int, int]]:
     """
     Extracts the centroids of cells from a labeled image. The third coordinates is the index.
@@ -49,7 +50,7 @@ def extract_centroids(img: np.ndarray) -> List[Tuple[int, int, int]]:
 def centroidspng2csv(centroids_file: np.ndarray, png_file: np.ndarray) -> pd.DataFrame:
     """
     Converts a PNG file with cell labels and a CSV file with cell centroids into a CSV file
-    associating each cell label with the closest centroid. 
+    associating each cell label with the closest centroid.
 
     :param centroids_file: A NumPy array with three columns, representing the X and Y coordinates
                            and class of each centroid.

@@ -44,7 +44,10 @@ def read_node_matrix(
     remove_vars = ['id', 'class', 'X', 'Y']
     if remove_morph:
         remove_vars.extend([
-            'area','perimeter','std','red0','red1','red2','red3','red4','green0','green1','green2','green3','green4','blue0','blue1','blue2','blue3','blue4'
+            'area', 'perimeter', 'std',
+            'red0', 'red1', 'red2', 'red3', 'red4',
+            'green0', 'green1', 'green2', 'green3', 'green4',
+            'blue0', 'blue1', 'blue2', 'blue3', 'blue4'
         ])
     if remove_prior:
         remove_vars.extend(list(filter(lambda x: 'prob' in x, df.columns)))
@@ -71,6 +74,7 @@ def read_node_matrix(
             yy = df['Y'].to_numpy()
             return X, None, xx, yy
 
+
 def _read_all_nodes(
         node_dir: str,
         names: List[str],
@@ -88,9 +92,9 @@ def _read_all_nodes(
     X, y = None, None
     for name in names:
         X_, y_ = read_node_matrix(os.path.join(node_dir, name), remove_morph=remove_morph, remove_prior=remove_prior)
-        if X is None: 
-            X = X_ # Shape (n_samples, n_features)
-            y = y_ # Shape (n_samples,)
+        if X is None:
+            X = X_  # Shape (n_samples, n_features)
+            y = y_  # Shape (n_samples,)
         else:
             X = np.vstack([X, X_])
             y = np.hstack([y, y_])
@@ -111,35 +115,36 @@ def read_all_nodes(
     """
     ext = '.nodes.csv'
     names = get_names(node_dir, ext)
-    names = [x+ext for x in names]
+    names = [x + ext for x in names]
     X, y = _read_all_nodes(node_dir, names, remove_morph=remove_morph, remove_prior=remove_prior)
     return X, y
 
 
 def create_node_splits(
-    node_dir: str, val_size: float, test_size: float, 
-    seed: Optional[int] = None,
-    mode: Optional[str] = 'total') -> List[np.ndarray]:
+        node_dir: str, val_size: float, test_size: float,
+        seed: Optional[int] = None,
+        mode: Optional[str] = 'total'
+        ) -> List[np.ndarray]:
     """
     Input
       node_dir: Path to folder with csv files containing node features.
       val_size: Percentage of data to use as validation.
       test_size: Percentage of data to use as test.
       seed: Seed for the random split.
-      mode: Whether to mix images in the splits or not. It can be 'total' or 'by_img'. 
+      mode: Whether to mix images in the splits or not. It can be 'total' or 'by_img'.
     Output
       X_train, X_val, X_test, y_train, y_val, y_test: Node features and labels.
     """
     ext = '.nodes.csv'
     names = get_names(node_dir, ext)
-    names = [x+ext for x in names]
+    names = [x + ext for x in names]
     if mode == 'total':
         X, y = _read_all_nodes(node_dir, names)
         X_tr_val, X_test, y_tr_val, y_test = train_test_split(
             X, y, test_size=test_size, stratify=y, random_state=seed
         )
         X_train, X_val, y_train, y_val = train_test_split(
-            X_tr_val, y_tr_val, test_size=val_size / (1-test_size), 
+            X_tr_val, y_tr_val, test_size=val_size / (1 - test_size),
             stratify=y_tr_val, random_state=seed
         )
         return X_train, X_val, X_test, y_train, y_val, y_test
@@ -151,8 +156,8 @@ def create_node_splits(
         N_val = int(N * val_size)
         N_tr = N - N_val - N_ts
         train_names = names[:N_tr]
-        val_names = names[N_tr:N_val+N_tr]
-        test_names = names[N_val+N_tr:]
+        val_names = names[N_tr:N_val + N_tr]
+        test_names = names[N_val + N_tr:]
         X_train, y_train = _read_all_nodes(node_dir, train_names)
         X_val, y_val = _read_all_nodes(node_dir, val_names)
         X_test, y_test = _read_all_nodes(node_dir, test_names)

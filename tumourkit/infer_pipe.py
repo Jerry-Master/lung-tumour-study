@@ -57,37 +57,37 @@ def run_hovernet(args: Namespace, logger: Logger) -> None:
 
 
 def run_posthov(args: Namespace, logger: Logger) -> None:
-    logger.info(f'Parsing Hovernet output')
+    logger.info('Parsing Hovernet output')
     logger.info('   From json to geojson.')
     newargs = Namespace(
-        json_dir = os.path.join(args.output_dir, 'tmp_hov', 'json'),
-        gson_dir = os.path.join(args.output_dir, 'gson_hov'),
-        num_classes = args.num_classes
+        json_dir=os.path.join(args.output_dir, 'tmp_hov', 'json'),
+        gson_dir=os.path.join(args.output_dir, 'gson_hov'),
+        num_classes=args.num_classes
     )
     hovernet2geojson(newargs)
     logger.info('   From geojson to pngcsv.')
     newargs = Namespace(
-        gson_dir = os.path.join(args.output_dir, 'gson_hov'),
-        png_dir = os.path.join(args.output_dir, 'png_hov'),
-        csv_dir = os.path.join(args.output_dir, 'csv_hov'),
-        num_classes = args.num_classes
+        gson_dir=os.path.join(args.output_dir, 'gson_hov'),
+        png_dir=os.path.join(args.output_dir, 'png_hov'),
+        csv_dir=os.path.join(args.output_dir, 'csv_hov'),
+        num_classes=args.num_classes
     )
     geojson2pngcsv(newargs)
     logger.info('   From pngcsv to nodes.csv.')
     create_dir(os.path.join(args.output_dir, 'graphs'))
     newargs = Namespace(
-        png_dir = os.path.join(args.output_dir, 'png_hov'),
-        orig_dir = args.input_dir,
-        output_path = os.path.join(args.output_dir, 'graphs', 'raw'),
-        num_workers = args.num_workers
+        png_dir=os.path.join(args.output_dir, 'png_hov'),
+        orig_dir=args.input_dir,
+        output_path=os.path.join(args.output_dir, 'graphs', 'raw'),
+        num_workers=args.num_workers
     )
     png2graph(newargs)
     logger.info('   Adding hovernet predictions to .nodes.csv.')
     newargs = Namespace(
-        json_dir = os.path.join(args.output_dir, 'tmp_hov', 'json'),
-        graph_dir = os.path.join(args.output_dir, 'graphs', 'raw'),
-        output_dir = os.path.join(args.output_dir, 'graphs', 'hovpreds'),
-        num_classes = args.num_classes
+        json_dir=os.path.join(args.output_dir, 'tmp_hov', 'json'),
+        graph_dir=os.path.join(args.output_dir, 'graphs', 'raw'),
+        output_dir=os.path.join(args.output_dir, 'graphs', 'hovpreds'),
+        num_classes=args.num_classes
     )
     join_hovprob_graph(newargs, logger)
     return
@@ -98,14 +98,14 @@ def run_graphs(args: Namespace, logger: Logger) -> None:
     model_name = 'best_' + args.best_arch + '_' + args.best_num_layers + '_' \
         + args.best_dropout + '_' + args.best_norm_type
     newargs = Namespace(
-        node_dir = os.path.join(args.output_dir, 'graphs', 'hovpreds'),
-        output_dir = os.path.join(args.output_dir, 'gnn_preds'),
-        weights = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'weights', model_name + '.pth'),
-        conf = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs', model_name + '.json'),
-        normalizers = os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'normalizers', model_name + '.pkl'),
-        num_classes = args.num_classes,
-        disable_prior = False,
-        disable_morph_feats = False,
+        node_dir=os.path.join(args.output_dir, 'graphs', 'hovpreds'),
+        output_dir=os.path.join(args.output_dir, 'gnn_preds'),
+        weights=os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'weights', model_name + '.pth'),
+        conf=os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs', model_name + '.json'),
+        normalizers=os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'normalizers', model_name + '.pkl'),
+        num_classes=args.num_classes,
+        disable_prior=False,
+        disable_morph_feats=False,
     )
     infer_gnn(newargs)
     return
@@ -115,24 +115,24 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
     logger.info('Parsing gnn output.')
     logger.info('   Converting .nodes.csv to .centroids.csv.')
     newargs = Namespace(
-        graph_dir = os.path.join(args.output_dir, 'gnn_preds'),
-        centroids_dir = os.path.join(args.output_dir, 'centroids'),
-        num_classes = args.num_classes,
+        graph_dir=os.path.join(args.output_dir, 'gnn_preds'),
+        centroids_dir=os.path.join(args.output_dir, 'centroids'),
+        num_classes=args.num_classes,
     )
     graph2centroids(newargs)
     logger.info('   Converting .centroids.csv and .GT_cells.png to .class.csv.')
     newargs = Namespace(
-        centroids_dir = os.path.join(args.output_dir, 'centroids'),
-        png_dir = os.path.join(args.output_dir, 'png_hov'),
-        csv_dir = os.path.join(args.output_dir, 'csv_gnn'),
+        centroids_dir=os.path.join(args.output_dir, 'centroids'),
+        png_dir=os.path.join(args.output_dir, 'png_hov'),
+        csv_dir=os.path.join(args.output_dir, 'csv_gnn'),
     )
     centroidspng2csv(newargs)
     logger.info('   Converting png/csv to geojson.')
     newargs = Namespace(
-        png_dir = os.path.join(args.output_dir, 'png_hov'),
-        csv_dir = os.path.join(args.output_dir, 'csv_gnn'),
-        gson_dir = os.path.join(args.output_dir, 'gson_gnn'),
-        num_classes = args.num_classes
+        png_dir=os.path.join(args.output_dir, 'png_hov'),
+        csv_dir=os.path.join(args.output_dir, 'csv_gnn'),
+        gson_dir=os.path.join(args.output_dir, 'gson_gnn'),
+        num_classes=args.num_classes
     )
     pngcsv2geojson(newargs)
     return

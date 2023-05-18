@@ -1,5 +1,5 @@
 """
-Merge broken cells using a morphological algorithm 
+Merge broken cells using a morphological algorithm
 to detect touching frontiers.
 
 Copyright (C) 2023  Jose Pérez Cano
@@ -33,59 +33,63 @@ from tqdm import tqdm
 
 MAX_CELLS = 1500
 
-def create_id_map() -> Tuple[Callable[[np.ndarray], np.ndarray], Dict[int, Tuple[int,int]]]:
+
+def create_id_map() -> Tuple[Callable[[np.ndarray], np.ndarray], Dict[int, Tuple[int, int]]]:
     """
     Map index to some function so that difference is unique per pair.
-    Also returns the inverse mapping of the differences and the 
+    Also returns the inverse mapping of the differences and the
     inverse mapping of the function itself.
     Extra information: https://math.stackexchange.com/questions/4565014/injectivity-of-given-integer-function/4567383#4567383
     """
-    f = lambda x: x**5
+    def f(x: int) -> int:
+        return x**5
     sq_dif = []
     inv_diff_mapping = {}
     for i in range(MAX_CELLS):
-        for j in range(i+1,MAX_CELLS):
-            sq_dif.append(f(j)-f(i))
-            inv_diff_mapping[f(j)-f(i)] = [j,i]
-    assert (len(sq_dif) - len(set(sq_dif)))==0, 'Defined function is not injective.'
+        for j in range(i + 1, MAX_CELLS):
+            sq_dif.append(f(j) - f(i))
+            inv_diff_mapping[f(j) - f(i)] = [j, i]
+    assert (len(sq_dif) - len(set(sq_dif))) == 0, 'Defined function is not injective.'
 
     vec_mapping = np.vectorize(f)
     return vec_mapping, inv_diff_mapping
+
 
 def get_gradient(png: np.ndarray) -> np.ndarray:
     """
     Apply a dilation, subtract the image and remove pixels in background.
     """
     mask = png.copy()
-    mask[mask>0] = 1
-    dilation = skimage.morphology.dilation(png, np.ones((3,3)))
+    mask[mask > 0] = 1
+    dilation = skimage.morphology.dilation(png, np.ones((3, 3)))
     grad = dilation - png
     grad_bkgr = grad * mask
     return grad_bkgr
 
+
 def merge_cells(
-    png: np.ndarray, 
-    vec_mapping: Callable[[np.ndarray], np.ndarray], 
-    inv_diff_mapping: Dict[int, Tuple[int,int]]
-    ) -> np.ndarray:
+        png: np.ndarray,
+        vec_mapping: Callable[[np.ndarray], np.ndarray],
+        inv_diff_mapping: Dict[int, Tuple[int, int]]
+        ) -> np.ndarray:
     """
     Merges all the cells that share a frontier of more than 13 pixels.
     """
     png_cp = png.copy()
-    png_cp = vec_mapping(png_cp) # Indices mapping
-    grad_bkgr = get_gradient(png_cp) # Morphological gradient
+    png_cp = vec_mapping(png_cp)  # Indices mapping
+    grad_bkgr = get_gradient(png_cp)  # Morphological gradient
     # Select pairs with long frontier
     unique, counts = np.unique(grad_bkgr, return_counts=True)
     component = [-1 for _ in range(MAX_CELLS)]
     for el, freq in zip(unique, counts):
-        if el > 0 and freq > 13: # More than 13 points in frontier
+        if el > 0 and freq > 13:  # More than 13 points in frontier
             pair = inv_diff_mapping[el]
             # Get component of each index
             if component[pair[0]] != -1:
                 pair[0] = component[pair[0]]
             if component[pair[1]] != -1:
                 pair[1] = component[pair[1]]
-            M = min(*pair) # Merge operation is to set both indices to the minimum
+            M = min(*pair)  # Merge operation is to set both indices to the minimum
             # Update component of each index
             for k, el in enumerate(component):
                 if el == pair[0] or el == pair[1]:
@@ -93,9 +97,10 @@ def merge_cells(
             component[pair[0]] = M
             component[pair[1]] = M
             # Map indices to new component
-            png[png==pair[0]] = M
-            png[png==pair[1]] = M
+            png[png == pair[0]] = M
+            png[png == pair[1]] = M
     return png
+
 
 def remove_lost_ids(png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
@@ -138,8 +143,9 @@ def main():
     vec_mapping, inv_diff_mapping = create_id_map()
     for k, name in tqdm(enumerate(names)):
         png, csv = read_labels(name, png_dir, csv_dir)
-        if png is None or csv is None: continue
-        assert(np.max(csv.id) < MAX_CELLS), "Exceeded maximum number of cells."
+        if png is None or csv is None:
+            continue
+        assert (np.max(csv.id) < MAX_CELLS), "Exceeded maximum number of cells."
         png = merge_cells(png, vec_mapping, inv_diff_mapping)
         csv = remove_lost_ids(png, csv)
         save_pngcsv(png, csv, png_out_path, csv_out_path, name)

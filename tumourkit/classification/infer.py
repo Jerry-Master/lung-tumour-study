@@ -33,7 +33,7 @@ import numpy as np
 import pandas as pd
 import argparse
 import os
-                  
+
 
 def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_feats: int) -> nn.Module:
     """
@@ -47,6 +47,7 @@ def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_fe
     model.load_state_dict(state_dict)
     return model
 
+
 def load_normalizer(norm_path: str) -> Tuple[Any]:
     """
     Returns normalizers used in training save at norm_path.
@@ -54,6 +55,7 @@ def load_normalizer(norm_path: str) -> Tuple[Any]:
     with open(norm_path, 'rb') as f:
         normalizers = pickle.load(f)
     return normalizers
+
 
 def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_classes: int) -> Dict[str, np.ndarray]:
     """
@@ -69,11 +71,12 @@ def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_cl
         # Forward
         logits = model(g, features)
         if num_classes == 2:
-            prob = F.softmax(logits, dim=1).detach().numpy()[:,1].reshape(-1,1)
+            prob = F.softmax(logits, dim=1).detach().numpy()[:, 1].reshape(-1, 1)
         else:
             prob = F.softmax(logits, dim=1).detach().numpy()
         probs[name[0]] = prob
     return probs
+
 
 def save_probs(probs: Dict[str, np.ndarray], node_dir: str, output_dir: str, num_classes: int) -> None:
     """
@@ -97,7 +100,7 @@ def _create_parser():
     parser.add_argument('--output-dir', type=str, required=True,
                         help='Folder to save .nodes.csv containing probabilities.')
     parser.add_argument('--weights', type=str, required=True,
-                        help='Path to model weights.')  
+                        help='Path to model weights.')
     parser.add_argument('--conf', type=str, required=True,
                         help='Configuration file for the model.')
     parser.add_argument('--normalizers', type=str, required=True,
@@ -129,6 +132,7 @@ def main_with_args(args):
     model.eval()
     probs = run_inference(model, eval_dataloader, 'cpu', args.num_classes)
     save_probs(probs, node_dir, output_dir, args.num_classes)
+
 
 def main():
     parser = _create_parser()

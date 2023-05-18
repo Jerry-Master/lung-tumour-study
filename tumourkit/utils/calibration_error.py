@@ -9,6 +9,7 @@ from sklearn.utils import assert_all_finite
 from sklearn.utils import check_consistent_length
 from sklearn.utils import column_or_1d
 
+
 def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
                       n_bins=10, strategy='uniform', pos_label=None,
                       reduce_bias=True):

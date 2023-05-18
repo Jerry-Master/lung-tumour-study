@@ -35,8 +35,8 @@ from ..utils.preprocessing import get_names, read_labels
 def draw_cells(orig: np.ndarray, png: np.ndarray, csv: pd.DataFrame, type_info: Dict[str, Tuple[str, List[int]]]) -> np.ndarray:
     blend = orig.copy()
     for i, (idx, cell_label) in csv.iterrows():
-        blend[png==idx] = 0.3 * np.array(type_info[str(cell_label)][1]) \
-                       + 0.7 * blend[png==idx]
+        blend[png == idx] = 0.3 * np.array(type_info[str(cell_label)][1]) \
+            + 0.7 * blend[png == idx]
     return blend
 
 

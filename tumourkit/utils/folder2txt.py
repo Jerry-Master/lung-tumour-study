@@ -1,6 +1,5 @@
 """
-
-Script to generate txt files with the names of the files in the 
+Script to generate txt files with the names of the files in the
 train, validation, test split folders.
 
 Input
@@ -9,7 +8,7 @@ The path to the folders.
 
 Output
 ------
-Txt files with one name per line, the names don't contain the 
+Txt files with one name per line, the names don't contain the
 (x,y).npy at the end.
 
 Copyright (C) 2023  Jose Pérez Cano
@@ -45,6 +44,7 @@ parser.add_argument('--test', type=str,
 parser.add_argument('--out-dir', type=str,
                     help='Path to save the txt files.')
 
+
 def remove_coordinates(name: str) -> str:
     """
     Removes the (number, number) pattern and '.npy' extension from the input string.
@@ -54,11 +54,12 @@ def remove_coordinates(name: str) -> str:
     :return: The input string with the (number, number) pattern and '.npy' extension removed.
     :rtype: str
     """
-    regex = '\([0-9]{1,3},[0-9]{1,3}\)'
+    regex = r'\([0-9]{1,3},[0-9]{1,3}\)'
     parenthesis = re.findall(regex, name)
     par_len = len(parenthesis[0])
     npy_len = len('.npy')
     return name[:-(par_len + npy_len)]
+
 
 def read_files(path: str) -> List[str]:
     """
@@ -76,6 +77,7 @@ def read_files(path: str) -> List[str]:
     file_list = list(set(file_list))
     return file_list
 
+
 def save_txt(file_list: List[str], path: str, name: str) -> None:
     """
     Saves a list of file names to a text file with one name per line.
@@ -92,7 +94,8 @@ def save_txt(file_list: List[str], path: str, name: str) -> None:
         for file_name in file_list:
             print(file_name, file=f)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     args = parser.parse_args()
     train_files = read_files(args.train)
     val_files = read_files(args.validation)

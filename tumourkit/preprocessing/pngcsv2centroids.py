@@ -26,7 +26,7 @@ import pandas as pd
 from typing import List, Tuple
 
 
-def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int,int,int]]:
+def extract_centroids(img: np.ndarray, csv: pd.DataFrame) -> List[Tuple[int, int, int]]:
     """
     Extracts the centroids of cells from a labeled image. The third coordinate is the class.
 

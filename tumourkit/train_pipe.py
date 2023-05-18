@@ -12,44 +12,44 @@ from .postprocessing import join_graph_gt, join_hovprob_graph
 from .classification import train_gnn
 
 
-def run_preproc_pipe(args: Namespace, logger : Logger) -> None:
+def run_preproc_pipe(args: Namespace, logger: Logger) -> None:
     """
     Converts the gson format to the rest of formats.
     """
     for split in ['train', 'validation', 'test']:
         logger.info(f'Parsing {split} split')
         newargs = Namespace(
-            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson'),
-            png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
-            num_classes = args.num_classes,
+            gson_dir=os.path.join(args.root_dir, 'data', split, 'gson'),
+            png_dir=os.path.join(args.root_dir, 'data', split, 'png'),
+            csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
+            num_classes=args.num_classes,
         )
         geojson2pngcsv(newargs)
         newargs = Namespace(
-            orig_dir = os.path.join(args.root_dir, 'data', 'orig'),
-            png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
-            out_dir = os.path.join(args.root_dir, 'data', split, 'npy'),
-            save_example = False, use_labels = True, split = False,
-            shape = '518'
+            orig_dir=os.path.join(args.root_dir, 'data', 'orig'),
+            png_dir=os.path.join(args.root_dir, 'data', split, 'png'),
+            csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
+            out_dir=os.path.join(args.root_dir, 'data', split, 'npy'),
+            save_example=False, use_labels=True, split=False,
+            shape='518'
         )
         pngcsv2npy(newargs)
     return
 
 
-def run_hov_pipe(args: Namespace, logger : Logger) -> None:
+def run_hov_pipe(args: Namespace, logger: Logger) -> None:
     """
     Trains hovernet and predicts cell contours on json format.
     """
     logger.info('Starting training.')
     newargs = Namespace(
-        gpu = args.gpu, view = None, save_name = None,
-        log_dir = os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet'),
-        train_dir = os.path.join(args.root_dir, 'data', 'train', 'npy'),
-        valid_dir = os.path.join(args.root_dir, 'data', 'validation', 'npy'),
-        pretrained_path = args.pretrained_path,
-        shape = '518',
-        num_classes = args.num_classes,
+        gpu=args.gpu, view=None, save_name=None,
+        log_dir=os.path.join(args.root_dir, 'weights', 'segmentation', 'hovernet'),
+        train_dir=os.path.join(args.root_dir, 'data', 'train', 'npy'),
+        valid_dir=os.path.join(args.root_dir, 'data', 'validation', 'npy'),
+        pretrained_path=args.pretrained_path,
+        shape='518',
+        num_classes=args.num_classes,
     )
     hov_train(newargs)
     logger.info('Starting inference.')
@@ -77,7 +77,7 @@ def run_hov_pipe(args: Namespace, logger : Logger) -> None:
     return
 
 
-def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
+def run_postproc_pipe(args: Namespace, logger: Logger) -> None:
     """
     Converts the json format to the graph format containing GT and preds.
     """
@@ -96,93 +96,93 @@ def run_postproc_pipe(args: Namespace, logger : Logger) -> None:
         logger.info(f'Parsing {split} split')
         logger.info('   From json to geojson.')
         newargs = Namespace(
-            json_dir = os.path.join(args.root_dir, 'data', split, 'json'),
-            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov'),
-            num_classes = args.num_classes
+            json_dir=os.path.join(args.root_dir, 'data', split, 'json'),
+            gson_dir=os.path.join(args.root_dir, 'data', split, 'gson_hov'),
+            num_classes=args.num_classes
         )
         hovernet2geojson(newargs)
         logger.info('   From geojson to pngcsv.')
         newargs = Namespace(
-            gson_dir = os.path.join(args.root_dir, 'data', split, 'gson_hov'),
-            png_dir = os.path.join(args.root_dir, 'data', split, 'png_hov'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov'),
-            num_classes = args.num_classes,
+            gson_dir=os.path.join(args.root_dir, 'data', split, 'gson_hov'),
+            png_dir=os.path.join(args.root_dir, 'data', split, 'png_hov'),
+            csv_dir=os.path.join(args.root_dir, 'data', split, 'csv_hov'),
+            num_classes=args.num_classes,
         )
         geojson2pngcsv(newargs)
         logger.info('   From pngcsv to nodes.csv.')
         newargs = Namespace(
-            png_dir = os.path.join(args.root_dir, 'data', split, 'png_hov'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv_hov'),
-            orig_dir = os.path.join(args.root_dir, 'data', 'orig'),
-            output_path = os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
-            num_workers = args.num_workers
+            png_dir=os.path.join(args.root_dir, 'data', split, 'png_hov'),
+            csv_dir=os.path.join(args.root_dir, 'data', split, 'csv_hov'),
+            orig_dir=os.path.join(args.root_dir, 'data', 'orig'),
+            output_path=os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
+            num_workers=args.num_workers
         )
         pngcsv2graph(newargs)
         logger.info('   Extracting centroids from GT.')
         newargs = Namespace(
-            png_dir = os.path.join(args.root_dir, 'data', split, 'png'),
-            csv_dir = os.path.join(args.root_dir, 'data', split, 'csv'),
-            output_path = os.path.join(args.root_dir, 'data', split, 'centroids')
+            png_dir=os.path.join(args.root_dir, 'data', split, 'png'),
+            csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
+            output_path=os.path.join(args.root_dir, 'data', split, 'centroids')
         )
         pngcsv2centroids(newargs)
         logger.info('   Adding GT labels to .nodes.csv.')
         newargs = Namespace(
-            graph_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
-            centroids_dir = os.path.join(args.root_dir, 'data', split, 'centroids'),
-            output_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'GT')
+            graph_dir=os.path.join(args.root_dir, 'data', split, 'graphs', 'raw'),
+            centroids_dir=os.path.join(args.root_dir, 'data', split, 'centroids'),
+            output_dir=os.path.join(args.root_dir, 'data', split, 'graphs', 'GT')
         )
         join_graph_gt(newargs)
         logger.info('   Adding hovernet predictions to .nodes.csv.')
         newargs = Namespace(
-            json_dir = os.path.join(args.root_dir, 'data', split, 'json'),
-            graph_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'GT'),
-            output_dir = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds'),
-            num_classes = args.num_classes,
+            json_dir=os.path.join(args.root_dir, 'data', split, 'json'),
+            graph_dir=os.path.join(args.root_dir, 'data', split, 'graphs', 'GT'),
+            output_dir=os.path.join(args.root_dir, 'data', split, 'graphs', 'preds'),
+            num_classes=args.num_classes,
         )
         join_hovprob_graph(newargs, logger)
     return
 
 
-def run_graph_pipe(args: Namespace, logger : Logger) -> None:
+def run_graph_pipe(args: Namespace, logger: Logger) -> None:
     """
     Trains the graph models.
     """
     newargs = Namespace(
-        train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
-        validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
-        test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
-        log_dir = os.path.join(args.root_dir, 'gnn_logs'),
-        early_stopping_rounds = 10,
-        batch_size = 20,
-        model_name = 'GCN',
-        save_file = os.path.join(args.root_dir, 'gnn_logs', 'gcn_results'),
-        num_confs = 32,
-        save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
-        device = 'cpu' if args.gpu == '' else 'cuda',
-        num_workers = args.num_workers,
-        checkpoint_iters = -1,
-        num_classes = args.num_classes,
-        disable_prior = False,
-        disable_morph_feats = False,
+        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir=os.path.join(args.root_dir, 'gnn_logs'),
+        early_stopping_rounds=10,
+        batch_size=20,
+        model_name='GCN',
+        save_file=os.path.join(args.root_dir, 'gnn_logs', 'gcn_results'),
+        num_confs=32,
+        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
+        device='cpu' if args.gpu == '' else 'cuda',
+        num_workers=args.num_workers,
+        checkpoint_iters=-1,
+        num_classes=args.num_classes,
+        disable_prior=False,
+        disable_morph_feats=False,
     )
     train_gnn(newargs)
     newargs = Namespace(
-        train_node_dir = os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
-        validation_node_dir = os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
-        test_node_dir = os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
-        log_dir = os.path.join(args.root_dir, 'gnn_logs'),
-        early_stopping_rounds = 10,
-        batch_size = 20,
-        model_name = 'ATT',
-        save_file = os.path.join(args.root_dir, 'gnn_logs', 'gat_results'),
-        num_confs = 32,
-        save_dir = os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
-        device = 'cpu' if args.gpu == '' else 'cuda',
-        num_workers = args.num_workers,
-        checkpoint_iters = -1,
-        num_classes = args.num_classes,
-        disable_prior = False,
-        disable_morph_feats = False,
+        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir=os.path.join(args.root_dir, 'gnn_logs'),
+        early_stopping_rounds=10,
+        batch_size=20,
+        model_name='ATT',
+        save_file=os.path.join(args.root_dir, 'gnn_logs', 'gat_results'),
+        num_confs=32,
+        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
+        device='cpu' if args.gpu == '' else 'cuda',
+        num_workers=args.num_workers,
+        checkpoint_iters=-1,
+        num_classes=args.num_classes,
+        disable_prior=False,
+        disable_morph_feats=False,
     )
     train_gnn(newargs)
     return
