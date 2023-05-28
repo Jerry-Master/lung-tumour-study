@@ -26,14 +26,13 @@ from tqdm import tqdm
 import os
 import cv2
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-import networkx as nx
 import json
 from typing import Dict, Tuple, List
 from concurrent.futures import ThreadPoolExecutor
 import dgl
 from dgl import DGLHeteroGraph
+import networkx as nx
 from ..utils.preprocessing import get_names
 from ..preprocessing import pngcsv2graph
 from ..classification.read_graph import GraphDataset
@@ -106,7 +105,13 @@ def main_subthread(
         remove_prior=False, remove_morph=False
         )
     graph = graph_dataset[k]
-    draw_graph(orig, graph, xx, yy, y, type_info, os.path.join(args.output_dir, name + '.overlay.png'))
+    draw_graph(orig, graph, xx, yy, y, type_info, os.path.join(args.output_dir, name + '.graph-overlay.png'))
+    nx_graph = dgl.to_networkx(graph)
+    nodes = [
+        (i, {'target': str(y[i])}) for i in nx_graph.nodes()
+    ]
+    nx_graph.add_nodes_from(nodes)
+    nx.write_gml(nx_graph, os.path.join(args.output_dir, 'graphs', name + '.gml'))
     pbar.update(1)
 
 
