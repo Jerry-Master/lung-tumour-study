@@ -241,10 +241,10 @@ def run_scaling(args: Namespace, logger: Logger) -> None:
     Runs the scaling experiment for Hovernet.
 
     This function performs the following steps:
-    1. Trains Hovernet models with different shapes: '270', '270FT', '518', '518FT'.
-    2. Performs inference with the trained models on the input data.
-    3. Runs post-processing on the Hovernet output.
-    4. Evaluates the Hovernet output using the ground truth data.
+        1. Trains Hovernet models with different shapes: '270', '270FT', '518', '518FT'.
+        2. Performs inference with the trained models on the input data.
+        3. Runs post-processing on the Hovernet output.
+        4. Evaluates the Hovernet output using the ground truth data.
 
     :param args: The arguments for the scaling experiment.
     :type args: Namespace
@@ -282,9 +282,9 @@ def run_xgb(args: Namespace, logger: Logger) -> None:
     Runs the XGBoost training and evaluation.
 
     This function performs the following steps:
-    1. Moves the graph files into a single folder for training and validation.
-    2. Trains XGBoost using the merged graph files.
-    3. Saves the cross-validation results.
+        1. Moves the graph files into a single folder for training and validation.
+        2. Trains XGBoost using the merged graph files.
+        3. Saves the cross-validation results.
 
     :param args: The arguments for the XGBoost training.
     :type args: Namespace
@@ -321,9 +321,9 @@ def run_void(args: Namespace, logger: Logger) -> None:
     Runs the training of GNN models without prior and morphological features.
 
     This function performs the following steps:
-    1. Trains a GNN model without prior.
-    2. Trains a GNN model without morphological features.
-    3. Trains a void GNN model (without prior and morphological features).
+        1. Trains a GNN model without prior.
+        2. Trains a GNN model without morphological features.
+        3. Trains a void GNN model (without prior and morphological features).
 
     :param args: The arguments for the GNN training.
     :type args: Namespace

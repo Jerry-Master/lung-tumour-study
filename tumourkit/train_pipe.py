@@ -37,8 +37,8 @@ def run_preproc_pipe(args: Namespace, logger: Logger) -> None:
     Runs the preprocessing pipeline to convert the gson format to other formats.
 
     This function performs the following steps:
-    1. Converts the geojson files to pngcsv format.
-    2. Converts the pngcsv files to npy format.
+        1. Converts the geojson files to pngcsv format.
+        2. Converts the pngcsv files to npy format.
 
     :param args: The arguments for the preprocessing pipeline.
     :type args: Namespace
@@ -72,9 +72,9 @@ def run_hov_pipe(args: Namespace, logger: Logger) -> None:
     Trains Hovernet and predicts cell contours in json format.
 
     This function performs the following steps:
-    1. Trains Hovernet on the training data.
-    2. Performs inference using the trained Hovernet model on the input images.
-    3. Saves the predicted cell contours in json format.
+        1. Trains Hovernet on the training data.
+        2. Performs inference using the trained Hovernet model on the input images.
+        3. Saves the predicted cell contours in json format.
 
     :param args: The arguments for the Hovernet pipeline.
     :type args: Namespace
@@ -123,13 +123,13 @@ def run_postproc_pipe(args: Namespace, logger: Logger) -> None:
     Converts the json format to the graph format containing ground truth (GT) and predictions.
 
     This function performs the following steps:
-    1. Moves json files to their corresponding folders based on the split.
-    2. Converts the json format to geojson format.
-    3. Converts the geojson format to pngcsv format.
-    4. Converts the pngcsv format to nodes.csv format.
-    5. Extracts centroids from ground truth (GT) data.
-    6. Adds GT labels to the nodes.csv file.
-    7. Adds Hovernet predictions to the nodes.csv file.
+        1. Moves json files to their corresponding folders based on the split.
+        2. Converts the json format to geojson format.
+        3. Converts the geojson format to pngcsv format.
+        4. Converts the pngcsv format to nodes.csv format.
+        5. Extracts centroids from ground truth (GT) data.
+        6. Adds GT labels to the nodes.csv file.
+        7. Adds Hovernet predictions to the nodes.csv file.
 
     :param args: The arguments for the post-processing pipeline.
     :type args: Namespace
@@ -204,8 +204,8 @@ def run_graph_pipe(args: Namespace, logger: Logger) -> None:
     Trains the graph models.
 
     This function trains the graph models using the following steps:
-    1. Trains the GCN (Graph Convolutional Network) model.
-    2. Trains the GAT (Graph Attention Network) model.
+        1. Trains the GCN (Graph Convolutional Network) model.
+        2. Trains the GAT (Graph Attention Network) model.
 
     :param args: The arguments for the graph pipeline.
     :type args: Namespace

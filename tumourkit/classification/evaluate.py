@@ -98,15 +98,15 @@ def compute_metrics(
     Computes various evaluation metrics based on the provided predictions and ground truth labels.
 
     This function computes the following metrics:
-    - Accuracy
-    - F1-score
-    - ROC AUC
-    - Expected Calibration Error (ECE)
-    - Percentage error
+        - Accuracy
+        - F1-score
+        - ROC AUC
+        - Expected Calibration Error (ECE)
+        - Percentage error
 
     The input DataFrame must contain the following columns:
-    - 'class': The ground truth labels (1 for negative, 2 for positive).
-    - 'prob1': The predicted probabilities for the positive class.
+        - 'class': The ground truth labels (1 for negative, 2 for positive).
+        - 'prob1': The predicted probabilities for the positive class.
 
     Optionally, a reliability diagram can be generated and saved to a file specified by 'draw_on'.
     The 'method_name' parameter is used for the legend in the reliability diagram.
