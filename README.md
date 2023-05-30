@@ -7,7 +7,6 @@
   <img src="docs/source/imgs/graph-overlay.png" width="30%" />
 </p>
 
-Python package from my Bachelor's thesis. It is dedicated to aid in the study of tumours. It all started with lung tissue, thus the repository name. But it now supports any tissue with any number of classes. For more information, please visit the [official documentation](https://lung-tumour-study.readthedocs.io/en/latest/index.html).
-
+Python package from my Bachelor's thesis. It is dedicated to aid in the study of tumours. It all started with lung tissue, thus the repository name. But it now supports any tissue with any number of classes. For more information, please visit the [official documentation](https://lung-tumour-study.readthedocs.io/en/latest/index.html). Pretrained models can be found on [Hugging Face](https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs).
 
 
