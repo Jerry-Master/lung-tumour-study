@@ -34,8 +34,20 @@ from logging import Logger
 
 def parse_centroids_probs(nuc: Dict[str, Any], logger: Optional[Logger] = None, num_classes: Optional[int] = 2) -> List[Tuple[int, int, int]]:
     """
-    Input: Hovernet json nuclei dictionary as given by modified run_infer.py.
-    Output: List of (X,Y,prob1) tuples representing centroids.
+    Parses the centroids and probabilities from the Hovernet JSON nuclei dictionary.
+
+    This function takes the Hovernet JSON nuclei dictionary as input, which is obtained from the modified run_infer.py script.
+    It extracts the centroids and probabilities from the dictionary and returns them as a list of tuples.
+    Each tuple represents a centroid and consists of (X, Y, prob1) for binary classification or (X, Y, prob1, prob2, ..., probN) for multiclass classification.
+
+    :param nuc: The Hovernet JSON nuclei dictionary.
+    :type nuc: Dict[str, Any]
+    :param logger: Optional logger object to log warnings.
+    :type logger: Optional[Logger]
+    :param num_classes: Optional number of classes. Defaults to 2 for binary classification.
+    :type num_classes: Optional[int]
+    :return: The list of centroids with probabilities.
+    :rtype: List[Tuple[int, int, int]]
     """
     centroids_ = []
     for inst in nuc:
@@ -62,8 +74,21 @@ def parse_centroids_probs(nuc: Dict[str, Any], logger: Optional[Logger] = None, 
 
 def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any], logger: Optional[Logger] = None, num_classes: Optional[int] = 2) -> pd.DataFrame:
     """
-    Extracts type_prob from json and adds it as column prob1.
-    Makes the join based on id.
+    Adds probability information from the Hovernet JSON nuclei dictionary to the graph DataFrame.
+
+    This function extracts the type probabilities from the Hovernet JSON nuclei dictionary (`hov_json`) and adds them as columns to the `graph` DataFrame.
+    The join between the `graph` DataFrame and the `hov_json` dictionary is based on the 'id' field.
+
+    :param graph: The graph DataFrame containing the nodes.
+    :type graph: pd.DataFrame
+    :param hov_json: The Hovernet JSON nuclei dictionary.
+    :type hov_json: Dict[str, Any]
+    :param logger: Optional logger object to log warnings.
+    :type logger: Optional[Logger]
+    :param num_classes: Optional number of classes. Defaults to 2 for binary classification.
+    :type num_classes: Optional[int]
+    :return: The updated graph DataFrame with probability information.
+    :rtype: pd.DataFrame
     """
     centroids = parse_centroids_probs(hov_json, logger, num_classes)
     centroids = np.array(centroids)

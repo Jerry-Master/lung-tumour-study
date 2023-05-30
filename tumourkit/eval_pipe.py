@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 from . import eval_segment
 import os
-from .preprocessing import hovernet2centroids, geojson2pngcsv, pngcsv2centroids
+from .preprocessing import hovernet2centroids_main, geojson2pngcsv_main, pngcsv2centroids_main
 from .utils.preprocessing import get_names
 from .utils.pipes import HovernetNotFoundError, check_void
 from .utils.classification import metrics_from_predictions
@@ -34,7 +34,15 @@ from .utils.classification import metrics_from_predictions
 
 def run_preprocessing(args: Namespace, logger: Logger) -> None:
     """
-    Converts the gson format to the rest of formats.
+    Runs the preprocessing steps to convert the gson format to other formats.
+
+    :param args: The arguments for the preprocessing.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+
+    :raises HovernetNotFoundError: If the Hovernet centroids are not found in the training output.
     """
     logger.info('Extracting Hovernet centroids from training output.')
     if not os.path.isdir(os.path.join(args.root_dir, 'data', 'tmp_hov', 'json')):
@@ -43,7 +51,7 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
         json_dir=os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'),
         output_path=os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
     )
-    hovernet2centroids(newargs)
+    hovernet2centroids_main(newargs)
     for split in ['train', 'validation', 'test']:
         if check_void(os.path.join(args.root_dir, 'data', split, 'names.txt')):
             logger.info(f'Preprocessing split {split}.')
@@ -59,7 +67,7 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
                 csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
                 num_classes=args.num_classes,
             )
-            geojson2pngcsv(newargs)
+            geojson2pngcsv_main(newargs)
         if check_void(os.path.join(args.root_dir, 'data', split, 'centroids')):
             logger.info('   Extracting centroids from GT.')
             newargs = Namespace(
@@ -67,11 +75,23 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
                 csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
                 output_path=os.path.join(args.root_dir, 'data', split, 'centroids')
             )
-            pngcsv2centroids(newargs)
+            pngcsv2centroids_main(newargs)
     return
 
 
 def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
+    """
+    Computes Expected Calibration Error (ECE) and other metrics for the given split.
+
+    :param args: The arguments for computing ECE and metrics.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+
+    :param split: The name of the split (e.g., 'train', 'validation', 'test').
+    :type split: str
+    """
     folder = os.path.join(args.root_dir, 'data', split, 'graphs', 'preds')
     trues, probs = None, None
     for file in os.listdir(folder):
@@ -108,6 +128,15 @@ def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
 
 
 def run_evaluation(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the evaluation of Hovernet output for different splits.
+
+    :param args: The arguments for the evaluation.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Starting evaluation of Hovernet output.')
     for split in ['train', 'validation', 'test']:
         logger.info(f'    Evaluating {split} split')

@@ -24,14 +24,23 @@ import logging
 from logging import Logger
 from .segmentation import hov_infer
 import os
-from .preprocessing import geojson2pngcsv, png2graph, hovernet2geojson, graph2centroids, centroidspng2csv, pngcsv2geojson
-from .postprocessing import join_hovprob_graph
+from .preprocessing import geojson2pngcsv_main, png2graph_main, hovernet2geojson_main, graph2centroids_main, centroidspng2csv_main, pngcsv2geojson_main
+from .postprocessing import join_hovprob_graph_main
 from .utils.preprocessing import create_dir
 from .classification import infer_gnn
 import pandas as pd
 
 
 def set_best_configuration(args: Namespace, logger: Logger) -> None:
+    """
+    Sets the best configuration from training based on the F1 score.
+
+    :param args: The arguments for setting the best configuration.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Configuration not provided, using best configuration from training based on F1 score.')
     if args.best_arch == 'GCN':
         save_file = os.path.join(args.root_dir, 'gnn_logs', 'gcn_results.csv')
@@ -51,6 +60,15 @@ def set_best_configuration(args: Namespace, logger: Logger) -> None:
 
 
 def run_hovernet(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the Hovernet inference.
+
+    :param args: The arguments for running Hovernet inference.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Starting hovernet inference.')
     newargs = {
         'nr_types': str(args.num_classes + 1),
@@ -77,6 +95,15 @@ def run_hovernet(args: Namespace, logger: Logger) -> None:
 
 
 def run_posthov(args: Namespace, logger: Logger) -> None:
+    """
+    Performs post-processing steps on Hovernet output.
+
+    :param args: The arguments for running post-processing on Hovernet output.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Parsing Hovernet output')
     logger.info('   From json to geojson.')
     newargs = Namespace(
@@ -84,7 +111,7 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
         gson_dir=os.path.join(args.output_dir, 'gson_hov'),
         num_classes=args.num_classes
     )
-    hovernet2geojson(newargs)
+    hovernet2geojson_main(newargs)
     logger.info('   From geojson to pngcsv.')
     newargs = Namespace(
         gson_dir=os.path.join(args.output_dir, 'gson_hov'),
@@ -92,7 +119,7 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
         csv_dir=os.path.join(args.output_dir, 'csv_hov'),
         num_classes=args.num_classes
     )
-    geojson2pngcsv(newargs)
+    geojson2pngcsv_main(newargs)
     logger.info('   From pngcsv to nodes.csv.')
     create_dir(os.path.join(args.output_dir, 'graphs'))
     newargs = Namespace(
@@ -101,7 +128,7 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
         output_path=os.path.join(args.output_dir, 'graphs', 'raw'),
         num_workers=args.num_workers
     )
-    png2graph(newargs)
+    png2graph_main(newargs)
     logger.info('   Adding hovernet predictions to .nodes.csv.')
     newargs = Namespace(
         json_dir=os.path.join(args.output_dir, 'tmp_hov', 'json'),
@@ -109,11 +136,20 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
         output_dir=os.path.join(args.output_dir, 'graphs', 'hovpreds'),
         num_classes=args.num_classes
     )
-    join_hovprob_graph(newargs, logger)
+    join_hovprob_graph_main(newargs, logger)
     return
 
 
 def run_graphs(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the graph inference.
+
+    :param args: The arguments for running graph inference.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Starting graph inference.')
     model_name = 'best_' + args.best_arch + '_' + args.best_num_layers + '_' \
         + args.best_dropout + '_' + args.best_norm_type
@@ -132,6 +168,15 @@ def run_graphs(args: Namespace, logger: Logger) -> None:
 
 
 def run_postgraphs(args: Namespace, logger: Logger) -> None:
+    """
+    Performs post-processing steps on GNN output.
+
+    :param args: The arguments for running post-processing on GNN output.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Parsing gnn output.')
     logger.info('   Converting .nodes.csv to .centroids.csv.')
     newargs = Namespace(
@@ -139,14 +184,14 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
         centroids_dir=os.path.join(args.output_dir, 'centroids'),
         num_classes=args.num_classes,
     )
-    graph2centroids(newargs)
+    graph2centroids_main(newargs)
     logger.info('   Converting .centroids.csv and .GT_cells.png to .class.csv.')
     newargs = Namespace(
         centroids_dir=os.path.join(args.output_dir, 'centroids'),
         png_dir=os.path.join(args.output_dir, 'png_hov'),
         csv_dir=os.path.join(args.output_dir, 'csv_gnn'),
     )
-    centroidspng2csv(newargs)
+    centroidspng2csv_main(newargs)
     logger.info('   Converting png/csv to geojson.')
     newargs = Namespace(
         png_dir=os.path.join(args.output_dir, 'png_hov'),
@@ -154,7 +199,7 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
         gson_dir=os.path.join(args.output_dir, 'gson_gnn'),
         num_classes=args.num_classes
     )
-    pngcsv2geojson(newargs)
+    pngcsv2geojson_main(newargs)
     return
 
 

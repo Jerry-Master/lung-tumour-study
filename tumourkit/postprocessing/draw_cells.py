@@ -32,7 +32,30 @@ from typing import Dict, Tuple, List
 from ..utils.preprocessing import get_names, read_labels
 
 
-def draw_cells(orig: np.ndarray, png: np.ndarray, csv: pd.DataFrame, type_info: Dict[str, Tuple[str, List[int]]]) -> np.ndarray:
+def draw_cells(
+        orig: np.ndarray,
+        png: np.ndarray,
+        csv: pd.DataFrame,
+        type_info: Dict[str, Tuple[str, List[int]]]
+        ) -> np.ndarray:
+    """
+    Draws cell labels on the original image based on the PNG labels and CSV data.
+
+    Given the original image, PNG labels, CSV data containing cell labels,
+    and type information, this function draws the cell labels on the original image.
+    The cell labels are blended with the original image by alpha compositing.
+
+    :param orig: The original image.
+    :type orig: np.ndarray
+    :param png: The PNG labels representing cell IDs.
+    :type png: np.ndarray
+    :param csv: The CSV data containing cell labels.
+    :type csv: pd.DataFrame
+    :param type_info: The type information dictionary mapping cell labels to colors.
+    :type type_info: Dict[str, Tuple[str, List[int]]]
+    :return: The image with cell labels drawn on it.
+    :rtype: np.ndarray
+    """
     blend = orig.copy()
     for i, (idx, cell_label) in csv.iterrows():
         blend[png == idx] = 0.3 * np.array(type_info[str(cell_label)][1]) \

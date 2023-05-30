@@ -5,11 +5,10 @@ import shutil
 import cv2
 import json
 from tumourkit.segmentation import hov_infer
-from tumourkit.preprocessing import geojson2pngcsv, png2graph, hovernet2geojson, graph2centroids, centroidspng2csv, pngcsv2geojson
-from tumourkit.postprocessing import join_hovprob_graph
+from tumourkit.preprocessing import geojson2pngcsv_main, png2graph_main, hovernet2geojson_main, graph2centroids_main, centroidspng2csv_main, pngcsv2geojson_main
+from tumourkit.postprocessing import join_hovprob_graph_main, draw_cells_main
 from tumourkit.utils.preprocessing import create_dir
 from tumourkit.classification import infer_gnn
-from tumourkit.postprocessing import draw_cells
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -17,12 +16,22 @@ from argparse import Namespace
 import logging
 from logging import Logger
 import argparse
+from typing import Tuple, Optional
 
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def download_file(url: str, filename: str):
+    """
+    Downloads a file from a specified URL and saves it to the given filename.
+
+    :param url: The URL of the file to be downloaded.
+    :type url: str
+
+    :param filename: The name of the file to be saved.
+    :type filename: str
+    """
     response = requests.get(url, stream=True)
     file_size = int(response.headers.get('Content-Length', 0))
     showname = '...' + filename[-20:] if len(filename) > 20 else filename
@@ -35,6 +44,18 @@ def download_file(url: str, filename: str):
 
 
 def download_folder(url_folder: str, url_files: str, dirname: str):
+    """
+    Downloads multiple files from a specified folder URL and saves them to the given directory.
+
+    :param url_folder: The URL of the folder containing the files to be downloaded.
+    :type url_folder: str
+
+    :param url_files: The files within the folder.
+    :type url_files: str
+
+    :param dirname: The name of the directory where the files will be saved.
+    :type dirname: str
+    """
     response = requests.get(url_folder)
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -55,6 +76,21 @@ def download_folder(url_folder: str, url_files: str, dirname: str):
 
 
 def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_model: str, weights_dir: str):
+    """
+    Downloads necessary models and files if they do not exist in the specified directory.
+
+    :param hov_dataset: The name of the Hovernet dataset.
+    :type hov_dataset: str
+
+    :param hov_model: The name of the Hovernet model.
+    :type hov_model: str
+
+    :param gnn_model: The name of the GNN (Graph Neural Network) model.
+    :type gnn_model: str
+
+    :param weights_dir: The directory path where the models and files will be saved.
+    :type weights_dir: str
+    """
     if not os.path.exists(os.path.join(weights_dir, hov_dataset, hov_model + '.tar')):
         os.makedirs(os.path.join(weights_dir, hov_dataset), exist_ok=True)
         url = f'https://huggingface.co/Jerry-Master/Hovernet-plus-Graphs/resolve/main/{hov_dataset}/hovernet/{hov_model}.tar'
@@ -75,6 +111,15 @@ def download_models_if_needed(hov_dataset: str, hov_model: str, gnn_model: str, 
 
 
 def create_input_dir(input_image: np.ndarray, delete_prev: bool):
+    """
+    Creates an input directory and saves the input image in it.
+
+    :param input_image: The input image to be saved.
+    :type input_image: np.ndarray
+
+    :param delete_prev: Flag indicating whether to delete the previous input directory if it exists.
+    :type delete_prev: bool
+    """
     if os.path.exists(os.path.join(APP_DIR, 'tmp')):
         if delete_prev:
             shutil.rmtree(os.path.join(APP_DIR, 'tmp'))
@@ -84,6 +129,21 @@ def create_input_dir(input_image: np.ndarray, delete_prev: bool):
 
 
 def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int, weights_dir: str):
+    """
+    Runs HoverNet inference using the specified HoverNet dataset, model, and weights.
+
+    :param hov_dataset: The name of the HoverNet dataset.
+    :type hov_dataset: str
+
+    :param hov_model: The name of the HoverNet model.
+    :type hov_model: str
+
+    :param num_classes: The number of classes in the dataset.
+    :type num_classes: int
+
+    :param weights_dir: The directory path containing the HoverNet weights.
+    :type weights_dir: str
+    """
     newargs = {
         'nr_types': str(num_classes + 1),
         'type_info_path': os.path.join(weights_dir, hov_dataset, 'type_info.json'),
@@ -108,19 +168,28 @@ def run_hovernet(hov_dataset: str, hov_model: str, num_classes: int, weights_dir
 
 
 def run_posthov(num_classes: int, logger: Logger):
+    """
+    Runs post-processing steps on the HoverNet predictions.
+
+    :param num_classes: The number of classes in the HoverNet predictions.
+    :type num_classes: int
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     newargs = Namespace(
         json_dir=os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'json'),
         gson_dir=os.path.join(APP_DIR, 'tmp', 'gson_hov'),
         num_classes=num_classes
     )
-    hovernet2geojson(newargs)
+    hovernet2geojson_main(newargs)
     newargs = Namespace(
         gson_dir=os.path.join(APP_DIR, 'tmp', 'gson_hov'),
         png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
         csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_hov'),
         num_classes=num_classes
     )
-    geojson2pngcsv(newargs)
+    geojson2pngcsv_main(newargs)
     create_dir(os.path.join(APP_DIR, 'tmp', 'graphs'))
     newargs = Namespace(
         png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
@@ -128,17 +197,32 @@ def run_posthov(num_classes: int, logger: Logger):
         output_path=os.path.join(APP_DIR, 'tmp', 'graphs', 'raw'),
         num_workers=0
     )
-    png2graph(newargs)
+    png2graph_main(newargs)
     newargs = Namespace(
         json_dir=os.path.join(APP_DIR, 'tmp', 'tmp_hov', 'json'),
         graph_dir=os.path.join(APP_DIR, 'tmp', 'graphs', 'raw'),
         output_dir=os.path.join(APP_DIR, 'tmp', 'graphs', 'hovpreds'),
         num_classes=num_classes
     )
-    join_hovprob_graph(newargs, logger)
+    join_hovprob_graph_main(newargs, logger)
 
 
 def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int, weights_dir: str):
+    """
+    Runs the GNN (Graph Neural Network) on the HoverNet graph predictions.
+
+    :param gnn_dataset: The name of the GNN dataset.
+    :type gnn_dataset: str
+
+    :param gnn_model: The name of the GNN model.
+    :type gnn_model: str
+
+    :param num_classes: The number of classes in the GNN predictions.
+    :type num_classes: int
+
+    :param weights_dir: The directory path containing the GNN weights.
+    :type weights_dir: str
+    """
     disable_prior = 'no-prior' in gnn_model or 'void' in gnn_model
     disable_morph_feats = 'no-morph' in gnn_model or 'void' in gnn_model
     model_name = os.listdir(os.path.join(weights_dir, gnn_dataset, gnn_model))[0]
@@ -157,28 +241,40 @@ def run_graphs(gnn_dataset: str, gnn_model: str, num_classes: int, weights_dir: 
 
 
 def run_postgraphs(num_classes: int):
+    """
+    Runs post-processing steps on the GNN predictions.
+
+    :param num_classes: The number of classes in the GNN predictions.
+    :type num_classes: int
+    """
     newargs = Namespace(
         graph_dir=os.path.join(APP_DIR, 'tmp', 'gnn_preds'),
         centroids_dir=os.path.join(APP_DIR, 'tmp', 'centroids'),
         num_classes=num_classes,
     )
-    graph2centroids(newargs)
+    graph2centroids_main(newargs)
     newargs = Namespace(
         centroids_dir=os.path.join(APP_DIR, 'tmp', 'centroids'),
         png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
         csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
     )
-    centroidspng2csv(newargs)
+    centroidspng2csv_main(newargs)
     newargs = Namespace(
         png_dir=os.path.join(APP_DIR, 'tmp', 'png_hov'),
         csv_dir=os.path.join(APP_DIR, 'tmp', 'csv_gnn'),
         gson_dir=os.path.join(APP_DIR, 'tmp', 'gson_gnn'),
         num_classes=num_classes
     )
-    pngcsv2geojson(newargs)
+    pngcsv2geojson_main(newargs)
 
 
-def create_logger():
+def create_logger() -> Logger:
+    """
+    Creates a logger object for logging messages.
+
+    :return: The logger object.
+    :rtype: Logger
+    """
     logger = logging.getLogger('gradio')
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
@@ -189,9 +285,18 @@ def create_logger():
     return logger
 
 
-def overlay_outputs(hov_dataset: str, use_gnn: bool):
+def overlay_outputs(hov_dataset: str, use_gnn: bool) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
-    Returns the output images.
+    Returns the overlayed images generated from HoverNet and optional GNN predictions.
+
+    :param hov_dataset: The name of the HoverNet dataset.
+    :type hov_dataset: str
+
+    :param use_gnn: Flag indicating whether to include GNN predictions in the overlay.
+    :type use_gnn: bool
+
+    :return: A tuple containing the HoverNet overlay image and the GNN overlay image (if applicable).
+    :rtype: Tuple[np.ndarray, Optional[np.ndarray]]
     """
     newargs = Namespace(
         orig_dir=os.path.join(APP_DIR, 'tmp', 'input'),
@@ -200,7 +305,7 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
         output_dir=os.path.join(APP_DIR, 'tmp', 'overlay_hov'),
         type_info=os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
     )
-    draw_cells(newargs)
+    draw_cells_main(newargs)
     hov_dir = os.path.join(APP_DIR, 'tmp', 'overlay_hov')
     hov_file = os.listdir(hov_dir)[0]
     hov = cv2.imread(os.path.join(hov_dir, hov_file), -1)[:, :, ::-1]
@@ -212,7 +317,7 @@ def overlay_outputs(hov_dataset: str, use_gnn: bool):
             output_dir=os.path.join(APP_DIR, 'tmp', 'overlay_gnn'),
             type_info=os.path.join(APP_DIR, 'weights', hov_dataset, 'type_info.json'),
         )
-        draw_cells(newargs)
+        draw_cells_main(newargs)
         gnn_dir = os.path.join(APP_DIR, 'tmp', 'overlay_gnn')
         gnn_file = os.listdir(gnn_dir)[0]
         gnn = cv2.imread(os.path.join(gnn_dir, gnn_file), -1)[:, :, ::-1]
@@ -226,7 +331,34 @@ LAST_HOV_DATASET = None
 LAST_IMG_HASH = None
 
 
-def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, hov_model: str, gnn_model: str):
+def process_image(
+        weights_dir: str,
+        input_image: np.ndarray,
+        hov_dataset: str,
+        hov_model: str,
+        gnn_model: str
+        ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """
+    Processes an input image using HoverNet and optionally GNN models.
+
+    :param weights_dir: The directory path containing the model weights. If None, default weights directory will be used.
+    :type weights_dir: str
+
+    :param input_image: The input image to be processed.
+    :type input_image: np.ndarray
+
+    :param hov_dataset: The name of the HoverNet dataset.
+    :type hov_dataset: str
+
+    :param hov_model: The name of the HoverNet model.
+    :type hov_model: str
+
+    :param gnn_model: The name of the GNN (Graph Neural Network) model.
+    :type gnn_model: str
+
+    :return: A tuple containing the HoverNet output image and the GNN output image (if applicable).
+    :rtype: Tuple[np.ndarray, Optional[np.ndarray]]
+    """
     # Cache information when possible
     global LAST_HOV_MODEL
     global LAST_IMG_HASH
@@ -267,6 +399,15 @@ def process_image(weights_dir: str, input_image: np.ndarray, hov_dataset: str, h
 
 
 def create_ui(weights_dir: str) -> gr.Interface:
+    """
+    Creates and returns a Gradio interface for the CNN+GNN demo.
+
+    :param weights_dir: The directory path containing the model weights.
+    :type weights_dir: str
+
+    :return: A Gradio interface object.
+    :rtype: gr.Interface
+    """
     image_input = gr.Image(shape=(1024, 1024))
     hov_dataset = gr.Dropdown(choices=[
         'consep', 'monusac', 'breast', 'lung'

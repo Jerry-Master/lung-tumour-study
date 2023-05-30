@@ -45,9 +45,19 @@ def get_confusion_matrix(
         pred_centroids: List[Tuple[int, int, int]]
         ) -> np.ndarray:
     """
+    Calculates the confusion matrix based on the ground truth and predicted centroids.
+
     Each centroid is represented by a 3-tuple with (X, Y, class).
-    Matrix has (N+1)x(N+1) entries, one more for background when no match is found.
-    N is the maximum value encountered for class.
+    The confusion matrix has (N+1)x(N+1) entries, where N is the maximum value encountered for the class.
+    There is one additional entry for the background class when no match is found.
+
+    :param gt_centroids: The ground truth centroids represented as a list of 3-tuples (X, Y, class).
+    :type gt_centroids: List[Tuple[int, int, int]]
+    :param pred_centroids: The predicted centroids represented as a list of 3-tuples (X, Y, class).
+    :type pred_centroids: List[Tuple[int, int, int]]
+
+    :return: The confusion matrix.
+    :rtype: np.ndarray
     """
     if len(gt_centroids) == 0 and len(pred_centroids) == 0:
         return np.array([[0]])
@@ -92,10 +102,19 @@ def get_pairs(
         pred_centroids: List[Tuple[int, int, int]]
         ) -> Tuple[np.ndarray, np.ndarray]:
     """
+    Retrieves true and predicted labels ordered by their correspondences.
+
     Each centroid is represented by a 3-tuple with (X, Y, class).
-    Class is 1=non-tumour, 2=tumour.
-    Returns true and predicted labels ordered by their correspondences.
-    Returned labels start at 0.
+    The class is represented as 1=non-tumour, 2=tumour.
+    The returned labels are ordered starting from 0.
+
+    :param gt_centroids: The ground truth centroids represented as a list of 3-tuples (X, Y, class).
+    :type gt_centroids: List[Tuple[int, int, int]]
+    :param pred_centroids: The predicted centroids represented as a list of 3-tuples (X, Y, class).
+    :type pred_centroids: List[Tuple[int, int, int]]
+
+    :return: A tuple containing the true labels and predicted labels ordered by their correspondences.
+    :rtype: Tuple[np.ndarray, np.ndarray]
     """
     if len(gt_centroids) == 0:
         return None, None
@@ -114,8 +133,15 @@ def get_pairs(
 
 def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
     """
-    Returns f1 score of given class against the rest.
-    If no positive or predictive positive classes are found, None is returned.
+    Computes the F1 score of a given class against the rest.
+
+    :param conf_mat: The confusion matrix.
+    :type conf_mat: np.ndarray
+    :param cls: The class for which to compute the F1 score.
+    :type cls: int
+
+    :return: The F1 score of the given class against the rest.
+    :rtype: float
     """
     if cls == 0:
         return None
@@ -135,8 +161,16 @@ def compute_f1_score_from_matrix(conf_mat: np.ndarray, cls: int) -> float:
 
 def compute_metrics_from_matrix(conf_mat: np.ndarray) -> Tuple[float, float, float, float]:
     """
-    Given confusion matrix,
-    returns F1 score, Accuracy, ROC AUC and percentage error.
+    Computes various evaluation metrics from a confusion matrix.
+
+    Given a confusion matrix, this function calculates the F1 score, accuracy,
+    ROC AUC, and percentage error.
+
+    :param conf_mat: The confusion matrix.
+    :type conf_mat: np.ndarray
+
+    :return: A tuple containing the F1 score, accuracy, ROC AUC, and percentage error.
+    :rtype: Tuple[float, float, float, float]
     """
     total = np.sum(conf_mat)
     acc = np.matrix.trace(conf_mat) / total
@@ -163,6 +197,14 @@ def add_matrices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     Adds two matrices even if their shapes are different.
     If B is bigger than A, A is enlarged with zeros.
     And vice versa.
+
+    :param A: The first matrix.
+    :type A: np.ndarray
+    :param B: The second matrix.
+    :type B: np.ndarray
+
+    :return: The sum of the two matrices.
+    :rtype: np.ndarray
     """
     if A.shape == B.shape:
         return A + B
@@ -183,8 +225,12 @@ def save_csv(
         save_path: str
         ) -> None:
     """
-    Saves metrics in csv format for later use.
-    Columns depend on dictionary keys.
+    Saves metrics in CSV format for later use.
+
+    :param metrics: The metrics dictionary containing the data to be saved.
+    :type metrics: Dict[str, List[float]]
+    :param save_path: The file path where the CSV file will be saved.
+    :type save_path: str
     """
     metrics_df = pd.DataFrame(metrics)
     metrics_df.to_csv(save_path + '.csv', index=False)
@@ -195,7 +241,12 @@ def save_debug_matrix(
         save_path: str
         ) -> None:
     """
-    Saves confusion matrices for debug purposes.
+    Saves a confusion matrix in CSV format for debug purposes.
+
+    :param mat: The confusion matrix to be saved.
+    :type mat: np.ndarray
+    :param save_path: The file path where the CSV file will be saved.
+    :type save_path: str
     """
     conf_mat_df = pd.DataFrame(mat)
     conf_mat_df.to_csv(save_path + '.csv')

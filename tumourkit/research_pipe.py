@@ -26,7 +26,7 @@ from logging import Logger
 import os
 from .segmentation import hov_train, hov_infer
 from .utils.pipes import check_training, WrongConfigurationError, HovernetNotFoundError, check_void
-from .preprocessing import hovernet2centroids, geojson2pngcsv, pngcsv2centroids
+from .preprocessing import hovernet2centroids_main, geojson2pngcsv_main, pngcsv2centroids_main
 from .segmentation import pngcsv2npy
 from .utils.preprocessing import get_names
 from . import eval_segment
@@ -34,6 +34,15 @@ from .classification import train_xgb, train_gnn
 
 
 def run_preprocessing(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the preprocessing steps.
+
+    :param args: The arguments for running the preprocessing.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     if args.experiment == 'cnn-gnn' or args.experiment == 'xgb-gnn' or args.experiment == 'void-gnn':
         check_training(args, logger)
     os.makedirs(args.output_dir, exist_ok=True)
@@ -45,7 +54,16 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
 
 def hovernet_preproc_with_shape(shape: str, args: Namespace, logger: Logger) -> None:
     """
-    Converts the gson format to the rest of formats.
+    Converts the Hovernet gson format to the rest of formats.
+
+    :param shape: The shape of the Hovernet model.
+    :type shape: str
+
+    :param args: The arguments for running Hovernet preprocessing.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
     """
     real_shape = shape[:-2] if 'FT' in shape else shape
     os.makedirs(os.path.join(args.output_dir, 'hovernet', 'data', real_shape), exist_ok=True)
@@ -59,7 +77,7 @@ def hovernet_preproc_with_shape(shape: str, args: Namespace, logger: Logger) -> 
                 csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
                 num_classes=args.num_classes,
             )
-            geojson2pngcsv(newargs)
+            geojson2pngcsv_main(newargs)
         os.makedirs(os.path.join(args.output_dir, 'hovernet', 'data', real_shape, split), exist_ok=True)
         os.makedirs(os.path.join(args.output_dir, 'hovernet', 'data', real_shape, split, 'npy'), exist_ok=True)
         if check_void(os.path.join(args.output_dir, 'hovernet', 'data', real_shape, split, 'npy')):
@@ -76,6 +94,18 @@ def hovernet_preproc_with_shape(shape: str, args: Namespace, logger: Logger) -> 
 
 
 def train_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) -> None:
+    """
+    Performs Hovernet preprocessing and training with the specified shape.
+
+    :param shape: The shape of the Hovernet model.
+    :type shape: str
+
+    :param args: The arguments for Hovernet preprocessing and training.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info(f'Starting hovernet preprocessing of {shape}.')
     hovernet_preproc_with_shape(shape, args, logger)
     logger.info(f'Starting training of {shape}.')
@@ -94,6 +124,18 @@ def train_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) -> No
 
 
 def infer_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) -> None:
+    """
+    Performs inference with the specified Hovernet model shape.
+
+    :param shape: The shape of the Hovernet model.
+    :type shape: str
+
+    :param args: The arguments for Hovernet inference.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info(f'Starting inference of {shape}.')
     newargs = {
         'nr_types': str(args.num_classes + 1),
@@ -121,7 +163,16 @@ def infer_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) -> No
 
 def run_postprocessing_with_shape(shape: str, args: Namespace, logger: Logger) -> None:
     """
-    Converts the gson format to the rest of formats.
+    Performs post-processing after Hovernet training with the specified shape.
+
+    :param shape: The shape of the Hovernet model.
+    :type shape: str
+
+    :param args: The arguments for post-processing.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
     """
     logger.info('Extracting Hovernet centroids from training output.')
     if not os.path.isdir(os.path.join(args.output_dir, 'hovernet', 'output', shape, 'json')):
@@ -130,7 +181,7 @@ def run_postprocessing_with_shape(shape: str, args: Namespace, logger: Logger) -
         json_dir=os.path.join(args.output_dir, 'hovernet', 'output', shape, 'json'),
         output_path=os.path.join(args.output_dir, 'hovernet', 'output', shape, 'centroids_hov'),
     )
-    hovernet2centroids(newargs)
+    hovernet2centroids_main(newargs)
     for split in ['train', 'validation', 'test']:
         if check_void(os.path.join(args.root_dir, 'data', split, 'names.txt')):
             logger.info(f'Preprocessing split {split}.')
@@ -146,7 +197,7 @@ def run_postprocessing_with_shape(shape: str, args: Namespace, logger: Logger) -
                 csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
                 num_classes=args.num_classes,
             )
-            geojson2pngcsv(newargs)
+            geojson2pngcsv_main(newargs)
         if check_void(os.path.join(args.root_dir, 'data', split, 'centroids')):
             logger.info('   Extracting centroids from GT.')
             newargs = Namespace(
@@ -154,10 +205,22 @@ def run_postprocessing_with_shape(shape: str, args: Namespace, logger: Logger) -
                 csv_dir=os.path.join(args.root_dir, 'data', split, 'csv'),
                 output_path=os.path.join(args.root_dir, 'data', split, 'centroids')
             )
-            pngcsv2centroids(newargs)
+            pngcsv2centroids_main(newargs)
 
 
 def evaluate_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) -> None:
+    """
+    Performs evaluation of Hovernet outputs with the specified shape.
+
+    :param shape: The shape of the Hovernet model.
+    :type shape: str
+
+    :param args: The arguments for evaluation.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info(f'Starting evaluation of {shape}.')
     os.makedirs(os.path.join(args.output_dir, 'hovernet', 'output', shape, 'results'), exist_ok=True)
     for split in ['train', 'validation', 'test']:
@@ -174,6 +237,21 @@ def evaluate_hovernet_with_shape(shape: str, args: Namespace, logger: Logger) ->
 
 
 def run_scaling(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the scaling experiment for Hovernet.
+
+    This function performs the following steps:
+    1. Trains Hovernet models with different shapes: '270', '270FT', '518', '518FT'.
+    2. Performs inference with the trained models on the input data.
+    3. Runs post-processing on the Hovernet output.
+    4. Evaluates the Hovernet output using the ground truth data.
+
+    :param args: The arguments for the scaling experiment.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     os.makedirs(os.path.join(args.output_dir, 'hovernet'), exist_ok=True)
     os.makedirs(os.path.join(args.output_dir, 'hovernet', 'weights'), exist_ok=True)
     os.makedirs(os.path.join(args.output_dir, 'hovernet', 'data'), exist_ok=True)
@@ -200,6 +278,20 @@ def run_scaling(args: Namespace, logger: Logger) -> None:
 
 
 def run_xgb(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the XGBoost training and evaluation.
+
+    This function performs the following steps:
+    1. Moves the graph files into a single folder for training and validation.
+    2. Trains XGBoost using the merged graph files.
+    3. Saves the cross-validation results.
+
+    :param args: The arguments for the XGBoost training.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Moving graphs files into one single folder.')
     all_graphs_dir = os.path.join(args.root_dir, 'data', 'train_validation', 'graphs', 'preds')
     os.makedirs(all_graphs_dir, exist_ok=True)
@@ -225,6 +317,20 @@ def run_xgb(args: Namespace, logger: Logger) -> None:
 
 
 def run_void(args: Namespace, logger: Logger) -> None:
+    """
+    Runs the training of GNN models without prior and morphological features.
+
+    This function performs the following steps:
+    1. Trains a GNN model without prior.
+    2. Trains a GNN model without morphological features.
+    3. Trains a void GNN model (without prior and morphological features).
+
+    :param args: The arguments for the GNN training.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
     logger.info('Training GNN without prior.')
     newargs = Namespace(
         train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),

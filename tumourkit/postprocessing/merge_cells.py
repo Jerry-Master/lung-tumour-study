@@ -36,10 +36,12 @@ MAX_CELLS = 1500
 
 def create_id_map() -> Tuple[Callable[[np.ndarray], np.ndarray], Dict[int, Tuple[int, int]]]:
     """
-    Map index to some function so that difference is unique per pair.
-    Also returns the inverse mapping of the differences and the
-    inverse mapping of the function itself.
+    Creates an index mapping function and its inverse mapping based on a unique difference per pair.
+    The index mapping function `f` is defined as `f(x) = x^5`, ensuring that the difference between function values for each pair of indices is unique.
     Extra information: https://math.stackexchange.com/questions/4565014/injectivity-of-given-integer-function/4567383#4567383
+
+    :return: A tuple containing the index mapping function `f` and the inverse mapping of the differences.
+    :rtype: Tuple[Callable[[np.ndarray], np.ndarray], Dict[int, Tuple[int, int]]]
     """
     def f(x: int) -> int:
         return x**5
@@ -56,8 +58,14 @@ def create_id_map() -> Tuple[Callable[[np.ndarray], np.ndarray], Dict[int, Tuple
 
 
 def get_gradient(png: np.ndarray) -> np.ndarray:
-    """
-    Apply a dilation, subtract the image and remove pixels in background.
+    """"
+    Computes the morphological gradient of a binary image.
+
+    :param png: The binary image for which the gradient is computed.
+    :type png: np.ndarray
+
+    :return: The gradient image.
+    :rtype: np.ndarray
     """
     mask = png.copy()
     mask[mask > 0] = 1
@@ -73,7 +81,17 @@ def merge_cells(
         inv_diff_mapping: Dict[int, Tuple[int, int]]
         ) -> np.ndarray:
     """
-    Merges all the cells that share a frontier of more than 13 pixels.
+    Merges cells in a binary image based on the shared frontier length.
+
+    :param png: The binary image containing cells.
+    :type png: np.ndarray
+    :param vec_mapping: The vectorized mapping function to map indices.
+    :type vec_mapping: Callable[[np.ndarray], np.ndarray]
+    :param inv_diff_mapping: The inverse mapping of differences between indices.
+    :type inv_diff_mapping: Dict[int, Tuple[int, int]]
+
+    :return: The merged binary image.
+    :rtype: np.ndarray
     """
     png_cp = png.copy()
     png_cp = vec_mapping(png_cp)  # Indices mapping
@@ -104,7 +122,15 @@ def merge_cells(
 
 def remove_lost_ids(png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
-    Removes identifiers in csv that are not in png.
+    Removes identifiers in csv that are not present in the png.
+
+    :param png: The binary image containing cell identifiers.
+    :type png: np.ndarray
+    :param csv: The DataFrame containing cell information with identifiers.
+    :type csv: pd.DataFrame
+
+    :return: The updated DataFrame with removed identifiers.
+    :rtype: pd.DataFrame
     """
     next_ids = set(np.unique(png))
     curr_ids = set(csv.id)

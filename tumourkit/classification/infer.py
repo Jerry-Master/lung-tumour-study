@@ -37,8 +37,18 @@ import os
 
 def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_feats: int) -> nn.Module:
     """
-    Loads state_dict into a torch module.
-    Configuration file must match with state_dict.
+    Loads a saved model from the given weights_path and conf_path.
+
+    :param weights_path: The path to the saved weights file.
+    :type weights_path: str
+    :param conf_path: The path to the configuration file.
+    :type conf_path: str
+    :param num_classes: The number of classes for the model.
+    :type num_classes: int
+    :param num_feats: The number of features for the model.
+    :type num_feats: int
+    :return: The loaded model.
+    :rtype: nn.Module
     """
     state_dict = torch.load(weights_path, map_location='cpu')
     with open(conf_path, 'r') as f:
@@ -50,7 +60,12 @@ def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_fe
 
 def load_normalizer(norm_path: str) -> Tuple[Any]:
     """
-    Returns normalizers used in training save at norm_path.
+    Loads the normalizers used in training from the given norm_path.
+
+    :param norm_path: The path to the saved normalizers file.
+    :type norm_path: str
+    :return: The loaded normalizers.
+    :rtype: Tuple[Any]
     """
     with open(norm_path, 'rb') as f:
         normalizers = pickle.load(f)
@@ -59,7 +74,18 @@ def load_normalizer(norm_path: str) -> Tuple[Any]:
 
 def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_classes: int) -> Dict[str, np.ndarray]:
     """
-    Computes probabilities for all the nodes.
+    Runs inference using the specified model on the provided data loader.
+
+    :param model: The model used for inference.
+    :type model: nn.Module
+    :param loader: The graph data loader.
+    :type loader: GraphDataLoader
+    :param device: The device used for inference (e.g., 'cpu' or 'cuda').
+    :type device: str
+    :param num_classes: The number of classes.
+    :type num_classes: int
+    :return: The probabilities for all the nodes.
+    :rtype: Dict[str, np.ndarray]
     """
     probs = {}
     for g, name in loader:
@@ -80,8 +106,16 @@ def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_cl
 
 def save_probs(probs: Dict[str, np.ndarray], node_dir: str, output_dir: str, num_classes: int) -> None:
     """
-    Saves probabilities in .nodes.csv files.
-    It appends a column to original .nodes.csv file.
+    Saves the probabilities in .nodes.csv files by appending a column to the original .nodes.csv file.
+
+    :param probs: The probabilities for each graph.
+    :type probs: Dict[str, np.ndarray]
+    :param node_dir: The directory containing the original .nodes.csv files.
+    :type node_dir: str
+    :param output_dir: The directory where the updated .nodes.csv files will be saved.
+    :type output_dir: str
+    :param num_classes: The number of classes.
+    :type num_classes: int
     """
     for name, prob in probs.items():
         orig = pd.read_csv(os.path.join(node_dir, name))

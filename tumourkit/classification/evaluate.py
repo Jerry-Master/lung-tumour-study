@@ -32,7 +32,14 @@ import argparse
 
 def abline(slope: float, intercept: float, axes: Axes) -> None:
     """
-    Plot a line from slope and intercept on current axis.
+    Plot a line on the current axis given a slope and intercept.
+
+    :param slope: The slope of the line.
+    :type slope: float
+    :param intercept: The y-intercept of the line.
+    :type intercept: float
+    :param axes: The matplotlib axes object on which to plot the line.
+    :type axes: matplotlib.axes.Axes
     """
     x_vals = np.array(axes.get_xlim())
     y_vals = intercept + slope * x_vals
@@ -46,8 +53,16 @@ def draw_reliability_diagram(
         method_name: str
         ) -> None:
     """
-    Draws reliability diagram into save_path.
-    save_path must not contain extension.
+    Draws a reliability diagram and saves it to the specified path.
+
+    :param y_true: The true labels.
+    :type y_true: np.ndarray
+    :param y_probs: The predicted probabilities.
+    :type y_probs: np.ndarray
+    :param save_path: The path to save the reliability diagram (without extension).
+    :type save_path: str
+    :param method_name: The name of the method for the legend.
+    :type method_name: str
     """
     prob_true, prob_pred = calibration_curve(y_true, y_probs, n_bins=20)
 
@@ -80,9 +95,31 @@ def compute_metrics(
         method_name: Optional[str] = 'Method'
         ) -> Dict[str, float]:
     """
-    Computes F1-score, Accuracy, ROC AUC, Expected Calibration Error and percentage error.
-    Dataframe must contain columns class and prob1.
-    Class columns must have 1 for negative and 2 for positive.
+    Computes various evaluation metrics based on the provided predictions and ground truth labels.
+
+    This function computes the following metrics:
+    - Accuracy
+    - F1-score
+    - ROC AUC
+    - Expected Calibration Error (ECE)
+    - Percentage error
+
+    The input DataFrame must contain the following columns:
+    - 'class': The ground truth labels (1 for negative, 2 for positive).
+    - 'prob1': The predicted probabilities for the positive class.
+
+    Optionally, a reliability diagram can be generated and saved to a file specified by 'draw_on'.
+    The 'method_name' parameter is used for the legend in the reliability diagram.
+
+    :param nodes_df: The DataFrame containing the predictions and ground truth labels.
+    :type nodes_df: pd.DataFrame
+    :param draw_on: The file path to save the reliability diagram (without extension), defaults to None.
+    :type draw_on: Optional[str]
+    :param method_name: The name of the method for the reliability diagram legend, defaults to 'Method'.
+    :type method_name: Optional[str]
+
+    :return: A dictionary containing the computed metrics.
+    :rtype: Dict[str, float]
     """
     labels = nodes_df['class'].to_numpy() - 1
     probs = nodes_df['prob1'].to_numpy()
@@ -98,7 +135,12 @@ def compute_metrics(
 
 def save_metrics(metrics: Dict[str, float], save_name):
     """
-    Saves metrics into csv file.
+    Saves the computed metrics into a CSV file.
+
+    :param metrics: A dictionary containing the computed metrics.
+    :type metrics: Dict[str, float]
+    :param save_name: The file path to save the metrics (without extension).
+    :type save_name: str
     """
     metrics_df = pd.DataFrame(metrics)
     metrics_df.to_csv(save_name + '.csv', index=False)
@@ -106,9 +148,15 @@ def save_metrics(metrics: Dict[str, float], save_name):
 
 def join_dictionaries(dict1: Dict[str, List[float]], dict2: Dict[str, float]) -> None:
     """
-    Joins dict2 into dict1, modifying dict1.
-    For each key it adds the value in dict2 to the list in dict1,
-    if dict1 doesn't have such key, it is created.
+    Joins the values from dict2 into dict1, modifying dict1.
+
+    For each key in dict2, the corresponding value is added to the list in dict1
+    with the same key. If dict1 does not have the key, it is created with an empty list.
+
+    :param dict1: The dictionary to be modified.
+    :type dict1: Dict[str, List[float]]
+    :param dict2: The dictionary containing the values to be joined into dict1.
+    :type dict2: Dict[str, float]
     """
     for key in dict2.keys():
         if key not in dict1:

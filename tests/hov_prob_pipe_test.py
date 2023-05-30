@@ -22,8 +22,7 @@ from argparse import Namespace
 import pandas as pd
 
 from tumourkit.utils.preprocessing import parse_path, create_dir
-from tumourkit.postprocessing import join_graph_gt
-from tumourkit.postprocessing import join_hovprob_graph
+from tumourkit.postprocessing import join_graph_gt_main, join_hovprob_graph_main
 from tumourkit import eval_class
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +39,7 @@ def test_hov_prob_pipe():
     args.graph_dir = GRAPHS_DIR
     args.centroids_dir = CENTROIDS_DIR
     args.output_dir = TMP_DIR
-    join_graph_gt(args)
+    join_graph_gt_main(args)
     args.node_dir = TMP_DIR
     args.save_file = TEST_DIR + 'tmp'
     args.by_img = False
@@ -50,7 +49,7 @@ def test_hov_prob_pipe():
     args.graph_dir = TMP_DIR
     args.output_dir = TMP_DIR
     args.num_classes = 2
-    join_hovprob_graph(args)
+    join_hovprob_graph_main(args)
     args.node_dir = TMP_DIR
     args.save_file = TEST_DIR + 'tmp2'
     eval_class(args)

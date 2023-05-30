@@ -34,16 +34,31 @@ import dgl
 from dgl import DGLHeteroGraph
 import networkx as nx
 from ..utils.preprocessing import get_names
-from ..preprocessing import pngcsv2graph
+from ..preprocessing import pngcsv2graph_main
 from ..classification.read_graph import GraphDataset
 from ..utils.read_nodes import read_node_matrix
 
 
 def get_colors(type_info: Dict[str, Tuple[str, List[int]]]) -> List[str]:
     """
-    Retrieves a list of hexadecimal colors from a list of rgb tuples.
+    Retrieves a list of hexadecimal colors from a dictionary of RGB tuples.
+
+    :param type_info: A dictionary containing type information as keys and RGB tuples as values.
+    :type type_info: Dict[str, Tuple[str, List[int]]]
+    
+    :return: A list of hexadecimal colors converted from the RGB tuples.
+    :rtype: List[str]
     """
     def to_hex(rgb_tuple: Tuple[int, int, int]) -> str:
+        """
+        Converts an RGB tuple to a hexadecimal color representation.
+
+        :param rgb_tuple: A tuple containing three integer values representing RGB channels.
+        :type rgb_tuple: Tuple[int, int, int]
+
+        :return: A string representing the hexadecimal color code.
+        :rtype: str
+        """
         hex_values = [format(value, '02x') for value in rgb_tuple]
         return '#' + ''.join(hex_values)
     return [to_hex(rgb_tuple) for name, rgb_tuple in type_info.values()]
@@ -59,7 +74,31 @@ def draw_graph(
         save_path: str
         ) -> np.ndarray:
     """
-    Draws graph into image using plt and networkx.
+    Draws a graph into an image using Matplotlib and NetworkX.
+
+    :param orig: The original data used to construct the graph.
+    :type orig: np.ndarray
+
+    :param graph: The graph object to be visualized.
+    :type graph: DGLHeteroGraph
+
+    :param x: Node features used for plotting.
+    :type x: np.ndarray
+
+    :param y: Node coordinates used for plotting.
+    :type y: np.ndarray
+
+    :param labels: Node labels used for visualization.
+    :type labels: np.ndarray
+
+    :param type_info: A dictionary containing type information as keys and RGB tuples as values.
+    :type type_info: Dict[str, Tuple[str, List[int]]]
+
+    :param save_path: The file path to save the resulting graph visualization.
+    :type save_path: str
+
+    :return: The image of the graph.
+    :rtype: np.ndarray
     """
     gx = dgl.to_networkx(graph)
     pos = {k: (y[k], x[k]) for k in range(len(x))}
@@ -124,7 +163,7 @@ def main_with_args(args: Namespace) -> None:
         output_path=os.path.join(args.output_dir, 'graphs'),
         num_workers=args.num_workers
     )
-    pngcsv2graph(newargs)
+    pngcsv2graph_main(newargs)
     graph_dataset = GraphDataset(
         node_dir = os.path.join(args.output_dir, 'graphs'),
         max_degree = args.max_degree,

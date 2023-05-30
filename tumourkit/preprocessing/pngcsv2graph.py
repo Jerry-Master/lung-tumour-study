@@ -30,15 +30,27 @@ from ..utils.preprocessing import get_mask, read_labels, parse_path, create_dir,
 
 def pngcsv2graph(img: np.ndarray, png: np.ndarray, csv: pd.DataFrame) -> pd.DataFrame:
     """
-    Given original image and pngcsv labels,
-    returns nodes with extracted attributes in a DataFrame.
-    Current attributes are:
-        - X, Y of centroid
+    Converts an original image and PNGCSV labels into a graph representation.
+
+    Given the original image and PNGCSV labels, this function extracts attributes
+    from each label and constructs a graph representation in the form of a DataFrame.
+
+    The current attributes extracted for each label include:
+        - X, Y coordinates of the centroid
         - Area
         - Perimeter
         - Variance
-        - Regularity (not yet)
+        - Regularity (not yet implemented)
         - Histogram (5 bins)
+
+    :param img: The original image.
+    :type img: np.ndarray
+    :param png: The PNGCSV labels.
+    :type png: np.ndarray
+    :param csv: The CSV file containing label information.
+    :type csv: pd.DataFrame
+    :return: The graph representation in the form of a DataFrame.
+    :rtype: pd.DataFrame
     """
     graph = {}
     for idx, cls in csv.itertuples(index=False, name=None):

@@ -31,8 +31,19 @@ from ..utils.nearest import generate_tree, find_nearest
 
 def merge_labels(graph: pd.DataFrame, centroids: np.ndarray) -> pd.DataFrame:
     """
-    Finds 1-1 matchings of nodes and substitutes labels in graph
-    by those in centroids. Internally uses KD-trees.
+    Matches nodes in the graph to centroids and updates their labels.
+
+    Given a graph DataFrame and a centroids array, this function finds 1-1 matchings
+    between nodes in the graph and centroids based on their coordinates.
+    It substitutes the labels of the graph nodes with the labels from the centroids.
+    The matching is performed using KD-trees for efficient nearest neighbor search.
+
+    :param graph: The graph DataFrame containing nodes with labels.
+    :type graph: pd.DataFrame
+    :param centroids: The centroids array containing coordinates and labels.
+    :type centroids: np.ndarray
+    :return: The updated graph DataFrame with matched labels.
+    :rtype: pd.DataFrame
     """
     assert len(centroids) > 0, 'GT must contain at least one cell.'
     graph = graph.copy()

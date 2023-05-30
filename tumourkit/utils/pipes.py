@@ -14,7 +14,15 @@ class HovernetNotFoundError(Exception):
 
 
 def check_void(path: str) -> bool:
-    """Tells if a directory if void or if file exists. True if void, False otherwise."""
+    """
+    Checks if a directory is void (empty) or if a file exists..
+
+    :param path: The path to the directory or file.
+    :type path: str
+
+    :return: True if the directory is void (empty) or the file exists, False otherwise.
+    :rtype: bool
+    """
     if os.path.isdir(path):
         files = os.listdir(path)
         return len(files) == 0
@@ -22,7 +30,19 @@ def check_void(path: str) -> bool:
 
 
 def check_same_num(dir_list: List[str]) -> bool:
-    """Tells if all the folders in the list contain the same number of files."""
+    """
+    Checks if all the folders in the list contain the same number of files.
+
+    This function takes a list of folder paths and checks if all the folders contain the same number of files. It counts
+    the number of files in each folder and compares them. If the number of files is the same for all folders, the
+    function returns True. Otherwise, it returns False.
+
+    :param dir_list: The list of folder paths.
+    :type dir_list: List[str]
+
+    :return: True if all folders contain the same number of files, False otherwise.
+    :rtype: bool
+    """
     num_files = [len([os.listdir(dir) for dir in dir_list])]
     if len(num_files) == 0:
         return True
@@ -34,6 +54,21 @@ def check_same_num(dir_list: List[str]) -> bool:
 
 
 def check_training(args: Namespace, logger: Logger) -> None:
+    """
+    Checks if the training pipeline was run correctly.
+
+    This function checks if the necessary folders and files from the training pipeline exist. It verifies the presence
+    of specific folders and files in the expected locations. If any required folder or file is missing, or if there are
+    inconsistencies in the training results, an exception is raised.
+
+    :param args: The command-line arguments.
+    :type args: Namespace
+
+    :param logger: The logger object for logging messages.
+    :type logger: Logger
+
+    :raises WrongConfigurationError: If any required folder or file is missing, or if there are inconsistencies in the training results.
+    """
     logger.info('Checking training pipeline was run correctly.')
     check_list = [
         os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs'),

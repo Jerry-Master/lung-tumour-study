@@ -27,6 +27,18 @@ from ..utils.preprocessing import get_names, read_gson, save_geojson
 
 
 def process_gson(gson: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Filters out uncertain classifications from a list of GeoJSON dictionaries.
+
+    Given a list of GeoJSON dictionaries, this function filters out the GeoJSON objects
+    that have an uncertain classification. The uncertain classification is determined
+    based on the 'name' property under the 'classification' key in the GeoJSON dictionary.
+
+    :param gson: The list of GeoJSON dictionaries.
+    :type gson: List[Dict[str, Any]]
+    :return: The filtered list of GeoJSON dictionaries without uncertain classifications.
+    :rtype: List[Dict[str, Any]]
+    """
     return list(filter(lambda x: x['properties']['classification']['name'] != 'uncertain', gson))
 
 

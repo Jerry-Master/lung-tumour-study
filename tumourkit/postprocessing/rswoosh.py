@@ -31,7 +31,19 @@ def rswoosh(
         ) -> List[Cell]:
     """
     Given a list of cells, returns the same list without duplicates.
-    Must provide a function to check equality and another to merge cells.
+
+    The `rswoosh` function takes a list of cells `I`, a function `isEqual` to check equality between contours,
+    and a function `merge` to merge two cells.
+
+    :param I: The list of cells.
+    :type I: List[Cell]
+    :param isEqual: A function to check equality between contours.
+    :type isEqual: Callable[[Contour, Contour], bool]
+    :param merge: A function to merge two cells.
+    :type merge: Callable[[Cell, Cell], Cell]
+
+    :return: The list of cells without duplicates.
+    :rtype: List[Cell]
     """
     out = {}  # Hash Table
     while (len(I) > 0):
