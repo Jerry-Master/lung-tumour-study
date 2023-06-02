@@ -26,10 +26,14 @@ import numpy as np
 import pandas as pd
 from . import eval_segment
 import os
-from .preprocessing import hovernet2centroids_main, geojson2pngcsv_main, pngcsv2centroids_main
+import shutil
+from .postprocessing import join_hovprob_graph_main
+from .preprocessing import hovernet2centroids_main, geojson2pngcsv_main, pngcsv2centroids_main, graph2centroids_main
 from .utils.preprocessing import get_names
 from .utils.pipes import HovernetNotFoundError, check_void
 from .utils.classification import metrics_from_predictions
+from .classification import infer_gnn
+from .infer_pipe import set_best_configuration
 
 
 def run_preprocessing(args: Namespace, logger: Logger) -> None:
@@ -76,10 +80,60 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
                 output_path=os.path.join(args.root_dir, 'data', split, 'centroids')
             )
             pngcsv2centroids_main(newargs)
+
+    args.best_arch = 'GCN'
+    set_best_configuration(args, logger)
+    # Perform inference steps from infer_pipe
+    if check_void(os.path.join(args.root_dir, 'tmp_graphs', 'gnn_preds')):
+        logger.info('Starting graph inference.')
+        os.makedirs(os.path.join(args.root_dir, 'tmp_graphs', 'gnn_preds'), exist_ok=True)
+        os.makedirs(os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'raw'), exist_ok=True)
+        os.makedirs(os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds'), exist_ok=True)
+        for split in ['train', 'validation', 'test']: # Move raw morphological features
+            for file in os.listdir(os.path.join(args.root_dir, 'data', split, 'graphs', 'raw')):
+                shutil.copy(
+                    os.path.join(args.root_dir, 'data', split, 'graphs', 'raw', file),
+                    os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'raw')
+                )
+        # Add hov probabilities
+        newargs = Namespace(
+            json_dir=os.path.join(args.root_dir, 'data', 'tmp_hov', 'json'),
+            graph_dir=os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'raw'),
+            output_dir=os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds'),
+            num_classes=args.num_classes,
+        )
+        join_hovprob_graph_main(newargs, logger)
+        for file in os.listdir(os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds')):
+            df = pd.read_csv(os.path.join(os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds'), file))
+            assert (df['class'].to_numpy() == ((df['prob1'].to_numpy() > 0.5) * 1 + 1)).all(), f"Probs and prediction of Hovernet don't coincide. {file}"
+            df.drop('class', axis=1).to_csv(os.path.join(os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds'), file), index=False)
+        model_name = 'best_' + args.best_arch + '_' + args.best_num_layers + '_' \
+            + args.best_dropout + '_' + args.best_norm_type
+        newargs = Namespace(
+            node_dir=os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds'),
+            output_dir=os.path.join(args.root_dir, 'tmp_graphs', 'gnn_preds'),
+            weights=os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'weights', model_name + '.pth'),
+            conf=os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'confs', model_name + '.json'),
+            normalizers=os.path.join(args.root_dir, 'weights', 'classification', 'gnn', 'normalizers', model_name + '.pkl'),
+            num_classes=args.num_classes,
+            disable_prior=False,
+            disable_morph_feats=False,
+        )
+        infer_gnn(newargs)
+    # Postproc to obtain centroids
+    if check_void(os.path.join(args.root_dir, 'tmp_graphs', 'centroids')):
+        logger.info('Parsing gnn output.')
+        logger.info('   Converting .nodes.csv to .centroids.csv.')
+        newargs = Namespace(
+            graph_dir=os.path.join(args.root_dir, 'tmp_graphs', 'gnn_preds'),
+            centroids_dir=os.path.join(args.root_dir, 'tmp_graphs', 'centroids'),
+            num_classes=args.num_classes,
+        )
+        graph2centroids_main(newargs)
     return
 
 
-def compute_ece(args: Namespace, logger: Logger, split: str) -> None:
+def compute_ece(args: Namespace, split: str) -> None:
     """
     Computes Expected Calibration Error (ECE) and other metrics for the given split.
 
@@ -145,12 +199,24 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
             gt_path=os.path.join(args.root_dir, 'data', split, 'centroids'),
             pred_path=os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
             save_name=args.save_name + '_' + split,
-            debug_path=None,
+            debug_path=args.save_name + '_debug_hov' if args.debug else None,
             num_classes=args.num_classes
         )
         eval_segment(newargs, logger)
-
-        compute_ece(args, logger, split)
+        compute_ece(args, split)
+    # Evaluate graph output same as hov output
+    logger.info('Starting evaluation of Hovernet output.')
+    for split in ['train', 'validation', 'test']:
+        logger.info(f'    Evaluating {split} split')
+        newargs = Namespace(
+            names=os.path.join(args.root_dir, 'data', split, 'names.txt'),
+            gt_path=os.path.join(args.root_dir, 'data', split, 'centroids'),
+            pred_path=os.path.join(args.root_dir, 'tmp_graphs', 'centroids'),
+            save_name=args.save_name + '_' + split + '_gnn',
+            debug_path=args.save_name + '_debug_gnn' if args.debug else None,
+            num_classes=args.num_classes
+        )
+        eval_segment(newargs, logger)
     return
 
 
@@ -159,6 +225,7 @@ def _create_parser():
     parser.add_argument('--root-dir', type=str, default='./.internals/', help='Root folder to save data and models.')
     parser.add_argument('--save-name', type=str, required=True, help='Name to save the result, without file type.')
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--debug', actions='store_true', help='Whether to save confusion matrices.')
     return parser
 
 
