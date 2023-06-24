@@ -98,18 +98,18 @@ def add_probability(
     :return: The updated graph DataFrame with probability information.
     :rtype: pd.DataFrame
     """
-    ##########
-    ## HANDLE BKGR
-    ##########
-    centroids = parse_centroids_probs(hov_json, logger, num_classes)
-    centroids = np.array(centroids)
-    assert len(centroids) > 0, 'Hov json must contain at least one cell.'
     graph = graph.copy()
     if 'prob1' not in graph.columns:
         n_cols = len(graph.columns)
         graph.insert(n_cols, 'prob1', [-1] * len(graph))
     else:
         graph['prob1'] = -1
+    if enable_background:
+        if 'background' not in graph.columns:
+            n_cols = len(graph.columns)
+            graph.insert(n_cols, 'background', [0] * len(graph))
+        else:
+            graph['background'] = 0
     if num_classes > 2:
         for k in range(2, num_classes + 1):
             if not 'prob' + str(k) in graph.columns:
@@ -117,17 +117,26 @@ def add_probability(
                 graph.insert(n_cols, 'prob' + str(k), [-1] * len(graph))
             else:
                 graph['prob' + str(k)] = -1
-    gt_tree = generate_tree(centroids[:, :2])
-    pred_centroids = graph[['X', 'Y']].to_numpy(dtype=int)
-    pred_tree = generate_tree(pred_centroids)
-    for point_id, point in enumerate(centroids):
-        closest_id = find_nearest(point[:2], pred_tree)
+    pred_centroids = parse_centroids_probs(hov_json, logger, num_classes)
+    pred_centroids = np.array(pred_centroids)
+    assert len(pred_centroids) > 0, 'Hov json must contain at least one cell.'
+    pred_tree = generate_tree(pred_centroids[:, :2])
+    gt_centroids = graph[['X', 'Y']].to_numpy(dtype=int)
+    gt_tree = generate_tree(gt_centroids)
+    for point_id, point in enumerate(pred_centroids):
+        closest_id = find_nearest(point[:2], gt_tree)
         closest = graph.loc[closest_id, ['X', 'Y', 'prob1']]
-        if point_id == find_nearest(closest[:2], gt_tree):
+        if point_id == find_nearest(closest[:2], pred_tree):
             graph.loc[closest_id, 'prob1'] = point[2]  # 1-1 matchings
             if num_classes > 2:
                 for k in range(2, num_classes + 1):
                     graph.loc[closest_id, 'prob' + str(k)] = point[k + 1]  # 1-1 matchings
+        elif enable_background:
+            graph.loc[closest_id, 'background'] = 1  # Pred not in GT
+            graph.loc[closest_id, 'prob1'] = point[2]  # closest matching
+            if num_classes > 2:
+                for k in range(2, num_classes + 1):
+                    graph.loc[closest_id, 'prob' + str(k)] = point[k + 1]  # closest matching
     graph.drop(graph[graph['prob1'] == -1].index, inplace=True)
     return graph
 

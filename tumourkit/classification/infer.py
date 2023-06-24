@@ -35,7 +35,7 @@ import argparse
 import os
 
 
-def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_feats: int) -> nn.Module:
+def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_feats: int, enable_background: bool) -> nn.Module:
     """
     Loads a saved model from the given weights_path and conf_path.
 
@@ -47,13 +47,15 @@ def load_saved_model(weights_path: str, conf_path: str, num_classes: int, num_fe
     :type num_classes: int
     :param num_feats: The number of features for the model.
     :type num_feats: int
+    :param enable_background: Enable when model has extra head to correct extra cells.
+    :type enable_background: bool
     :return: The loaded model.
     :rtype: nn.Module
     """
     state_dict = torch.load(weights_path, map_location='cpu')
     with open(conf_path, 'r') as f:
         conf = json.load(f)
-    model = load_model(conf, num_classes, num_feats)
+    model = load_model(conf, num_classes, num_feats, enable_background)
     model.load_state_dict(state_dict)
     return model
 
@@ -104,13 +106,15 @@ def run_inference(
         features = g.ndata['X'].to(device)
         # Forward
         logits = model(g, features)
+        if enable_background:
+            logits, logits_bkgr = logits
         if num_classes == 2:
             prob = F.softmax(logits, dim=1).detach().numpy()[:, 1].reshape(-1, 1)
         else:
             prob = F.softmax(logits, dim=1).detach().numpy()
-        ##########
-        ## HANDLE BKGR
-        ##########
+        if enable_background:
+            prob_bkgr = F.softmax(logits_bkgr, dim=1).detach().numpy()[:, 1].reshape(-1, 1)
+            prob = np.hstack((prob_bkgr, prob))
         probs[name[0]] = prob
     return probs
 
@@ -138,14 +142,14 @@ def save_probs(
     """
     for name, prob in probs.items():
         orig = pd.read_csv(os.path.join(node_dir, name))
+        if enable_background:
+            orig['prob0'] = prob[:, 0]
+            prob = prob[:, 1:]
         if num_classes == 2:
             orig['prob1'] = prob
         else:
             for k in range(1, num_classes + 1):
                 orig['prob' + str(k)] = prob[:, (k - 1)]
-        ##########
-        ## HANDLE BKGR
-        ##########
         orig.to_csv(output_dir + name, index=False)
 
 

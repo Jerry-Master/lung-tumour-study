@@ -43,6 +43,8 @@ def graph2centroids(graph_file: pd.DataFrame, num_classes: int, enable_backgroun
     """
     if 'class' in graph_file.columns:
         return graph_file[['X', 'Y', 'class']].to_numpy(dtype=int)
+    if enable_background:
+        graph_file = graph_file[graph_file.prob0 < 0.5]
     if num_classes == 2:
         res = graph_file[['X', 'Y', 'prob1']].to_numpy()
         res[:, 2] = (res[:, 2] > 0.5) * 1 + 1
@@ -51,9 +53,6 @@ def graph2centroids(graph_file: pd.DataFrame, num_classes: int, enable_backgroun
         prob_cols = graph_file[['prob' + str(k) for k in range(1, num_classes + 1)]].to_numpy()
         class_col = np.argmax(prob_cols, axis=1) + 1
         res[:, 2] = class_col
-    ##########
-    ## HANDLE BKGR
-    ##########
     return np.array(res, dtype=int)
 
 
