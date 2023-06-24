@@ -163,7 +163,11 @@ class HardGAT(nn.Module):
         negative_slope=0.2,
         residual=False,
         k=8,
+        enable_background=False,
     ):
+        ##########
+        ## HANDLE BKGR
+        ##########
         super(HardGAT, self).__init__()
         feat_drop=dropout
         attn_drop=dropout

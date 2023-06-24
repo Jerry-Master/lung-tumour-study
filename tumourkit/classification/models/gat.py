@@ -29,7 +29,10 @@ from dgl.nn import GATConv
 from .norm import Norm
 
 class GAT(nn.Module):
-    def __init__(self, in_size, hid_size, out_size, heads, num_layers, dropout, norm_type):
+    def __init__(self, in_size, hid_size, out_size, heads, num_layers, dropout, norm_type, enable_background=False):
+        ##########
+        ## HANDLE BKGR
+        ##########
         super().__init__()
         self.gat_layers = nn.ModuleList()
         # two-layer GAT

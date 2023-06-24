@@ -72,7 +72,13 @@ def load_normalizer(norm_path: str) -> Tuple[Any]:
     return normalizers
 
 
-def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_classes: int) -> Dict[str, np.ndarray]:
+def run_inference(
+        model: nn.Module,
+        loader: GraphDataLoader,
+        device: str,
+        num_classes: int,
+        enable_background: bool,
+        ) -> Dict[str, np.ndarray]:
     """
     Runs inference using the specified model on the provided data loader.
 
@@ -84,6 +90,8 @@ def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_cl
     :type device: str
     :param num_classes: The number of classes.
     :type num_classes: int
+    :param enable_background: Enable when model has extra head to correct extra cells.
+    :type enable_background: bool
     :return: The probabilities for all the nodes.
     :rtype: Dict[str, np.ndarray]
     """
@@ -100,11 +108,20 @@ def run_inference(model: nn.Module, loader: GraphDataLoader, device: str, num_cl
             prob = F.softmax(logits, dim=1).detach().numpy()[:, 1].reshape(-1, 1)
         else:
             prob = F.softmax(logits, dim=1).detach().numpy()
+        ##########
+        ## HANDLE BKGR
+        ##########
         probs[name[0]] = prob
     return probs
 
 
-def save_probs(probs: Dict[str, np.ndarray], node_dir: str, output_dir: str, num_classes: int) -> None:
+def save_probs(
+        probs: Dict[str, np.ndarray],
+        node_dir: str,
+        output_dir: str,
+        num_classes: int,
+        enable_background: bool,
+        ) -> None:
     """
     Saves the probabilities in .nodes.csv files by appending a column to the original .nodes.csv file.
 
@@ -114,6 +131,8 @@ def save_probs(probs: Dict[str, np.ndarray], node_dir: str, output_dir: str, num
     :type node_dir: str
     :param output_dir: The directory where the updated .nodes.csv files will be saved.
     :type output_dir: str
+    :param enable_background: Enable when model has extra head to correct extra cells.
+    :type enable_background: bool
     :param num_classes: The number of classes.
     :type num_classes: int
     """
@@ -124,6 +143,9 @@ def save_probs(probs: Dict[str, np.ndarray], node_dir: str, output_dir: str, num
         else:
             for k in range(1, num_classes + 1):
                 orig['prob' + str(k)] = prob[:, (k - 1)]
+        ##########
+        ## HANDLE BKGR
+        ##########
         orig.to_csv(output_dir + name, index=False)
 
 
@@ -142,6 +164,7 @@ def _create_parser():
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     parser.add_argument('--disable-prior', action='store_true', help='If True, remove hovernet probabilities from node features.')
     parser.add_argument('--disable-morph-feats', action='store_true', help='If True, remove morphological features from node features.')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 
@@ -164,8 +187,8 @@ def main_with_args(args):
         num_feats = 1
     model = load_saved_model(args.weights, args.conf, args.num_classes, num_feats)
     model.eval()
-    probs = run_inference(model, eval_dataloader, 'cpu', args.num_classes)
-    save_probs(probs, node_dir, output_dir, args.num_classes)
+    probs = run_inference(model, eval_dataloader, 'cpu', args.num_classes, args.enable_background)
+    save_probs(probs, node_dir, output_dir, args.num_classes, args.enable_background)
 
 
 def main():

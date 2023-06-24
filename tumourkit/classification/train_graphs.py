@@ -53,6 +53,7 @@ def evaluate(
         epoch: Optional[int] = None,
         log_suffix: Optional[str] = None,
         num_classes: Optional[str] = 2,
+        enable_background: Optional[bool] = False,
         ) -> List[float]:
     """
     Evaluates model in loader.
@@ -70,6 +71,9 @@ def evaluate(
         features = g.ndata['X']
         # Forward
         logits = model(g, features)
+        ##########
+        ## HANDLE BKGR
+        ##########
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1, 1)
         preds = np.vstack((preds, pred))
         if num_classes == 2:
@@ -110,6 +114,7 @@ def train_one_iter(
         epoch: int,
         writer: SummaryWriter,
         num_classes: int,
+        enable_background: Optional[bool] = False,
         ) -> None:
     """
     Trains for one iteration, as the name says.
@@ -125,6 +130,9 @@ def train_one_iter(
         labels = tr_g.ndata['y']
         # Forward
         logits = model(tr_g, features)
+        ##########
+        ## HANDLE BKGR
+        ##########
         loss = F.cross_entropy(logits, labels)
         # Backward
         optimizer.zero_grad()
@@ -166,6 +174,7 @@ def train(
         conf: Optional[Dict[str, Any]] = None,
         normalizers: Optional[Tuple[Normalizer]] = None,
         num_classes: Optional[int] = 2,
+        enable_background: Optional[bool] = False,
         ) -> None:
     """
     Train the model with early stopping on F1 score (weighted) or until 1000 iterations.
@@ -175,8 +184,8 @@ def train(
     best_val_f1 = 0
     early_stop_rounds = 0
     for epoch in range(n_epochs):
-        train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes)
-        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes)
+        train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes, enable_background=enable_background)
+        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes, enable_background=enable_background)
         if num_classes == 2:
             val_f1, val_acc, val_auc, val_perc_error, val_ece = val_metrics
         else:
@@ -265,21 +274,21 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
     return confs
 
 
-def load_model(conf: Dict[str, Any], num_classes: int, num_feats: int) -> nn.Module:
+def load_model(conf: Dict[str, Any], num_classes: int, num_feats: int, enable_background: bool) -> nn.Module:
     """
     Available models: GCN, ATT, HATT, SAGE, BOOST
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
     """
     hidden_feats = 100
     if conf['MODEL_NAME'] == 'GCN':
-        return GCN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+        return GCN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], enable_background)
     if conf['MODEL_NAME'] == 'ATT' or conf['MODEL_NAME'] == 'HATT':
         num_heads = 8
         num_out_heads = 1
         heads = ([num_heads] * conf['NUM_LAYERS']) + [num_out_heads]
         if conf['MODEL_NAME'] == 'ATT':
-            return GAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
-        return HardGAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'])
+            return GAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], enable_background)
+        return HardGAT(num_feats, hidden_feats, num_classes, heads, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], enable_background)
     assert False, 'Model not implemented.'
 
 
@@ -355,16 +364,19 @@ def train_one_conf(
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
     # Model
-    model = load_model(conf, num_classes, num_feats)
+    model = load_model(conf, num_classes, num_feats, args.enable_background)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
     train(
         save_dir, save_weights, train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
         args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers(),
-        num_classes=num_classes
+        num_classes=num_classes, enable_background=args.enable_background
     )
-    test_metrics = evaluate(test_dataloader, model, args.device, num_classes=num_classes)
+    test_metrics = evaluate(
+        test_dataloader, model, args.device, num_classes=num_classes,
+        enable_background=args.enable_background
+    )
     model = model.cpu()
     if num_classes == 2:
         test_f1, test_acc, test_auc, test_perc_err, test_ece = test_metrics
@@ -405,6 +417,7 @@ def _create_parser():
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
     parser.add_argument('--disable-prior', action='store_true', help='If True, remove hovernet probabilities from node features.')
     parser.add_argument('--disable-morph-feats', action='store_true', help='If True, remove morphological features from node features.')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 

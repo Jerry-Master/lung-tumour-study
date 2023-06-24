@@ -30,7 +30,10 @@ from dgl.nn import GraphConv
 from .norm import Norm
 
 class GCN(nn.Module):
-    def __init__(self, in_feats, h_feats, num_classes, num_layers, drop_rate, norm_type):
+    def __init__(self, in_feats, h_feats, num_classes, num_layers, drop_rate, norm_type, enable_background=False):
+        ##########
+        ## HANDLE BKGR
+        ##########
         super(GCN, self).__init__()
         self.conv_layers = nn.ModuleList()
         self.conv_layers.append(GraphConv(in_feats, h_feats, activation=F.elu))

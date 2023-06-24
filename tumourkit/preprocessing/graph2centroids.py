@@ -26,12 +26,14 @@ import numpy as np
 from tqdm import tqdm
 
 
-def graph2centroids(graph_file: pd.DataFrame, num_classes: int) -> np.ndarray:
+def graph2centroids(graph_file: pd.DataFrame, num_classes: int, enable_background: bool) -> np.ndarray:
     """
     Extracts X, Y and class attributes from graphs nodes.
 
     :param graph_file: The Pandas DataFrame containing the graph nodes.
     :type graph_file: pd.DataFrame
+    :param enable_background: Enable when model has extra head to correct extra cells.
+    :type enable_background: bool
     :return: A NumPy array containing the X, Y and class attributes from the graph nodes.
     :rtype: np.ndarray
 
@@ -49,6 +51,9 @@ def graph2centroids(graph_file: pd.DataFrame, num_classes: int) -> np.ndarray:
         prob_cols = graph_file[['prob' + str(k) for k in range(1, num_classes + 1)]].to_numpy()
         class_col = np.argmax(prob_cols, axis=1) + 1
         res[:, 2] = class_col
+    ##########
+    ## HANDLE BKGR
+    ##########
     return np.array(res, dtype=int)
 
 
@@ -57,6 +62,7 @@ def _create_parser():
     parser.add_argument('--graph-dir', type=str, required=True, help='Path to folder containing .nodes.csv.')
     parser.add_argument('--centroids-dir', type=str, required=True, help='Path to folder where to save .centroids.csv.')
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 
@@ -67,7 +73,7 @@ def main_with_args(args: Namespace) -> None:
     names = get_names(graph_dir, '.nodes.csv')
     for name in tqdm(names):
         graph_file = read_graph(name, graph_dir)
-        centroids_file = graph2centroids(graph_file, args.num_classes)
+        centroids_file = graph2centroids(graph_file, args.num_classes, args.enable_background)
         save_centroids(centroids_file, centroids_dir, name)
     return
 
