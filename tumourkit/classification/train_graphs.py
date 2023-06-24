@@ -53,6 +53,7 @@ def evaluate(
         epoch: Optional[int] = None,
         log_suffix: Optional[str] = None,
         num_classes: Optional[str] = 2,
+        enable_background: Optional[bool] = False,
         ) -> List[float]:
     """
     Evaluates model in loader.
@@ -61,6 +62,7 @@ def evaluate(
     """
     model.eval()
     preds, labels, probs = np.array([]).reshape(0, 1), np.array([]).reshape(0, 1), np.array([]).reshape(0, 1 if num_classes == 2 else num_classes)
+    preds_bkgr, labels_bkgr, probs_bkgr = np.array([]).reshape(0, 1), np.array([]).reshape(0, 1), np.array([]).reshape(0, 1)
     for g in loader:
         g = g.to(device)
         # self-loops
@@ -70,6 +72,14 @@ def evaluate(
         features = g.ndata['X']
         # Forward
         logits = model(g, features)
+        if enable_background:
+            logits, logits_bkgr = logits
+            pred_bkgr = logits_bkgr.argmax(1).detach().cpu().numpy().reshape(-1, 1)
+            preds_bkgr = np.vstack((preds_bkgr, pred_bkgr))
+            prob_bkgr = F.softmax(logits_bkgr, dim=1).detach().cpu().numpy()[:, 1].reshape(-1, 1)
+            probs_bkgr = np.vstack((probs_bkgr, prob_bkgr))
+            label_bkgr = g.ndata['y_bkgr'].detach().cpu().numpy().reshape(-1, 1)
+            labels_bkgr = np.vstack((labels_bkgr, label_bkgr))
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1, 1)
         preds = np.vstack((preds, pred))
         if num_classes == 2:
@@ -80,6 +90,17 @@ def evaluate(
         label = g.ndata['y'].detach().cpu().numpy().reshape(-1, 1)
         labels = np.vstack((labels, label))
     # Compute metrics on validation
+    if enable_background:
+        preds_bkgr = logits_bkgr.argmax(1).detach().cpu().numpy()
+        labels_bkgr = labels_bkgr.detach().cpu().numpy()
+        probs_bkgr = F.softmax(logits_bkgr, dim=1).detach().cpu().numpy()[:, 1]
+        acc_bkgr, f1_bkgr, auc_bkgr, perc_err_bkgr, ece_bkgr = metrics_from_predictions(labels_bkgr, preds_bkgr, probs_bkgr, 2)
+        # Tensorboard
+        writer.add_scalar('Accuracy-bkgr/' + log_suffix, acc_bkgr, epoch)
+        writer.add_scalar('F1-bkgr/' + log_suffix, f1_bkgr, epoch)
+        writer.add_scalar('ROC_AUC-bkgr/' + log_suffix, auc_bkgr, epoch)
+        writer.add_scalar('ECE-bkgr/' + log_suffix, ece_bkgr, epoch)
+        writer.add_scalar('Percentage Error-bkgr/' + log_suffix, perc_err_bkgr, epoch)
     if num_classes == 2:
         acc, f1, auc, perc_err, ece = metrics_from_predictions(labels, preds, probs, 2)
         # Tensorboard
@@ -196,7 +217,7 @@ def train(
     early_stop_rounds = 0
     for epoch in range(n_epochs):
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes, enable_background=enable_background)
-        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes)
+        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes, enable_background=enable_background)
         if num_classes == 2:
             val_f1, val_acc, val_auc, val_perc_error, val_ece = val_metrics
         else:
@@ -388,7 +409,7 @@ def train_one_conf(
         num_classes=num_classes, enable_background=args.enable_background
     )
     test_metrics = evaluate(
-        test_dataloader, model, args.device, num_classes=num_classes
+        test_dataloader, model, args.device, num_classes=num_classes, enable_background=args.enable_background
     )
     model = model.cpu()
     if num_classes == 2:
