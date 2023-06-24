@@ -165,9 +165,6 @@ class HardGAT(nn.Module):
         k=8,
         enable_background=False,
     ):
-        ##########
-        ## HANDLE BKGR
-        ##########
         super(HardGAT, self).__init__()
         feat_drop=dropout
         attn_drop=dropout
@@ -219,9 +216,25 @@ class HardGAT(nn.Module):
             )
         )
 
+        self.enable_background = enable_background
+        if enable_background:
+            self.bkgr_head = gat_layer(
+                num_hidden * heads[-2],
+                1,
+                heads[-1],
+                feat_drop,
+                attn_drop,
+                negative_slope,
+                False,
+                None,
+            )
+
     def forward(self, g, inputs):
         h = inputs
         for l in range(self.num_layers):
             h = self.gat_layers[l](g, h).flatten(1)
         logits = self.gat_layers[-1](g, h).mean(1)
+        if self.enable_background:
+            logits_bkgr = self.bkgr_head(g, h).mean(1)
+            return logits, logits_bkgr
         return logits

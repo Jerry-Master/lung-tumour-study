@@ -30,12 +30,8 @@ from .norm import Norm
 
 class GAT(nn.Module):
     def __init__(self, in_size, hid_size, out_size, heads, num_layers, dropout, norm_type, enable_background=False):
-        ##########
-        ## HANDLE BKGR
-        ##########
         super().__init__()
         self.gat_layers = nn.ModuleList()
-        # two-layer GAT
         self.gat_layers.append(
             GATConv(
                 in_size,
@@ -70,12 +66,27 @@ class GAT(nn.Module):
             )
         )
 
+        self.enable_background = enable_background
+        if enable_background:
+            self.bkgr_head = GATConv(
+                hid_size * heads[-2],
+                1,
+                heads[-1],
+                feat_drop=dropout,
+                attn_drop=dropout,
+                activation=None,
+            )
+
+
     def forward(self, g, inputs):
         h = inputs
         for i, layer in enumerate(self.gat_layers):
             h = layer(g, h)
             if i == len(self.gat_layers)-1:  # last layer
                 h = h.mean(1)
+                if self.enable_background:
+                    h_bkgr = self.bkgr_head(g, h).mean(1)
+                    return h, h_bkgr
             else:  # other layer(s)
                 h = h.flatten(1)
         return h

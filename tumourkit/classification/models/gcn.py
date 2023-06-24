@@ -31,9 +31,6 @@ from .norm import Norm
 
 class GCN(nn.Module):
     def __init__(self, in_feats, h_feats, num_classes, num_layers, drop_rate, norm_type, enable_background=False):
-        ##########
-        ## HANDLE BKGR
-        ##########
         super(GCN, self).__init__()
         self.conv_layers = nn.ModuleList()
         self.conv_layers.append(GraphConv(in_feats, h_feats, activation=F.elu))
@@ -49,6 +46,7 @@ class GCN(nn.Module):
         if enable_background:
             self.bkgr_head = GraphConv(h_feats, 1)
 
+
     def forward(self, g, in_feat):
         h = in_feat
         for i, layer in enumerate(self.conv_layers):
@@ -56,4 +54,8 @@ class GCN(nn.Module):
                 h = layer(h) # Dropout
             else:
                 h = layer(g, h) # Other layers
+            if i == len(self.conv_layers) - 1 and self.enable_background:
+                h = layer(g, h)
+                h_bkgr = self.bkgr_head(g, h)
+                return h, h_bkgr 
         return h
