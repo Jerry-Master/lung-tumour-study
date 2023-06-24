@@ -86,10 +86,14 @@ class GraphDataset(Dataset):
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
-        X, y, xx, yy = read_node_matrix(
+        tmp = read_node_matrix(
             os.path.join(self.node_dir, file_name), return_coordinates=True, return_class=not self.is_inference,
-            remove_prior=self.remove_prior, remove_morph=self.remove_morph
+            remove_prior=self.remove_prior, remove_morph=self.remove_morph, enable_background=self.enable_background
             )
+        if self.enable_background:
+            X, y, xx, yy, y_bkgr = tmp
+        else:
+            X, y, xx, yy = tmp
         if self.column_normalize:
             X = self.col_sc.transform(X)
         if self.row_normalize:
@@ -103,10 +107,9 @@ class GraphDataset(Dataset):
         g = dgl.graph((source, dest), num_nodes=len(X))
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
         if not self.is_inference:
-            ##########
-            ## HANDLE BKGR
-            ##########
             g.ndata['y'] = torch.tensor(y, dtype=torch.long)
+            if self.enable_background:
+                g.ndata['y_bkgr'] = torch.tensor(y_bkgr, dtype=torch.long)
         g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1, 1))
         if self.return_names:
             return g, file_name

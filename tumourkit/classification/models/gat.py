@@ -70,7 +70,7 @@ class GAT(nn.Module):
         if enable_background:
             self.bkgr_head = GATConv(
                 hid_size * heads[-2],
-                1,
+                2,
                 heads[-1],
                 feat_drop=dropout,
                 attn_drop=dropout,

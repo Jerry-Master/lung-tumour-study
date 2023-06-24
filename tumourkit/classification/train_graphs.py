@@ -53,7 +53,6 @@ def evaluate(
         epoch: Optional[int] = None,
         log_suffix: Optional[str] = None,
         num_classes: Optional[str] = 2,
-        enable_background: Optional[bool] = False,
         ) -> List[float]:
     """
     Evaluates model in loader.
@@ -71,9 +70,6 @@ def evaluate(
         features = g.ndata['X']
         # Forward
         logits = model(g, features)
-        ##########
-        ## HANDLE BKGR
-        ##########
         pred = logits.argmax(1).detach().cpu().numpy().reshape(-1, 1)
         preds = np.vstack((preds, pred))
         if num_classes == 2:
@@ -128,12 +124,15 @@ def train_one_iter(
         # data
         features = tr_g.ndata['X']
         labels = tr_g.ndata['y']
+        if enable_background:
+            labels_bkgr = tr_g.ndata['y_bkgr']
         # Forward
         logits = model(tr_g, features)
-        ##########
-        ## HANDLE BKGR
-        ##########
+        if enable_background:
+            logits, logits_bkgr = logits
         loss = F.cross_entropy(logits, labels)
+        if enable_background:
+            loss += F.cross_entropy(logits_bkgr, labels_bkgr)
         # Backward
         optimizer.zero_grad()
         loss.backward()
@@ -158,6 +157,18 @@ def train_one_iter(
             writer.add_scalar('Macro F1/train', train_macro, step + len(tr_loader) * epoch)
             writer.add_scalar('Weighted F1/train', train_weighted, step + len(tr_loader) * epoch)
             writer.add_scalar('ECE/train', train_ece, step + len(tr_loader) * epoch)
+
+        if enable_background:
+            preds_bkgr = logits_bkgr.argmax(1).detach().cpu().numpy()
+            labels_bkgr = labels_bkgr.detach().cpu().numpy()
+            probs_bkgr = F.softmax(logits_bkgr, dim=1).detach().cpu().numpy()[:, 1]
+            train_acc_bkgr, train_f1_bkgr, train_auc_bkgr, train_perc_err_bkgr, train_ece_bkgr = metrics_from_predictions(labels_bkgr, preds_bkgr, probs_bkgr, 2)
+            # Tensorboard
+            writer.add_scalar('Accuracy-bkgr/train', train_acc_bkgr, step + len(tr_loader) * epoch)
+            writer.add_scalar('F1-bkgr/train', train_f1_bkgr, step + len(tr_loader) * epoch)
+            writer.add_scalar('ROC_AUC-bkgr/train', train_auc_bkgr, step + len(tr_loader) * epoch)
+            writer.add_scalar('ECE-bkgr/train', train_ece_bkgr, step + len(tr_loader) * epoch)
+            writer.add_scalar('Percentage Error-bkgr/train', train_perc_err_bkgr, step + len(tr_loader) * epoch)
 
 
 def train(
@@ -185,7 +196,7 @@ def train(
     early_stop_rounds = 0
     for epoch in range(n_epochs):
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes, enable_background=enable_background)
-        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes, enable_background=enable_background)
+        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes)
         if num_classes == 2:
             val_f1, val_acc, val_auc, val_perc_error, val_ece = val_metrics
         else:
@@ -377,8 +388,7 @@ def train_one_conf(
         num_classes=num_classes, enable_background=args.enable_background
     )
     test_metrics = evaluate(
-        test_dataloader, model, args.device, num_classes=num_classes,
-        enable_background=args.enable_background
+        test_dataloader, model, args.device, num_classes=num_classes
     )
     model = model.cpu()
     if num_classes == 2:

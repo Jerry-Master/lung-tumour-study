@@ -44,7 +44,7 @@ class GCN(nn.Module):
 
         self.enable_background = enable_background
         if enable_background:
-            self.bkgr_head = GraphConv(h_feats, 1)
+            self.bkgr_head = GraphConv(h_feats, 2)
 
 
     def forward(self, g, in_feat):

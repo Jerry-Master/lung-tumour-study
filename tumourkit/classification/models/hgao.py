@@ -220,7 +220,7 @@ class HardGAT(nn.Module):
         if enable_background:
             self.bkgr_head = gat_layer(
                 num_hidden * heads[-2],
-                1,
+                2,
                 heads[-1],
                 feat_drop,
                 attn_drop,
