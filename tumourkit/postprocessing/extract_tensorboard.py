@@ -78,6 +78,29 @@ def extract_all_scalars(path: str) -> Dict[str, Dict[str, float]]:
     return res
 
 
+def to_long_format(values: pd.DataFrame) -> pd.DataFrame:
+    """
+    Converts the initial dataframe into a more useful one that is in long format.
+    New columns: arch, bn, dropout, layers, metric, value
+
+    :param values: The initial dataframe from extract_tensorboard.
+    :type values: pd.DataFrame
+
+    :return: DataFrame in long format.
+    :rtype: pd.DataFrame
+    """
+    data = values.copy()
+    data = data.reset_index()
+    data[['arch', 'layers', 'dropout', 'bn']] = data['index'].str.split('_', expand=True)
+    data['layers'] = pd.to_numeric(data['layers'])
+    data['dropout'] = pd.to_numeric(data['dropout'])
+    data['bn'] = data['bn'].apply(lambda x: {'bn': 'Yes', 'None': 'No'}.get(x, 'Unknown'))
+    data = data.drop(columns=['index'])
+    data = data.melt(id_vars=['arch', 'layers', 'dropout', 'bn'], var_name='metric')
+    data[['metric', 'split']] = data['metric'].str.split('/', expand=True)
+    return data
+
+
 def write_to_file(path: str, values: Dict[str, Dict[str, float]]) -> None:
     """
     Saves output to file. Dictionary keys are used as index.
@@ -89,7 +112,8 @@ def write_to_file(path: str, values: Dict[str, Dict[str, float]]) -> None:
     :type values: Dict[str, Dict[str, float]]
     """
     values_df = pd.DataFrame(values).transpose()
-    values_df.to_csv(path + '.csv')
+    values_df = to_long_format(values_df)
+    values_df.to_csv(path + '.csv', index=False)
 
 
 def _create_parser():
