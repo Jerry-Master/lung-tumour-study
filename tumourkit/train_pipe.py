@@ -230,6 +230,7 @@ def run_graph_pipe(args: Namespace, logger: Logger) -> None:
         num_classes=args.num_classes,
         disable_prior=False,
         disable_morph_feats=False,
+        enable_background=args.enable_background,
     )
     train_gnn(newargs)
     newargs = Namespace(
@@ -249,6 +250,7 @@ def run_graph_pipe(args: Namespace, logger: Logger) -> None:
         num_classes=args.num_classes,
         disable_prior=False,
         disable_morph_feats=False,
+        enable_background=args.enable_background,
     )
     train_gnn(newargs)
     return
@@ -261,6 +263,7 @@ def _create_parser():
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--num-workers', type=int, default=0)
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 

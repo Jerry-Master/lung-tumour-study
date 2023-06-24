@@ -183,6 +183,7 @@ def run_postgraphs(args: Namespace, logger: Logger) -> None:
         graph_dir=os.path.join(args.output_dir, 'gnn_preds'),
         centroids_dir=os.path.join(args.output_dir, 'centroids'),
         num_classes=args.num_classes,
+        enable_background=args.enable_background,
     )
     graph2centroids_main(newargs)
     logger.info('   Converting .centroids.csv and .GT_cells.png to .class.csv.')
@@ -215,6 +216,7 @@ def _create_parser():
     parser.add_argument('--best-norm-type', type=str, help='Optimal type of normalization layers when training GNNs')
     parser.add_argument('--best-arch', type=str, help='Best architecture (convolutional, attention, ...) when training GNNs', required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'])
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 

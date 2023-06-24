@@ -132,6 +132,7 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
             graph_dir=os.path.join(args.root_dir, 'tmp_graphs', 'gnn_preds'),
             centroids_dir=os.path.join(args.root_dir, 'tmp_graphs', 'centroids'),
             num_classes=args.num_classes,
+            enable_background=args.enable_background,
         )
         graph2centroids_main(newargs)
 
@@ -215,7 +216,7 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
             pred_path=os.path.join(args.root_dir, 'data', 'tmp_hov', 'centroids_hov'),
             save_name=os.path.join(args.save_dir, split, 'hov'),
             debug_path=os.path.join(args.save_dir, 'conf-matrices', 'hov_individual', 'debug_hov') if args.debug else None,
-            num_classes=args.num_classes
+            num_classes=args.num_classes,
         )
         eval_segment(newargs, logger)
         compute_ece(args, split, is_hov=True)
@@ -224,7 +225,7 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
                 os.path.join(args.save_dir, 'conf-matrices', 'hov_individual', 'debug_hov_global.csv'),
                 os.path.join(args.save_dir, 'conf-matrices', 'debug_hov_global_' + split + '.csv'))
     # Evaluate graph output same as hov output
-    logger.info('Starting evaluation of Hovernet output.')
+    logger.info('Starting evaluation of GNN output.')
     for split in ['train', 'validation', 'test']:
         logger.info(f'    Evaluating {split} split (with background)')
         newargs = Namespace(
@@ -245,7 +246,6 @@ def run_evaluation(args: Namespace, logger: Logger) -> None:
         for file in get_names(os.path.join(args.root_dir, 'data', split, 'graphs', 'preds'), '.nodes.csv'):
             df_gt = pd.read_csv(os.path.join(args.root_dir, 'data', split, 'graphs', 'preds', file + '.nodes.csv'))
             df = pd.read_csv(os.path.join(args.root_dir, 'tmp_graphs', 'gnn_preds', file + '.nodes.csv'))
-            # import pdb;pdb.set_trace()
             df = df[df.id.isin(df_gt.id)]
             df = df.set_index(df.id)
             df_gt = df_gt.set_index(df_gt.id)
@@ -270,6 +270,7 @@ def _create_parser():
     parser.add_argument('--gnn-dir', type=str, help='Path where the gnn is saved, otherwise the default in root-dir will be used. It must have three folder inside: confs, weights and normalizers.')
     parser.add_argument('--disable-prior', action='store_true', help='Whether to disable the use of Hovernet probabilities.')
     parser.add_argument('--disable-morph', action='store_true', help='Whether to disable the use of morphological properties.')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 
