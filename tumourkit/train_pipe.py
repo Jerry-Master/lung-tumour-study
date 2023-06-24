@@ -194,6 +194,7 @@ def run_postproc_pipe(args: Namespace, logger: Logger) -> None:
             graph_dir=os.path.join(args.root_dir, 'data', split, 'graphs', 'GT'),
             output_dir=os.path.join(args.root_dir, 'data', split, 'graphs', 'preds'),
             num_classes=args.num_classes,
+            enable_background=args.enable_background,
         )
         join_hovprob_graph_main(newargs, logger)
     return
