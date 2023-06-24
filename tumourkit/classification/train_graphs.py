@@ -212,6 +212,7 @@ def load_dataset(
         bsize: int,
         remove_prior: Optional[bool] = False,
         remove_morph: Optional[bool] = False,
+        enable_background: Optional[bool] = False,
         ) -> Tuple[GraphDataLoader, GraphDataLoader, GraphDataLoader]:
     """
     Creates Torch dataloaders for training.
@@ -232,15 +233,17 @@ def load_dataset(
     """
     train_dataset = GraphDataset(
         node_dir=train_node_dir, remove_morph=remove_morph, remove_prior=remove_prior,
-        max_dist=200, max_degree=10, column_normalize=True)
+        max_dist=200, max_degree=10, column_normalize=True, enable_background=enable_background)
     train_dataloader = GraphDataLoader(train_dataset, batch_size=bsize, shuffle=True)
     val_dataset = GraphDataset(
         node_dir=val_node_dir, remove_morph=remove_morph, remove_prior=remove_prior,
-        max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
+        max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers(),
+        enable_background=enable_background)
     val_dataloader = GraphDataLoader(val_dataset, batch_size=1, shuffle=False)
     test_dataset = GraphDataset(
         node_dir=test_node_dir, remove_morph=remove_morph, remove_prior=remove_prior,
-        max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers())
+        max_dist=200, max_degree=10, normalizers=train_dataset.get_normalizers(),
+        enable_background=enable_background)
     test_dataloader = GraphDataLoader(test_dataset, batch_size=1, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
 

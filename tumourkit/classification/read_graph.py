@@ -52,6 +52,7 @@ class GraphDataset(Dataset):
             is_inference: Optional[bool] = False,
             remove_prior: Optional[bool] = False,
             remove_morph: Optional[bool] = False,
+            enable_background: Optional[bool] = False,
             ):
         """
         node_dir: Path to .nodes.csv files.
@@ -80,6 +81,8 @@ class GraphDataset(Dataset):
         self.initialize_normalizers()
         self.return_names = return_names
         self.is_inference = is_inference
+        self.enable_background = enable_background
+
 
     def __getitem__(self, idx):
         file_name = self.node_names[idx] + '.nodes.csv'
@@ -100,14 +103,19 @@ class GraphDataset(Dataset):
         g = dgl.graph((source, dest), num_nodes=len(X))
         g.ndata['X'] = torch.tensor(X, dtype=torch.float32)
         if not self.is_inference:
+            ##########
+            ## HANDLE BKGR
+            ##########
             g.ndata['y'] = torch.tensor(y, dtype=torch.long)
         g.edata['dist'] = torch.tensor(dists, dtype=torch.float32).reshape((-1, 1))
         if self.return_names:
             return g, file_name
         return g
 
+
     def __len__(self):
         return len(self.node_names)
+
 
     @staticmethod
     def create_edges(
@@ -139,6 +147,7 @@ class GraphDataset(Dataset):
             distances.extend(dists)
         return source, dest, distances
 
+
     def initialize_normalizers(self):
         """
         Fits normalizers for later use and also checks they contain transform method.
@@ -155,6 +164,7 @@ class GraphDataset(Dataset):
             self.row_sc = Normalizer(norm='l1')
             assert callable(getattr(self.row_sc, "transform", None)), \
                 'Error loading row normalizer.'
+
 
     def get_normalizers(self) -> Tuple[Any]:
         """

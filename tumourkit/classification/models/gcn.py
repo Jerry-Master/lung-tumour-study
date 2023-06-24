@@ -45,6 +45,10 @@ class GCN(nn.Module):
             self.conv_layers.append(Norm(norm_type=norm_type, hidden_dim=h_feats))
         self.conv_layers.append(GraphConv(h_feats, num_classes))
 
+        self.enable_background = enable_background
+        if enable_background:
+            self.bkgr_head = GraphConv(h_feats, 1)
+
     def forward(self, g, in_feat):
         h = in_feat
         for i, layer in enumerate(self.conv_layers):

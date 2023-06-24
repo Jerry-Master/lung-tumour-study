@@ -72,7 +72,13 @@ def parse_centroids_probs(nuc: Dict[str, Any], logger: Optional[Logger] = None, 
     return centroids_
 
 
-def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any], logger: Optional[Logger] = None, num_classes: Optional[int] = 2) -> pd.DataFrame:
+def add_probability(
+        graph: pd.DataFrame,
+        hov_json: Dict[str, Any],
+        logger: Optional[Logger] = None,
+        num_classes: Optional[int] = 2,
+        enable_background: Optional[bool] = False,
+        ) -> pd.DataFrame:
     """
     Adds probability information from the Hovernet JSON nuclei dictionary to the graph DataFrame.
 
@@ -87,9 +93,14 @@ def add_probability(graph: pd.DataFrame, hov_json: Dict[str, Any], logger: Optio
     :type logger: Optional[Logger]
     :param num_classes: Optional number of classes. Defaults to 2 for binary classification.
     :type num_classes: Optional[int]
+    :param enable_background: If True, extra cells are included. They are represented with a value of 1 in the column background.
+    :type enable_background: Optional[bool]
     :return: The updated graph DataFrame with probability information.
     :rtype: pd.DataFrame
     """
+    ##########
+    ## HANDLE BKGR
+    ##########
     centroids = parse_centroids_probs(hov_json, logger, num_classes)
     centroids = np.array(centroids)
     assert len(centroids) > 0, 'Hov json must contain at least one cell.'
@@ -136,6 +147,7 @@ def _create_parser():
         help='Path where to save new .nodes.csv. If same as --graph-dir, overwrites its content.'
     )
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
+    parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
     return parser
 
 
@@ -149,7 +161,7 @@ def main_with_args(args: Namespace, logger: Optional[Logger] = None) -> None:
         try:
             graph = pd.read_csv(os.path.join(graph_dir, name + '.nodes.csv'))
             hov_json = read_json(os.path.join(json_dir, name + '.json'))
-            graph = add_probability(graph, hov_json, logger, args.num_classes)
+            graph = add_probability(graph, hov_json, logger, args.num_classes, args.enable_background)
             save_graph(graph, os.path.join(output_dir, name + '.nodes.csv'))
         except FileNotFoundError:
             continue
