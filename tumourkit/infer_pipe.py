@@ -162,6 +162,7 @@ def run_graphs(args: Namespace, logger: Logger) -> None:
         num_classes=args.num_classes,
         disable_prior=False,
         disable_morph_feats=False,
+        enable_background=args.enable_background,
     )
     infer_gnn(newargs)
     return
