@@ -50,12 +50,15 @@ class GCN(nn.Module):
     def forward(self, g, in_feat):
         h = in_feat
         for i, layer in enumerate(self.conv_layers):
-            if i % 3 == 1:
-                h = layer(h) # Dropout
-            else:
-                h = layer(g, h) # Other layers
-            if i == len(self.conv_layers) - 1 and self.enable_background:
+            if i == len(self.conv_layers) - 1:
+                if self.enable_background:  # Last layer
+                    h_bkgr = self.bkgr_head(g, h)
+                    h = layer(g, h)
+                    return h, h_bkgr 
                 h = layer(g, h)
-                h_bkgr = self.bkgr_head(g, h)
-                return h, h_bkgr 
+            else:
+                if i % 3 == 1:
+                    h = layer(h)  # Dropout
+                else:
+                    h = layer(g, h)  # Other layers
         return h

@@ -78,10 +78,10 @@ class GraphDataset(Dataset):
         self.normalizers = normalizers
         self.remove_prior = remove_prior
         self.remove_morph = remove_morph
-        self.initialize_normalizers()
         self.return_names = return_names
         self.is_inference = is_inference
         self.enable_background = enable_background
+        self.initialize_normalizers()
 
 
     def __getitem__(self, idx):
@@ -160,7 +160,7 @@ class GraphDataset(Dataset):
                 assert callable(getattr(normalizer, "transform", None)), \
                     'Normalizers provided must have transform method.'
         if self.column_normalize:
-            self.col_sc = fit_column_normalizer(self.node_dir, self.node_names, remove_morph=self.remove_morph, remove_prior=self.remove_prior)
+            self.col_sc = fit_column_normalizer(self.node_dir, self.node_names, remove_morph=self.remove_morph, remove_prior=self.remove_prior, enable_background=self.enable_background)
             assert callable(getattr(self.col_sc, "transform", None)), \
                 'Error loading column normalizer.'
         if self.row_normalize:

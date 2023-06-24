@@ -91,16 +91,14 @@ def evaluate(
         labels = np.vstack((labels, label))
     # Compute metrics on validation
     if enable_background:
-        preds_bkgr = logits_bkgr.argmax(1).detach().cpu().numpy()
-        labels_bkgr = labels_bkgr.detach().cpu().numpy()
-        probs_bkgr = F.softmax(logits_bkgr, dim=1).detach().cpu().numpy()[:, 1]
         acc_bkgr, f1_bkgr, auc_bkgr, perc_err_bkgr, ece_bkgr = metrics_from_predictions(labels_bkgr, preds_bkgr, probs_bkgr, 2)
         # Tensorboard
-        writer.add_scalar('Accuracy-bkgr/' + log_suffix, acc_bkgr, epoch)
-        writer.add_scalar('F1-bkgr/' + log_suffix, f1_bkgr, epoch)
-        writer.add_scalar('ROC_AUC-bkgr/' + log_suffix, auc_bkgr, epoch)
-        writer.add_scalar('ECE-bkgr/' + log_suffix, ece_bkgr, epoch)
-        writer.add_scalar('Percentage Error-bkgr/' + log_suffix, perc_err_bkgr, epoch)
+        if writer is not None:
+            writer.add_scalar('Accuracy-bkgr/' + log_suffix, acc_bkgr, epoch)
+            writer.add_scalar('F1-bkgr/' + log_suffix, f1_bkgr, epoch)
+            writer.add_scalar('ROC_AUC-bkgr/' + log_suffix, auc_bkgr, epoch)
+            writer.add_scalar('ECE-bkgr/' + log_suffix, ece_bkgr, epoch)
+            writer.add_scalar('Percentage Error-bkgr/' + log_suffix, perc_err_bkgr, epoch)
     if num_classes == 2:
         acc, f1, auc, perc_err, ece = metrics_from_predictions(labels, preds, probs, 2)
         # Tensorboard
@@ -473,7 +471,8 @@ def main_with_args(args: Namespace):
         test_node_dir=args.test_node_dir,
         bsize=args.batch_size,
         remove_prior=args.disable_prior,
-        remove_morph=args.disable_morph_feats
+        remove_morph=args.disable_morph_feats,
+        enable_background=args.enable_background,
     )
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)

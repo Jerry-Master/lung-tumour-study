@@ -35,7 +35,7 @@ def read_node_matrix(
         remove_prior: Optional[bool] = False,
         remove_morph: Optional[bool] = False,
         enable_background: Optional[bool] = False,
-        ) -> Tuple[List[np.ndarray, np.ndarray]]:
+        ) -> List[np.ndarray]:
     """
     Read csv and creates X and y matrices.
     Centroids coordinates are removed.
@@ -54,6 +54,7 @@ def read_node_matrix(
         remove_vars.extend(list(filter(lambda x: 'prob' in x, df.columns)))
     if enable_background:
         y_bkgr = df['background'].to_numpy()
+    if 'background' in df.columns:
         df = df.drop(['background'], axis=1)
     if return_class:
         y = df['class'].to_numpy() - 1
@@ -92,6 +93,7 @@ def _read_all_nodes(
         names: List[str],
         remove_prior: Optional[bool] = False,
         remove_morph: Optional[bool] = False,
+        enable_background: Optional[bool] = False,
         ) -> List[np.ndarray]:
     """
     Input
@@ -103,7 +105,11 @@ def _read_all_nodes(
     """
     X, y = None, None
     for name in names:
-        X_, y_ = read_node_matrix(os.path.join(node_dir, name), remove_morph=remove_morph, remove_prior=remove_prior)
+        tmp = read_node_matrix(os.path.join(node_dir, name), remove_morph=remove_morph, remove_prior=remove_prior, enable_background=enable_background)
+        if enable_background:
+            X_, y_, y_bkgr = tmp
+        else:
+            X_, y_ = tmp
         if X is None:
             X = X_  # Shape (n_samples, n_features)
             y = y_  # Shape (n_samples,)

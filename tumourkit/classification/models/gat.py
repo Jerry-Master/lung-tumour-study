@@ -81,12 +81,12 @@ class GAT(nn.Module):
     def forward(self, g, inputs):
         h = inputs
         for i, layer in enumerate(self.gat_layers):
-            h = layer(g, h)
             if i == len(self.gat_layers)-1:  # last layer
-                h = h.mean(1)
                 if self.enable_background:
                     h_bkgr = self.bkgr_head(g, h).mean(1)
+                    h = layer(g, h).mean(1)
                     return h, h_bkgr
             else:  # other layer(s)
+                h = layer(g, h)
                 h = h.flatten(1)
         return h

@@ -52,6 +52,7 @@ def fit_column_normalizer(
         names: List[str],
         remove_prior: Optional[bool] = False,
         remove_morph: Optional[bool] = False,
+        enable_background: Optional[bool] = False,
         ) -> StandardScaler:
     """
     Fits a StandardScaler object to the input data and returns it.
@@ -67,7 +68,7 @@ def fit_column_normalizer(
     :return: A StandardScaler object fitted to the input data.
     :rtype: StandardScaler
     """
-    X, y = _read_all_nodes(node_dir, [x + '.nodes.csv' for x in names], remove_morph=remove_morph, remove_prior=remove_prior)
+    X, y = _read_all_nodes(node_dir, [x + '.nodes.csv' for x in names], remove_morph=remove_morph, remove_prior=remove_prior, enable_background=enable_background)
     sc = StandardScaler()
     sc.fit(X)
     return sc
