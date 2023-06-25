@@ -49,6 +49,7 @@ def test_hov_prob_pipe():
     args.graph_dir = TMP_DIR
     args.output_dir = TMP_DIR
     args.num_classes = 2
+    args.enable_background = False
     join_hovprob_graph_main(args)
     args.node_dir = TMP_DIR
     args.save_file = TEST_DIR + 'tmp2'

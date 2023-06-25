@@ -220,6 +220,27 @@ def add_matrices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     return res
 
 
+def compute_perc_error_bkgr(
+        gt_centroids: List[Tuple[int, int, int]],
+        pred_centroids: List[Tuple[int, int, int]]
+        ) -> float:
+    """
+    Computes absolute difference in percentages of the classes.
+
+    :param gt_centroids: Ground truth.
+    :type gt_centroids: List[Tuple[int, int, int]]
+    :param pred_centroids: Predictions.
+    :type pred_centroids: List[Tuple[int, int, int]]
+    :return: The percentage error.
+    :rtype: float
+    """
+    gt_cls = gt_centroids[:, 2]
+    pred_cls = pred_centroids[:, 2]
+    gt_perc = (gt_cls == 2).sum() / len(gt_cls)
+    pred_perc = (pred_cls == 2).sum() / len(pred_cls)
+    return abs(gt_perc - pred_perc)
+
+
 def save_csv(
         metrics: Dict[str, List[float]],
         save_path: str
@@ -273,7 +294,7 @@ def main_with_args(args: Namespace, logger: Logger):
     if args.num_classes == 2:
         metrics = {
             'Name': [], 'F1': [], 'Accuracy': [], 'ROC_AUC': [], 'Perc_err': [], 'ECE': [],
-            'Macro F1 (bkgr)': [], 'Weighted F1 (bkgr)': [], 'Micro F1 (bkgr)': []
+            'Macro F1 (bkgr)': [], 'Weighted F1 (bkgr)': [], 'Micro F1 (bkgr)': [], 'Perc_err (bkgr)': []
         }
     else:
         metrics = {
@@ -282,12 +303,15 @@ def main_with_args(args: Namespace, logger: Logger):
         }
     global_conf_mat = None
     global_pred, global_true = [], []
+    global_gt_centroids, global_pred_centroids = np.array([]).reshape(0,3), np.array([]).reshape(0,3)
     for k, name in enumerate(names):
         logger.info('Progress: {:2d}/{}'.format(k + 1, len(names)))
         metrics['Name'].append(name)
         # Read
         gt_centroids = read_centroids(name, args.gt_path)
         pred_centroids = read_centroids(name, args.pred_path)
+        global_gt_centroids = np.vstack((global_gt_centroids, gt_centroids))
+        global_pred_centroids = np.vstack((global_pred_centroids, pred_centroids))
         # Compute pairs and confusion matrix
         conf_mat = get_confusion_matrix(gt_centroids, pred_centroids)
         if args.debug_path is not None:
@@ -312,6 +336,8 @@ def main_with_args(args: Namespace, logger: Logger):
         try:
             _metrics = metrics_from_predictions(true_labels, pred_labels, None, args.num_classes)
             macro_bkgr, weighted_bkgr, micro_bkgr = compute_metrics_from_matrix(conf_mat)
+            if args.num_classes == 2:
+                perc_error_bkgr = compute_perc_error_bkgr(gt_centroids, pred_centroids)
         except Exception as e:
             logger.error(e)
             logger.error(name)
@@ -327,6 +353,7 @@ def main_with_args(args: Namespace, logger: Logger):
             metrics['Macro F1 (bkgr)'].append(macro_bkgr)
             metrics['Weighted F1 (bkgr)'].append(weighted_bkgr)
             metrics['Micro F1 (bkgr)'].append(micro_bkgr)
+            metrics['Perc_err (bkgr)'].append(perc_error_bkgr)
         else:
             micro, macro, weighted, ece = _metrics
             metrics['Macro F1'].append(macro)
@@ -344,9 +371,11 @@ def main_with_args(args: Namespace, logger: Logger):
     macro_bkgr, weighted_bkgr, micro_bkgr = compute_metrics_from_matrix(global_conf_mat)
     if args.num_classes == 2:
         acc, f1, auc, perc_error, ece = _global_metrics
+        perc_error_bkgr = compute_perc_error_bkgr(global_gt_centroids, global_pred_centroids)
         global_metrics = {
             'Name': ['All'], 'F1': [f1], 'Accuracy': [acc], 'ROC_AUC': [auc], 'Perc_err': [perc_error], 'ECE': [ece],
-            'Macro F1 (bkgr)': [macro_bkgr], 'Weighted F1 (bkgr)': [weighted_bkgr], 'Micro F1 (bkgr)': [micro_bkgr]
+            'Macro F1 (bkgr)': [macro_bkgr], 'Weighted F1 (bkgr)': [weighted_bkgr], 'Micro F1 (bkgr)': [micro_bkgr],
+            'Perc_err (bkgr)': [perc_error_bkgr]
         }
     else:
         micro, macro, weighted, ece = _global_metrics

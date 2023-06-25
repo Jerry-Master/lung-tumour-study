@@ -20,20 +20,24 @@ Contact information: joseperez2000@hotmail.es
 """
 import argparse
 from argparse import Namespace
+from typing import Optional
 from ..utils.preprocessing import get_names, create_dir, parse_path, save_centroids, read_graph
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
 
-def graph2centroids(graph_file: pd.DataFrame, num_classes: int, enable_background: bool) -> np.ndarray:
+def graph2centroids(
+        graph_file: pd.DataFrame,
+        num_classes: int,
+        enable_background: Optional[bool] = False) -> np.ndarray:
     """
     Extracts X, Y and class attributes from graphs nodes.
 
     :param graph_file: The Pandas DataFrame containing the graph nodes.
     :type graph_file: pd.DataFrame
     :param enable_background: Enable when model has extra head to correct extra cells.
-    :type enable_background: bool
+    :type enable_background: Optional[bool]
     :return: A NumPy array containing the X, Y and class attributes from the graph nodes.
     :rtype: np.ndarray
 

@@ -189,7 +189,7 @@ def main_with_args(args):
         num_feats -= (1 if args.num_classes == 2 else args.num_classes)
     if num_feats == 0:
         num_feats = 1
-    model = load_saved_model(args.weights, args.conf, args.num_classes, num_feats)
+    model = load_saved_model(args.weights, args.conf, args.num_classes, num_feats, args.enable_background)
     model.eval()
     probs = run_inference(model, eval_dataloader, 'cpu', args.num_classes, args.enable_background)
     save_probs(probs, node_dir, output_dir, args.num_classes, args.enable_background)

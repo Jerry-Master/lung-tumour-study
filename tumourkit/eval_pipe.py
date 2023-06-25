@@ -103,6 +103,7 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
             graph_dir=os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'raw'),
             output_dir=os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds'),
             num_classes=args.num_classes,
+            enable_background=args.enable_background,
         )
         join_hovprob_graph_main(newargs, logger)
         for file in os.listdir(os.path.join(args.root_dir, 'tmp_graphs', 'graphs', 'hovpreds')):
@@ -122,6 +123,7 @@ def run_preprocessing(args: Namespace, logger: Logger) -> None:
             num_classes=args.num_classes,
             disable_prior=args.disable_prior,
             disable_morph_feats=args.disable_morph,
+            enable_background=args.enable_background,
         )
         infer_gnn(newargs)
     # Postproc to obtain centroids

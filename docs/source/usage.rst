@@ -11,6 +11,7 @@ Once you have installed the library several commands will be made available in t
 * :code:`make_dirs`: It will create an internal directory structure where all the magic is going to happen. More info :ref:`below <make_dirs>`.
 * :code:`run_training`: It will train the segmentation and classification models sequentially. More info :ref:`below <run_training>`.
 * :code:`run_inference`: It will execute the pipeline on previously unseen images. More info :ref:`below <run_inference>`.
+* :code:`run_evaluation`: It will evaluate Hovernet and GNNs after training. More info :ref:`below <run_evaluation>`.
 
 They all require some parameters to be specified. You can get the parameter names and a brief description by calling the commands together with the flag :code:`-h` or :code:`--help`.
 
@@ -88,6 +89,10 @@ You can modify the code to use a smaller field of view of 270, but it will proba
 Apart from that, the space occupied by the checkpoints and other data inside the root directory can reach up to 50GB of disk space.
 Also, for a dataset of about one hundred images it can take up to 20 hours to train. Be prepared. 
 
+After version 0.8.0 another parameter was added called :code:`--enable-background`. This parameters enables a different way of training.
+If it is set, GNNs have an extra head to predicted whether a given predicted cell is potentially not a cell, therefore correcting some Hovernet mistakes.
+This flag is present in all the commands, keep in mind that a model trained with this flag on, must also have it enabled on inference and evaluation.
+
 .. _run_inference:
 
 run_inference
@@ -111,6 +116,40 @@ If you find that hovernet is breaking cells into parts, we provide an algorithm 
 
 Be aware that you will need at least 10GB of RAM in order to execute the hovernet model. The rest of the pipeline works smoothly on CPU, but the hovernet model requires heavy computation.
 It should take only a few seconds for the hovernet to process one image and less than a minute per image for the whole pipeline. Obviously, it depends on your hardware.
+
+.. _run_evaluation:
+
+run_evaluation
+^^^^^^^^^^^^^^
+
+To evaluate the performance of a given model in the test set you can use this command
+
+.. code-block:: console
+
+   $ run_evaluation --root-dir [...] --save-dir [...] --num-classes 2 --debug --best-num-layers [...] --best-dropout [...] --best-norm-type [...] --best-arch [...]
+
+In the save directory you will have the metrics computed taking into account perfect 1-1 matching and including the background as a class.
+The last one normally has the suffix 'bkgr'. When :code:`--debug` is enabled confusion matrices are also saved.
+If :code:`--best-arch` is not provided, the best configuration is estimated from the training logs.
+
+There are also two extra commands to obtain visualizations from the validation logs of tensorboard computed during training. 
+
+.. code-block:: console
+
+   $ extract_tensorboard --logs-dir gnn_logs/  --output-path gnn_logs
+   $ plot_logs --input-path gnn_logs.csv --output-dir gnn-plots/
+
+This will create line charts for analyzing the effect of batch normalization and boxplots for the effect of the dropout, like the examples below.
+
+|pic1| |pic2|
+
+.. |pic1| image:: imgs/F1-GCN-bn-line.png
+   :width: 50%
+   :alt: Line chart.
+
+.. |pic2| image:: imgs/F1-GCN-drop-box.png
+   :width: 40%
+   :alt: Box plot.
 
 .. _run_research:
 
