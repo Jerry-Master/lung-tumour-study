@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A SDK for tumour study"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: GPU :: NVIDIA CUDA :: 11.7",
