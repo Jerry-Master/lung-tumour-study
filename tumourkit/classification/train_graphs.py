@@ -32,6 +32,8 @@ from .read_graph import GraphDataset
 from .models.gcn import GCN
 from .models.hgao import HardGAT
 from .models.gat import GAT
+from .models.gin import GIN
+from .models.graphsage import GraphSAGE
 import argparse
 from argparse import Namespace
 from torch.utils.tensorboard import SummaryWriter
@@ -309,12 +311,16 @@ def generate_configurations(max_confs: int, model_name: str) -> List[Dict[str, i
 
 def load_model(conf: Dict[str, Any], num_classes: int, num_feats: int, enable_background: bool) -> nn.Module:
     """
-    Available models: GCN, ATT, HATT, SAGE, BOOST
+    Available models: GCN, ATT, HATT, SAGE, GIN
     Configuration space: NUM_LAYERS, DROPOUT, NORM_TYPE
     """
     hidden_feats = 100
     if conf['MODEL_NAME'] == 'GCN':
         return GCN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], enable_background)
+    if conf['MODEL_NAME'] == 'GIN':
+        return GIN(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], enable_background)
+    if conf['MODEL_NAME'] == 'SAGE':
+        return GraphSAGE(num_feats, hidden_feats, num_classes, conf['NUM_LAYERS'], conf['DROPOUT'], conf['NORM_TYPE'], enable_background)
     if conf['MODEL_NAME'] == 'ATT' or conf['MODEL_NAME'] == 'HATT':
         num_heads = 8
         num_out_heads = 1
@@ -432,8 +438,8 @@ def _create_parser():
                         help='Number of epochs needed to consider convergence when worsening.')
     parser.add_argument('--batch-size', type=int, required=True,
                         help='Batch size. No default.')
-    parser.add_argument('--model-name', type=str, required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'BOOST'],
-                        help='Which model to use. Options: GCN, ATT, HATT, SAGE, BOOST')
+    parser.add_argument('--model-name', type=str, required=True, choices=['GCN', 'ATT', 'HATT', 'SAGE', 'GIN'],
+                        help='Which model to use. Options: GCN, ATT, HATT, SAGE, GIN')
     parser.add_argument('--save-file', type=str, required=True,
                         help='Name to file where to save the results. Must not contain extension.')
     parser.add_argument('--num-confs', type=int, default=50,
