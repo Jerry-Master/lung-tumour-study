@@ -134,7 +134,8 @@ def run_posthov(args: Namespace, logger: Logger) -> None:
         json_dir=os.path.join(args.output_dir, 'tmp_hov', 'json'),
         graph_dir=os.path.join(args.output_dir, 'graphs', 'raw'),
         output_dir=os.path.join(args.output_dir, 'graphs', 'hovpreds'),
-        num_classes=args.num_classes
+        num_classes=args.num_classes,
+        enable_background=args.enable_background,
     )
     join_hovprob_graph_main(newargs, logger)
     return
