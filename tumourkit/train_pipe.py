@@ -214,46 +214,28 @@ def run_graph_pipe(args: Namespace, logger: Logger) -> None:
     :param logger: The logger object used for logging messages.
     :type logger: Logger
     """
-    newargs = Namespace(
-        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
-        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
-        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
-        log_dir=os.path.join(args.root_dir, 'gnn_logs'),
-        early_stopping_rounds=10,
-        batch_size=20,
-        model_name='GCN',
-        save_file=os.path.join(args.root_dir, 'gnn_logs', 'gcn_results'),
-        num_confs=32,
-        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
-        device='cpu' if args.gpu == '' else 'cuda',
-        num_workers=args.num_workers,
-        checkpoint_iters=-1,
-        num_classes=args.num_classes,
-        disable_prior=False,
-        disable_morph_feats=False,
-        enable_background=args.enable_background,
-    )
-    train_gnn(newargs)
-    newargs = Namespace(
-        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
-        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
-        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
-        log_dir=os.path.join(args.root_dir, 'gnn_logs'),
-        early_stopping_rounds=10,
-        batch_size=20,
-        model_name='ATT',
-        save_file=os.path.join(args.root_dir, 'gnn_logs', 'gat_results'),
-        num_confs=32,
-        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
-        device='cpu' if args.gpu == '' else 'cuda',
-        num_workers=args.num_workers,
-        checkpoint_iters=-1,
-        num_classes=args.num_classes,
-        disable_prior=False,
-        disable_morph_feats=False,
-        enable_background=args.enable_background,
-    )
-    train_gnn(newargs)
+    methods = ['GIN', 'SAGE', 'GCN', 'ATT']
+    for method in methods:
+        newargs = Namespace(
+            train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+            validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+            test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+            log_dir=os.path.join(args.root_dir, 'gnn_logs'),
+            early_stopping_rounds=10,
+            batch_size=20,
+            model_name=method,
+            save_file=os.path.join(args.root_dir, 'gnn_logs', method + '_results'),
+            num_confs=32,
+            save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn'),
+            device='cpu' if args.gpu == '' else 'cuda',
+            num_workers=args.num_workers,
+            checkpoint_iters=-1,
+            num_classes=args.num_classes,
+            disable_prior=False,
+            disable_morph_feats=False,
+            enable_background=args.enable_background,
+        )
+        train_gnn(newargs)
     return
 
 
