@@ -267,7 +267,7 @@ def _create_parser():
     parser.add_argument('--best-num-layers', type=str, help='Optimal number of layers when training GNNs.')
     parser.add_argument('--best-dropout', type=str, help='Optimal dropout rate when training GNNs')
     parser.add_argument('--best-norm-type', type=str, help='Optimal type of normalization layers when training GNNs')
-    parser.add_argument('--best-arch', type=str, help='Best architecture (convolutional, attention, ...) when training GNNs', choices=['GCN', 'ATT'])
+    parser.add_argument('--best-arch', type=str, help='Best architecture (convolutional, attention, ...) when training GNNs', choices=['GCN', 'ATT', 'GIN', 'SAGE'])
     parser.add_argument('--debug', action='store_true', help='Whether to save confusion matrices.')
     parser.add_argument('--gnn-dir', type=str, help='Path where the gnn is saved, otherwise the default in root-dir will be used. It must have three folder inside: confs, weights and normalizers.')
     parser.add_argument('--disable-prior', action='store_true', help='Whether to disable the use of Hovernet probabilities.')
