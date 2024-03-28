@@ -25,8 +25,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest
-        python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117
-        python -m pip install dgl -f https://data.dgl.ai/wheels/repo.html
+        python -m pip install torch==1.13.1 torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117
+        python -m pip install dgl==1.0.1 -f https://data.dgl.ai/wheels/repo.html
         python -m pip install dglgo -f https://data.dgl.ai/wheels-test/repo.html
         python -m pip install git+https://github.com/marcown/imgaug.git@74e63f2#egg=imgaug
         python -m pip install .
