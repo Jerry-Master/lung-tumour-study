@@ -28,6 +28,7 @@ pandas==1.5.2
 Pillow==9.4.0
 pipreqs==0.4.11
 pluggy==1.0.0
+POT==0.9.5
 psutil==5.9.4
 pycodestyle==2.10.0
 pyflakes==3.0.1

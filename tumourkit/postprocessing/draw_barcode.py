@@ -88,7 +88,7 @@ def draw_barcode(
     for dim in range(max_dim + 1):
         subdiagram = diagram[dim]
         for i, (b, d) in enumerate(subdiagram):
-            ax.hlines(y=i + dim * 20, xmin=b, xmax=d if np.isfinite(d) else max_edge_length, color='C' + str(dim), lw=2, label=f"H{int(dim)}" if i == 0 else "")
+            ax.hlines(y=i + dim * 20, xmin=b, xmax=d if np.isfinite(d) else max_edge_length, color='C' + str(dim), lw=0.5, label=f"H{int(dim)}" if i == 0 else "")
     ax.set_title("Persistence Barcode")
     ax.set_xlabel("Filtration Value")
     ax.set_yticks([])
@@ -149,7 +149,7 @@ def main_with_args(args: Namespace) -> None:
     )
     pbar = tqdm(total=len(names))
     plt.switch_backend('Agg')
-    max_edge_length = args.max_distance if args.use_metric else 3
+    max_edge_length = args.max_distance if args.use_metric else 10
     max_dimension = 2
     rips_persistence = RipsPersistence(
         input_type='point cloud' if args.use_metric else 'full distance matrix',
