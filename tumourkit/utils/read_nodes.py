@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Contact information: joseperez2000@hotmail.es
 """
-from typing import List, Optional, Tuple
+from typing import List, Optional
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
