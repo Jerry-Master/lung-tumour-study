@@ -1,4 +1,4 @@
 from .segmentation.evaluate import main_with_args as eval_segment
 from .classification.evaluate import main_with_args as eval_class
 
-__version__ = "0.8.2"
+__version__ = "0.9.0"
