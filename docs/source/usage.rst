@@ -371,3 +371,54 @@ The command for that is:
 Parameters here means the same as in the above command but there are two extra important parameters.
 The max-degree parameter limits the maximum degree of each node in the graph.
 The max-distance parameter control the maximums distance between any two cells to have an edge connecting them.
+
+Vietoris-Rips Filtration
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Another way to visualize the topology of the graph is to use a Vietoris-Rips filtration:
+
+|pic1| |pic2| |pic3|
+
+.. |pic1| image:: imgs/25.75.metric.vr-complex.png
+   :width: 30%
+
+.. |pic2| image:: imgs/50.5.metric.vr-complex.png
+   :width: 30%
+
+.. |pic3| image:: imgs/75.25.metric.vr-complex.png
+   :width: 30%
+
+The command for that is:
+
+.. code-block:: console
+
+    $ draw_rips --orig-dir ORIG_DIR --png-dir PNG_DIR --csv-dir CSV_DIR --output-dir OUTPUT_DIR --type-info TYPE_INFO --num-workers NUM_WORKERS --max-degree MAX_DEGREE --max-distance MAX_DISTANCE [--use-metric]
+
+Parameters here means the same as in the above command but there is one extra important parameter.
+When --use-metric is activated the filtration is made using euclidean distance, otherwise it uses graph distance.
+
+Persistence Diagrams
+^^^^^^^^^^^^^^^^^^^^
+
+Given the above filtration one can compute the persistence diagram to obtain topological information:
+
+.. image:: imgs/metric.barcode.png
+  :width: 600
+  :alt: Persistence barcode
+
+The command for that is:
+
+.. code-block:: console
+
+    $ draw_barcode --orig-dir ORIG_DIR --png-dir PNG_DIR --csv-dir CSV_DIR --output-dir OUTPUT_DIR --num-workers NUM_WORKERS --max-degree MAX_DEGREE --max-distance MAX_DISTANCE [--use-metric]
+
+Parameters here means the same as in the above command.
+The zero dimensional barcode encodes information of connected components as well as the distances of the minimum spanning tree edge lengths.
+One dimensional barcode is related to the loops and second dimensional to 2D loops, which are spheres.
+No higher dimensional information is computed. The result is also saved in a csv file.
+
+To compare diagrams there is also another command that computes q-Wassertein and Bottleneck distances:
+
+.. code-block:: console
+
+    $ compare_barcodes --barcode1 PATH1 --barcode2 PATH2 [--output_path OUTPUT_PATH] [-q Q] [--homology-dim D]
