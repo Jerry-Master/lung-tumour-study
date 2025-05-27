@@ -141,13 +141,13 @@ There are also two extra commands to obtain visualizations from the validation l
 
 This will create line charts for analyzing the effect of batch normalization and boxplots for the effect of the dropout, like the examples below.
 
-|pic1| |pic2|
+|pic1-f1| |pic2-f1|
 
-.. |pic1| image:: imgs/F1-GCN-bn-line.png
+.. |pic1-f1| image:: imgs/F1-GCN-bn-line.png
    :width: 50%
    :alt: Line chart.
 
-.. |pic2| image:: imgs/F1-GCN-drop-box.png
+.. |pic2-f1| image:: imgs/F1-GCN-drop-box.png
    :width: 40%
    :alt: Box plot.
 
@@ -156,17 +156,33 @@ This will create line charts for analyzing the effect of batch normalization and
 run_research
 ^^^^^^^^^^^^^
 
-This command is provided in case you want to reproduce the experiments from my bachelor's thesis. The command is as follows:
+This command is provided in case you want to reproduce the experiments from my bachelor's or masters's thesis. The command is as follows:
 
 .. code-block:: console
 
    $ run_research --root-dir [...] --output-dir [...] --experiment [...] --pretrained-path [...] --num-classes [...] --gpu 0 --num-workers 10
 
 It works quite similar as the two commands above. In the output directory everything will be saved, from logs to newly trained models. 
-There are three different experiments available to choose: scaling, void-gnn, xgb-gnn. For more information on what do the experiments represent, you can read my thesis. 
+From my bachelor's thesis there are three different experiments available to choose: scaling, void-gnn, xgb-gnn.
+For more information on what do the experiments represent, you can read my thesis. 
+
+From my master's thesis there is one experiment available: early-topo.
+This experiment trains several GNNs in the same way as the other experiments but it uses the neural persistence as a stopping criterion.
+The neural persistence is computed from the network weights using either Vietoris-Rips complexes of all the weights as 1D points,
+or using cubical complexes and considering matrices as images. 
+Both training runs will be saved in the output directory and results can be visualized with tensorboard.
+The experiment can be run like this:
+
+.. code-block:: console
+
+   $ run_research --output-dir [...] --experiment early-topo
+
+
 With respect to compute power needed, except for the scaling one they are all lighter than the run_training pipeline. The xgb-gnn can even be done in the CPU in less than half an hour. 
-An the void-gnn can also be done in CPU if needed. The scaling experiment trains four different hovernet models with different field of views. 
+An the void-gnn can also be done in CPU if needed. The scaling experiment trains four different hovernet models with different fields of view. 
 For the 270 models it needs less than 10GB GPU RAM while for the 518 models it requires at least 20GB RAM.
+
+If you downloaded the dataset from `Zenodo <https://zenodo.org/records/8368163>`_, make sure to have the dataset inside folder :code:`.internals/` and renamed with name :code:`data` instead of :code:`lung-tumour-study`.
 
 .. _preproc_utils:
 
