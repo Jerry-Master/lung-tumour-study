@@ -37,20 +37,6 @@ from ..classification.read_graph import GraphDataset
 from .draw_rips import compute_graph_distance_matrix
 
 
-def _create_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--orig-dir', type=str, help='Path to base images folder. Must be in .png format.')
-    parser.add_argument('--png-dir', type=str, help='Path to folder with png of the labels.')
-    parser.add_argument('--csv-dir', type=str, help='Path to folder with csv of the labels.')
-    parser.add_argument('--output-dir', type=str, help='Path to folder where to save results.')
-    parser.add_argument('--use-metric', action='store_true', help='True: use euclidean distance between nodes. False: use graph distance between nodes.')
-    parser.add_argument('--num-workers', type=int, default=0)
-    parser.add_argument('--force-overwrite', action='store_true', help='By default if the output folder already contains graph subfolder it avoid computing graphs. Activate to overwrite the .nodes.csv there.')
-    parser.add_argument('--max-degree', type=int, default=10, help='Maximum degree allowed for each node.')
-    parser.add_argument('--max-distance', type=int, default=200, help='Maximum allowed distance between nodes, in pixels.')
-    return parser
-
-
 def draw_barcode(
         rips_persistence: RipsPersistence,
         X: Any,
@@ -163,6 +149,20 @@ def main_with_args(args: Namespace) -> None:
     else:
         for k, name in enumerate(names):
             main_subthread(args, name, graph_dataset, k, rips_persistence, max_edge_length, max_dimension, pbar)
+
+
+def _create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--orig-dir', type=str, help='Path to base images folder. Must be in .png format.')
+    parser.add_argument('--png-dir', type=str, help='Path to folder with png of the labels.')
+    parser.add_argument('--csv-dir', type=str, help='Path to folder with csv of the labels.')
+    parser.add_argument('--output-dir', type=str, help='Path to folder where to save results.')
+    parser.add_argument('--use-metric', action='store_true', help='True: use euclidean distance between nodes. False: use graph distance between nodes.')
+    parser.add_argument('--num-workers', type=int, default=0)
+    parser.add_argument('--force-overwrite', action='store_true', help='By default if the output folder already contains graph subfolder it avoid computing graphs. Activate to overwrite the .nodes.csv there.')
+    parser.add_argument('--max-degree', type=int, default=10, help='Maximum degree allowed for each node.')
+    parser.add_argument('--max-distance', type=int, default=200, help='Maximum allowed distance between nodes, in pixels.')
+    return parser
 
 
 def main():

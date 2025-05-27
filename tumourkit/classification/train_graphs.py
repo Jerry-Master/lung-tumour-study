@@ -26,6 +26,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Optimizer
+from torch.utils.data import ConcatDataset
 import dgl
 from dgl.dataloading import GraphDataLoader
 from .read_graph import GraphDataset
@@ -44,7 +45,42 @@ import json
 import pickle
 from ..utils.preprocessing import parse_path, create_dir
 from ..utils.classification import metrics_from_predictions
+from ..utils.tda import compute_matrix_persistence
 warnings.filterwarnings('ignore')
+
+
+def compute_neural_persistence(
+        model: nn.Module,
+        writer: Optional[SummaryWriter] = None,
+        epoch: Optional[int] = None,
+        log_suffix: Optional[str] = None,
+        use_cubical: Optional[bool] = False
+        ) -> float:
+    """
+    Computes normalized neural persistence of the model using Gudhi.
+    Logs to TensorBoard if writer is provided.
+    Returns the normalized neural persistence score.
+    """
+    model.eval()
+    persistence_scores = []
+
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() >= 2:
+            matrix = param.detach().cpu().numpy()
+            tp = compute_matrix_persistence(matrix, use_cubical)
+            n = matrix.shape[0] + matrix.shape[1]
+            tp_normalized = tp / math.sqrt(n - 1)
+            persistence_scores.append(tp_normalized)
+
+    if not persistence_scores:
+        return 0.0
+
+    mean_persistence = sum(persistence_scores) / len(persistence_scores)
+
+    if writer is not None and log_suffix is not None and epoch is not None:
+        writer.add_scalar('Persistence/' + log_suffix, mean_persistence, epoch)
+
+    return mean_persistence
 
 
 def evaluate(
@@ -192,6 +228,21 @@ def train_one_iter(
             writer.add_scalar('Percentage Error-bkgr/train', train_perc_err_bkgr, step + len(tr_loader) * epoch)
 
 
+def fuse_loaders(tr_loader: GraphDataLoader, val_loader: GraphDataLoader) -> GraphDataLoader:
+    """
+    Concatenates both loaders into one.
+    """
+    combined_dataset = ConcatDataset([tr_loader.dataset, val_loader.dataset])
+    fused_loader = GraphDataLoader(
+        dataset=combined_dataset,
+        batch_size=tr_loader.batch_size,
+        shuffle=True,
+        num_workers=getattr(tr_loader, 'num_workers', 0),
+        drop_last=getattr(tr_loader, 'drop_last', False)
+    )
+    return fused_loader
+
+
 def train(
         save_dir: str,
         save_weights: bool,
@@ -207,27 +258,39 @@ def train(
         normalizers: Optional[Tuple[Normalizer]] = None,
         num_classes: Optional[int] = 2,
         enable_background: Optional[bool] = False,
+        use_neural_persistence: Optional[bool] = False,
+        use_cubical: Optional[bool] = False,
         ) -> None:
     """
-    Train the model with early stopping on F1 score (weighted) or until 1000 iterations.
+    Train the model with early stopping on either: 
+    F1 score (weighted) or neural persistence,
+    or until 1000 iterations.
+
+    n_early is also called patience in some places.
     """
     model = model.to(device)
     n_epochs = 1000
-    best_val_f1 = 0
+    best_val_criterion = 0
     early_stop_rounds = 0
+    if use_neural_persistence:
+        tr_loader = fuse_loaders(tr_loader, val_loader)
     for epoch in range(n_epochs):
         train_one_iter(tr_loader, model, device, optimizer, epoch, writer, num_classes, enable_background=enable_background)
-        val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes, enable_background=enable_background)
-        if num_classes == 2:
-            val_f1, val_acc, val_auc, val_perc_error, val_ece = val_metrics
+        if use_neural_persistence:
+            val_criterion = compute_neural_persistence(model, writer, epoch, 'validation', use_cubical)
         else:
-            val_micro, val_macro, val_f1, val_ece = val_metrics
+            val_metrics = evaluate(val_loader, model, device, writer, epoch, 'validation', num_classes=num_classes, enable_background=enable_background)
+            if num_classes == 2:
+                val_f1, val_acc, val_auc, val_perc_error, val_ece = val_metrics
+            else:
+                val_micro, val_macro, val_f1, val_ece = val_metrics
+            val_criterion = val_f1
         # Save checkpoint
         if save_weights and check_iters != -1 and epoch % check_iters == 0:
             save_model(save_dir, model, conf, normalizers, prefix='last_')
         # Early stopping
-        if val_f1 > best_val_f1:
-            best_val_f1 = val_f1
+        if val_criterion > best_val_criterion:
+            best_val_criterion = val_criterion
             early_stop_rounds = 0
             if save_weights:
                 save_model(save_dir, model, conf, normalizers, prefix='best_')
@@ -403,17 +466,18 @@ def train_one_conf(
     # Tensorboard logs
     writer = SummaryWriter(log_dir=os.path.join(log_dir, name_from_conf(conf)))
     # Model
-    model = load_model(conf, num_classes, num_feats, args.enable_background)
+    model = load_model(conf, num_classes, num_feats, getattr(args, 'enable_background', False))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Train
     train(
         save_dir, save_weights, train_dataloader, val_dataloader,
         model, optimizer, writer, args.early_stopping_rounds,
         args.device, args.checkpoint_iters, conf, train_dataloader.dataset.get_normalizers(),
-        num_classes=num_classes, enable_background=args.enable_background
+        num_classes=num_classes, enable_background=getattr(args, 'enable_background', False),
+        use_neural_persistence=getattr(args, 'use_neural_persistence', False), use_cubical=getattr(args, 'use_cubical', False)
     )
     test_metrics = evaluate(
-        test_dataloader, model, args.device, num_classes=num_classes, enable_background=args.enable_background
+        test_dataloader, model, args.device, num_classes=num_classes, enable_background=getattr(args, 'enable_background', False)
     )
     model = model.cpu()
     if num_classes == 2:
@@ -456,6 +520,8 @@ def _create_parser():
     parser.add_argument('--disable-prior', action='store_true', help='If True, remove hovernet probabilities from node features.')
     parser.add_argument('--disable-morph-feats', action='store_true', help='If True, remove morphological features from node features.')
     parser.add_argument('--enable-background', action='store_true', help='If enabled, GNNs are allowed to predict the class 0 (background) and correct extra cells.')
+    parser.add_argument('--use-neural-persistence', action='store_true', help='If enabled, neural persistence is used instead of validation set and that set is included in training.')
+    parser.add_argument('--use-cubical', action='store_true', help='If enabled, neural persistence is computed using cubical complex instead of Rips complex over 1D points.')
     return parser
 
 
@@ -478,7 +544,7 @@ def main_with_args(args: Namespace):
         bsize=args.batch_size,
         remove_prior=args.disable_prior,
         remove_morph=args.disable_morph_feats,
-        enable_background=args.enable_background,
+        enable_background=getattr(args, 'enable_background', False),
     )
     # Configurations
     confs = generate_configurations(args.num_confs, args.model_name)

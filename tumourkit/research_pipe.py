@@ -395,8 +395,90 @@ def run_void(args: Namespace, logger: Logger) -> None:
     train_gnn(newargs)
 
 
-def run_cnn(args: Namespace, logger: Logger) -> None:
-    raise NotImplementedError
+def run_early_topo(args: Namespace, logger: Logger) -> None:
+    """
+    It tests the hypothesis that we can use the neural persistence as 
+    an early stopping criterion. 
+
+    This function performs the following steps:
+        1. Trains a GNN model with early stopping based on neural persistence (Rips).
+        2. Trains a GNN model with early stopping based on neural persistence (Cubical).
+        3. Trains a GNN model with early stopping based on validation dataset.
+
+    :param args: The arguments for the GNN training.
+    :type args: Namespace
+
+    :param logger: The logger object used for logging messages.
+    :type logger: Logger
+    """
+    device = 'cpu' if args.gpu == '' else 'cuda'
+    logger.info(f'Training GNN with neural persistence criterion (Rips) in {device}.')
+    newargs = Namespace(
+        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir=os.path.join(args.output_dir, 'gnn_persistence_logs'),
+        early_stopping_rounds=10,
+        batch_size=10,
+        model_name='GCN',
+        save_file=os.path.join(args.output_dir, 'gnn_persistence_logs', 'gnn_results'),
+        num_confs=32,
+        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn_persistence'),
+        device=device,
+        num_workers=args.num_workers,
+        checkpoint_iters=-1,
+        num_classes=args.num_classes,
+        disable_prior=False,
+        disable_morph_feats=False,
+        use_neural_persistence=True,
+        use_cubical=False
+    )
+    train_gnn(newargs)
+
+    logger.info(f'Training GNN with neural persistence criterion (Cubical) in {device}.')
+    newargs = Namespace(
+        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir=os.path.join(args.output_dir, 'gnn_persistence_logs'),
+        early_stopping_rounds=10,
+        batch_size=10,
+        model_name='GCN',
+        save_file=os.path.join(args.output_dir, 'gnn_persistence_logs', 'gnn_results'),
+        num_confs=32,
+        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn_persistence'),
+        device=device,
+        num_workers=args.num_workers,
+        checkpoint_iters=-1,
+        num_classes=args.num_classes,
+        disable_prior=False,
+        disable_morph_feats=False,
+        use_neural_persistence=True,
+        use_cubical=True
+    )
+    train_gnn(newargs)
+
+    logger.info('Training GNN with validation set criterion.')
+    newargs = Namespace(
+        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
+        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
+        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
+        log_dir=os.path.join(args.output_dir, 'gnn_validation_logs'),
+        early_stopping_rounds=10,
+        batch_size=10,
+        model_name='GCN',
+        save_file=os.path.join(args.output_dir, 'gnn_validation_logs', 'gnn_results'),
+        num_confs=32,
+        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn_validation'),
+        device=device,
+        num_workers=args.num_workers,
+        checkpoint_iters=-1,
+        num_classes=args.num_classes,
+        disable_prior=False,
+        disable_morph_feats=False,
+        use_neural_persistence=False,
+    )
+    train_gnn(newargs)
 
 
 def _create_parser():
@@ -404,7 +486,7 @@ def _create_parser():
     parser.add_argument('--root-dir', type=str, help='Internal data and weights directory.', default='./.internals/')
     parser.add_argument('--output-dir', type=str, help='Folder where to save all the results.')
     parser.add_argument('--num-classes', type=int, default=2, help='Number of classes to consider for classification (background not included).')
-    parser.add_argument('--experiment', type=str, choices=['scaling', 'xgb-gnn', 'void-gnn', 'cnn-gnn'])
+    parser.add_argument('--experiment', type=str, choices=['scaling', 'xgb-gnn', 'void-gnn', 'early-topo'])
     parser.add_argument('--pretrained-path', type=str, help='Path to initial Hovernet weights.')
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--num-workers', type=int, default=0)
@@ -430,5 +512,5 @@ def main():
         run_xgb(args, logger)
     if args.experiment == 'void-gnn':
         run_void(args, logger)
-    if args.experiment == 'cnn-gnn':
-        run_cnn(args, logger)
+    if args.experiment == 'early-topo':
+        run_early_topo(args, logger)

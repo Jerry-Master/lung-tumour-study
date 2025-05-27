@@ -51,7 +51,7 @@ def create_dir(path: str) -> None:
     :type path: str
     """
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.makedirs(path, exist_ok=True)
 
 
 def get_names(path: str, pattern: str) -> List[str]:
