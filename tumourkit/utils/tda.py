@@ -18,7 +18,14 @@ Contact information: joseperez2000@hotmail.es
 """
 import numpy as np
 import math
-from gudhi import RipsComplex, CubicalComplex
+from gudhi import CubicalComplex
+
+
+try:
+    import dionysus as d
+    HAS_DIONYSUS = True
+except ImportError:
+    HAS_DIONYSUS = False
 
 
 def compute_matrix_persistence(matrix: np.ndarray, use_cubical: bool = False) -> float:
@@ -33,12 +40,19 @@ def compute_matrix_persistence(matrix: np.ndarray, use_cubical: bool = False) ->
         cc.persistence(homology_coeff_field=2)
         diag = cc.persistence()
     else:
-        # Flatten to 1D point cloud for Rips
-        points = np.expand_dims(np.abs(matrix).flatten(), axis=1)
-        rc = RipsComplex(points=points)
-        st = rc.create_simplex_tree(max_dimension=1)
-        st.persistence(homology_coeff_field=2, persistence_dim_max=True)
-        diag = st.persistence()
+        # Check for Dionysus and platform compatibility
+        if not HAS_DIONYSUS:
+            raise RuntimeError(
+                "Rips persistence requires Dionysus, which is not installed or not supported on Windows.\n"
+                "To use this mode, install Dionysus on Linux/macOS or use WSL."
+            )
+        # Use Dionysus for Rips complex on flattened point cloud
+        points = [tuple([x]) for x in np.abs(matrix).flatten()]
+        points = np.abs(matrix).flatten().astype(np.float32)
+        f = d.fill_rips(points, 1, np.inf)
+        p = d.homology_persistence(f)
+        dgms = d.init_diagrams(p, f)
+        diag = [(dim, (pt.birth, pt.death)) for dim, dgm in enumerate(dgms) for pt in dgm]
 
     # Total 0-dimensional persistence (finite deaths)
     h0_pairs = [pair for pair in diag if pair[0] == 0 and pair[1][1] != float('inf')]
