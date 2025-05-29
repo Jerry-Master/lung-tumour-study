@@ -305,6 +305,14 @@ To do so, run in your local machine (not the server) this command
 where the host address is the direction you use to access the server by ssh. 
 If you want to change the port it is redirected to, change the first 6006 to whatever you find convenient.
 
+If you want to extract the values of the validation metrics after training there is a command for that:
+
+.. code-block:: console
+
+   $ summarize_logs --input-dir [...] --output-path [...] --patience [...]
+
+This can be useful when you want to measure correlation between validation proxy metrics and the test metrics.
+
 .. _gradio:
 
 Gradio demo
