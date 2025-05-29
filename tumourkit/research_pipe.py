@@ -435,29 +435,6 @@ def run_early_topo(args: Namespace, logger: Logger) -> None:
     )
     train_gnn(newargs)
 
-    logger.info(f'Training GNN with neural persistence criterion (Rips) in {device}.')
-    newargs = Namespace(
-        train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
-        validation_node_dir=os.path.join(args.root_dir, 'data', 'validation', 'graphs', 'preds'),
-        test_node_dir=os.path.join(args.root_dir, 'data', 'test', 'graphs', 'preds'),
-        log_dir=os.path.join(args.output_dir, 'gnn_persistence_rips_logs'),
-        early_stopping_rounds=10,
-        batch_size=10,
-        model_name='GCN',
-        save_file=os.path.join(args.output_dir, 'gnn_persistence_rips_logs', 'gnn_results'),
-        num_confs=32,
-        save_dir=os.path.join(args.root_dir, 'weights', 'classification', 'gnn_persistence_rips'),
-        device=device,
-        num_workers=args.num_workers,
-        checkpoint_iters=-1,
-        num_classes=args.num_classes,
-        disable_prior=False,
-        disable_morph_feats=False,
-        use_neural_persistence=True,
-        use_cubical=False
-    )
-    train_gnn(newargs)
-
     logger.info('Training GNN with validation set criterion.')
     newargs = Namespace(
         train_node_dir=os.path.join(args.root_dir, 'data', 'train', 'graphs', 'preds'),
