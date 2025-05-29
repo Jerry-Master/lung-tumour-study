@@ -37,7 +37,6 @@ def compute_matrix_persistence(matrix: np.ndarray, use_cubical: bool = False) ->
     if use_cubical:
         # Use Cubical complex directly on 2D matrix
         cc = CubicalComplex(top_dimensional_cells=np.abs(matrix))
-        cc.persistence(homology_coeff_field=2)
         diag = cc.persistence()
     else:
         # Check for Dionysus and platform compatibility
@@ -47,8 +46,8 @@ def compute_matrix_persistence(matrix: np.ndarray, use_cubical: bool = False) ->
                 "To use this mode, install Dionysus on Linux/macOS or use WSL."
             )
         # Use Dionysus for Rips complex on flattened point cloud
-        points = [tuple([x]) for x in np.abs(matrix).flatten()]
         points = np.abs(matrix).flatten().astype(np.float32)
+        points = np.column_stack((points, np.zeros_like(points)))
         f = d.fill_rips(points, 1, np.inf)
         p = d.homology_persistence(f)
         dgms = d.init_diagrams(p, f)
